@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import time
 
 from dynamics import dydx1, dydx2, fvdp2
-from generator import generator_items, main
+from generator import generate_complete_polynomail
 
 def simulation_ode(ode_func, y0, t_tuple, stepsize):
     """ Given a ODE function, some initial state, stepsize, then return the points.
@@ -31,7 +31,7 @@ def diff_method(t_points, y_list, order, stepsize):
     final_b_mat = None
     L_t = len(t_points)
     L_y = y_list[0].shape[1]
-    gene = main(L_y,order)
+    gene = generate_complete_polynomail(L_y,order)
     L_p = gene.shape[0]
 
 
@@ -74,21 +74,12 @@ def draw(t,y):
     plt.show()
     return 0
 
-
-# def dydx1(t,y):
-#     dy_dx = -1.34*y**3+2.7*y**2-4*y+5.6
-#     return dy_dx
-
-# def dydx2(t,y):
-#     dy_dx = -1.34*y**3+9.8*y**2+6.5*y-23
-#     return dy_dx
-
 def infer_dynamic():
     """ The main function to infer a dynamic system.
     """
     y0 = [[2,0]]
     t_tuple = (0,4)
-    stepsize = 0.02
+    stepsize = 0.05
 
     start = time.time()
     t_points, y_list = simulation_ode(fvdp2, y0, t_tuple, stepsize)
@@ -99,7 +90,6 @@ def infer_dynamic():
     end_pseudoinv = time.time()
 
     print(g.T)
-    # print(g.type())
 
     print("Total time: ", end_pseudoinv-start)
     print("Simulation time: ", end_simulation-start)

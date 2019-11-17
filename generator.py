@@ -1,7 +1,6 @@
 import numpy as np 
 import time
 
-
 def generator_items(m, n):
     """@m : the number of variables
        @n : the order
@@ -20,7 +19,7 @@ def generator_items(m, n):
         A = np.r_[A,D]
     return A
 
-def main(m,n):
+def generate_complete_polynomail(m,n):
     A = None
     for i in range(0, n+1):
         g = generator_items(m,n-i)
@@ -32,7 +31,7 @@ def main(m,n):
 
 if __name__ == "__main__":
     start = time.time()
-    A = main(1,2)
+    A = generate_complete_polynomail(1,2)
     end = time.time()
     print(A)
     print(end-start)

@@ -1,6 +1,7 @@
 import numpy as np 
 import time
 
+
 def generator_items(m, n):
     """@m : the number of variables
        @n : the order

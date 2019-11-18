@@ -3,34 +3,36 @@ from scipy import linalg, linspace
 from scipy.integrate import odeint, solve_ivp
 import matplotlib.pyplot as plt
 import time
-import random
+# import random
 
 from dynamics import dydx1, dydx2, fvdp2
 from generator import generate_complete_polynomail
 
-def simulation_ode(ode_func, y0, t_tuple, stepsize):
+def simulation_ode(ode_func, y0, t_tuple, stepsize, eps=0):
     """ Given a ODE function, some initial state, stepsize, then return the points.
         @ode_func: ODE function 
         @y0: inital state
         @t_tuple: 
         @stepsize: step size
+        @eps: guass noise (defult 0)
     """
     t_start = t_tuple[0]
     t_end = t_tuple[1]
     t_points = np.arange(t_start, t_end + stepsize, stepsize)
     y_list = []
-    eps = 0.01
+
     for k in range(0,len(y0)):
         y_object = solve_ivp(ode_func, (t_start, t_end+stepsize), y0[k], t_eval = t_points, rtol=1e-7, atol=1e-9)
         y_points = y_object.y.T
-        for i in range(0,y_points.shape[0]):
-            for j in range(0,y_points.shape[1]):
-                y_points[i][j] = y_points[i][j] + np.random.normal(0,eps)
+        if eps > 0:
+            for i in range(0,y_points.shape[0]):
+                for j in range(0,y_points.shape[1]):
+                    y_points[i][j] = y_points[i][j] + np.random.normal(0,eps)
         y_list.append(y_points)
     return t_points, y_list
 
 def diff_method(t_points, y_list, order, stepsize):
-    """Using multi-step difference method (Adams5) to calculate the coefficiant matrix.
+    """Using multi-step difference method (Adams5, Moore-Penrose Inverse) to calculate the coefficiant matrix.
     """
     final_A_mat = None
     final_b_mat = None
@@ -38,7 +40,6 @@ def diff_method(t_points, y_list, order, stepsize):
     L_y = y_list[0].shape[1]
     gene = generate_complete_polynomail(L_y,order)
     L_p = gene.shape[0]
-
 
     D = L_t - 4    #Adams5
 
@@ -52,7 +53,6 @@ def diff_method(t_points, y_list, order, stepsize):
                 for l in range(0,L_y):
                    coef_matrix[i][j] = coef_matrix[i][j] * (y_points[i][l] ** gene[j][l])
 
-                
         # Adams5
         for i in range(0, 2*D):
             if i < D:     # forward
@@ -62,6 +62,7 @@ def diff_method(t_points, y_list, order, stepsize):
                 A_matrix[i] = (-19*coef_matrix[i-D+4]+106*coef_matrix[i-D+3]-264*coef_matrix[i-D+2]+646*coef_matrix[i-D+1]+251*coef_matrix[i-D])*stepsize/720
                 b_matrix[i] = y_points[i-D+1]-y_points[i-D]
         
+        # Moore-Penrose Inverse (pseudoinverse)
         if k == 0:
             final_A_mat = A_matrix
             final_b_mat = b_matrix
@@ -88,7 +89,7 @@ def infer_dynamic():
     stepsize = 0.01
 
     start = time.time()
-    t_points, y_list = simulation_ode(fvdp2, y0, t_tuple, stepsize)
+    t_points, y_list = simulation_ode(fvdp2, y0, t_tuple, stepsize, eps=0.01)
     # t_points, y_list = simulation_ode(dydx2, y0, t_tuple, stepsize)
     end_simulation = time.time()
     A, b = diff_method(t_points, y_list, 3, stepsize)

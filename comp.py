@@ -17,4 +17,5 @@ y0 = [[2,0]] # 初值条件
 # 返回y，其中y[:,0]是y[0]的值，就是最终解，y[:,1]是y'(x)的值
 y_ = solve_ivp(fvdp2, t_span=tspan, y0=y0[0], t_eval=t2)
 print(y_.y.T.shape)
+print(np.random.normal(0,0.01))
 

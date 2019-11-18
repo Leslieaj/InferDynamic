@@ -3,6 +3,7 @@ from scipy import linalg, linspace
 from scipy.integrate import odeint, solve_ivp
 import matplotlib.pyplot as plt
 import time
+import random
 
 from dynamics import dydx1, dydx2, fvdp2
 from generator import generate_complete_polynomail
@@ -18,9 +19,13 @@ def simulation_ode(ode_func, y0, t_tuple, stepsize):
     t_end = t_tuple[1]
     t_points = np.arange(t_start, t_end + stepsize, stepsize)
     y_list = []
+    eps = 0.05
     for k in range(0,len(y0)):
         y_object = solve_ivp(ode_func, (t_start, t_end+stepsize), y0[k], t_eval = t_points, rtol=1e-7, atol=1e-9)
         y_points = y_object.y.T
+        #for i in range(0,y_points.shape[0]):
+        #    for j in range(0,y_points.shape[1]):
+        #        y_points[i][j] = y_points[i][j] + random.uniform(-eps,eps)
         y_list.append(y_points)
     return t_points, y_list
 
@@ -77,9 +82,9 @@ def draw(t,y):
 def infer_dynamic():
     """ The main function to infer a dynamic system.
     """
-    y0 = [[2,0]]
+    y0 = [[5,-3],[2,0],[-2,3]]
     t_tuple = (0,4)
-    stepsize = 0.05
+    stepsize = 0.01
 
     start = time.time()
     t_points, y_list = simulation_ode(fvdp2, y0, t_tuple, stepsize)

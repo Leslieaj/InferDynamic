@@ -62,7 +62,6 @@ def diff_method(t_points, y_list, order, stepsize):
                 A_matrix[i] = (-19*coef_matrix[i-D+4]+106*coef_matrix[i-D+3]-264*coef_matrix[i-D+2]+646*coef_matrix[i-D+1]+251*coef_matrix[i-D])*stepsize/720
                 b_matrix[i] = y_points[i-D+1]-y_points[i-D]
         
-        # Moore-Penrose Inverse (pseudoinverse)
         if k == 0:
             final_A_mat = A_matrix
             final_b_mat = b_matrix
@@ -94,6 +93,7 @@ def infer_dynamic():
     end_simulation = time.time()
     A, b = diff_method(t_points, y_list, 3, stepsize)
     end_diff = time.time()
+    # Moore-Penrose Inverse (pseudoinverse)
     g = linalg.pinv(A).dot(b)
     end_pseudoinv = time.time()
 

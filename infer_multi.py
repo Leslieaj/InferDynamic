@@ -5,8 +5,9 @@ import matplotlib.pyplot as plt
 import time
 # import random
 
-from dynamics import dydx1, dydx2, fvdp2
+from dynamics import dydx1, dydx2, fvdp2, fvdp2_1
 from generator import generate_complete_polynomail
+from draw import draw, draw2D
 
 def simulation_ode(ode_func, y0, t_tuple, stepsize, eps=0):
     """ Given a ODE function, some initial state, stepsize, then return the points.
@@ -32,7 +33,7 @@ def simulation_ode(ode_func, y0, t_tuple, stepsize, eps=0):
     return t_points, y_list
 
 def diff_method(t_points, y_list, order, stepsize):
-    """Using multi-step difference method (Adams5, Moore-Penrose Inverse) to calculate the coefficiant matrix.
+    """Using multi-step difference method (Adams5) to calculate the coefficiant matrix.
     """
     final_A_mat = None
     final_b_mat = None
@@ -71,40 +72,33 @@ def diff_method(t_points, y_list, order, stepsize):
 
     return final_A_mat, final_b_mat
 
-def draw(t,y):
-    """Draw
-    """
-    for temp_y in y:
-        plt.plot(t,temp_y)
-    plt.show()
-    return 0
-
-def infer_dynamic():
+def infer_dynamic(t_points, y_list, stepsize, order, eps=0):
     """ The main function to infer a dynamic system.
     """
-    y0 = [[5,-3],[2,0],[-2,3]]
-    # y0 = [[5],[1],[2],[3],[0],[-1],[-2]]
-    t_tuple = (0,4)
-    stepsize = 0.01
-
     start = time.time()
-    t_points, y_list = simulation_ode(fvdp2, y0, t_tuple, stepsize, eps=0.01)
-    # t_points, y_list = simulation_ode(dydx2, y0, t_tuple, stepsize)
-    end_simulation = time.time()
-    A, b = diff_method(t_points, y_list, 3, stepsize)
+    A, b = diff_method(t_points, y_list, order, stepsize)
     end_diff = time.time()
     # Moore-Penrose Inverse (pseudoinverse)
     g = linalg.pinv(A).dot(b)
     end_pseudoinv = time.time()
+    return g.T, end_diff-start, end_pseudoinv-end_diff
 
-    print(g.T)
-
-    print("Total time: ", end_pseudoinv-start)
-    print("Simulation time: ", end_simulation-start)
-    print("Calc-diff time: ", end_diff-end_simulation)
-    print("Pseudoinv time: ", end_pseudoinv-end_diff)
-
-    draw(t_points, y_list)
 
 if __name__ == "__main__":
-    infer_dynamic()
+    y0 = [[5],[1],[2],[3],[0],[-1],[-2]]
+    t_tuple = (0,4)
+    stepsize = 0.01
+    order = 3
+    start = time.time()
+    t_points, y_list = simulation_ode(dydx1, y0, t_tuple, stepsize)
+    end_simulation = time.time()
+    result_coef, calcdiff_time, pseudoinv_time = infer_dynamic(t_points, y_list, stepsize, order, eps=0)
+    end_inference = time.time()
+    print(result_coef)
+    print()
+    print("Total time: ", end_inference-start)
+    print("Simulation time: ", end_simulation-start)
+    print("Calc-diff time: ", calcdiff_time)
+    print("Pseudoinv time: ", pseudoinv_time)
+    
+    draw(t_points, y_list)

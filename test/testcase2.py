@@ -12,7 +12,7 @@ from draw import draw, draw2D, draw3D
 def case1():
     y0 = [[a,b] for a in np.arange(-0.5,0.5+0.25,0.25) for b in np.arange(-2.5,-1.5+0.25,0.25)]
     t_tuple = (0,1)
-    stepsize = 0.01
+    stepsize = 0.001
     order = 2
 
     start = time.time()
@@ -31,8 +31,8 @@ def case1():
 
 def case2():
     y0 = [[-8,7,27]]
-    t_tuple = (0,50)
-    stepsize = 0.01
+    t_tuple = (0,100)
+    stepsize = 0.001
     order = 2
 
     start = time.time()

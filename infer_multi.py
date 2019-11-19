@@ -79,7 +79,8 @@ def infer_dynamic(t_points, y_list, stepsize, order, eps=0):
     A, b = diff_method(t_points, y_list, order, stepsize)
     end_diff = time.time()
     # Moore-Penrose Inverse (pseudoinverse)
-    g = linalg.pinv(A).dot(b)
+    # g = linalg.pinv(A).dot(b) # using least-square solver
+    g = linalg.pinv2(A).dot(b) # using using its singular-value decomposition and including all 'large' singular values.
     end_pseudoinv = time.time()
     return g.T, end_diff-start, end_pseudoinv-end_diff
 

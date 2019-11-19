@@ -49,7 +49,7 @@ def case2():
 
 def case3():
     y0 = [[5,-3],[2,0],[-2,3]]
-    t_tuple = (0,4)
+    t_tuple = (0,10)
     stepsize = 0.01
     order = 3
     start = time.time()
@@ -64,7 +64,8 @@ def case3():
     print("Simulation time: ", end_simulation-start)
     print("Calc-diff time: ", calcdiff_time)
     print("Pseudoinv time: ", pseudoinv_time)
-    draw(t_points, y_list)
+    draw2D(y_list)
+    # draw(t_points, y_list)
 
 if __name__ == "__main__":
     # case1()

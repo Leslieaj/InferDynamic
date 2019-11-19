@@ -15,9 +15,9 @@ def case1():
     stepsize = 0.01
     order = 3
     start = time.time()
-    t_points, y_list = simulation_ode(dydx1, y0, t_tuple, stepsize)
+    t_points, y_list = simulation_ode(dydx1, y0, t_tuple, stepsize, eps=0)
     end_simulation = time.time()
-    result_coef, calcdiff_time, pseudoinv_time = infer_dynamic(t_points, y_list, stepsize, order, eps=0)
+    result_coef, calcdiff_time, pseudoinv_time = infer_dynamic(t_points, y_list, stepsize, order)
     end_inference = time.time()
 
     print(result_coef)
@@ -34,9 +34,9 @@ def case2():
     stepsize = 0.01
     order = 3
     start = time.time()
-    t_points, y_list = simulation_ode(dydx2, y0, t_tuple, stepsize)
+    t_points, y_list = simulation_ode(dydx2, y0, t_tuple, stepsize, eps=0)
     end_simulation = time.time()
-    result_coef, calcdiff_time, pseudoinv_time = infer_dynamic(t_points, y_list, stepsize, order, eps=0)
+    result_coef, calcdiff_time, pseudoinv_time = infer_dynamic(t_points, y_list, stepsize, order)
     end_inference = time.time()
 
     print(result_coef)
@@ -53,9 +53,9 @@ def case3():
     stepsize = 0.01
     order = 3
     start = time.time()
-    t_points, y_list = simulation_ode(fvdp2, y0, t_tuple, stepsize)
+    t_points, y_list = simulation_ode(fvdp2, y0, t_tuple, stepsize, eps=0)
     end_simulation = time.time()
-    result_coef, calcdiff_time, pseudoinv_time = infer_dynamic(t_points, y_list, stepsize, order, eps=0)
+    result_coef, calcdiff_time, pseudoinv_time = infer_dynamic(t_points, y_list, stepsize, order)
     end_inference = time.time()
 
     print(result_coef)

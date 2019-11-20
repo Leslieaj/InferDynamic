@@ -1,59 +1,59 @@
 import numpy as np
-from scipy import linalg, linspace
+from scipy.linalg import pinv, pinv2
 from scipy.integrate import odeint, solve_ivp
 import matplotlib.pyplot as plt
 import time
+# import random
 
-from dynamics import dydx1, dydx2
+from dynamics import dydx1, dydx2, fvdp2, fvdp2_1
+from generator import generate_complete_polynomail
+from draw import draw, draw2D
 
-def simulation_ode(ode_func, y0, t_tuple, stepsize):
+def simulation_ode(ode_func, y0, t_tuple, stepsize, noise_type=1, eps=0):
     """ Given a ODE function, some initial state, stepsize, then return the points.
         @ode_func: ODE function 
         @y0: inital state
         @t_tuple: 
         @stepsize: step size
+        @eps: guass noise (defult 0)
     """
     t_start = t_tuple[0]
     t_end = t_tuple[1]
     t_points = np.arange(t_start, t_end + stepsize, stepsize)
     y_list = []
+
     for k in range(0,len(y0)):
         y_object = solve_ivp(ode_func, (t_start, t_end+stepsize), y0[k], t_eval = t_points, rtol=1e-7, atol=1e-9)
         y_points = y_object.y.T
+        if eps > 0:
+            for i in range(0,y_points.shape[0]):
+                for j in range(0,y_points.shape[1]):
+                    y_points[i][j] = y_points[i][j] + np.random.normal(0,eps)
         y_list.append(y_points)
     return t_points, y_list
 
-def diff_method(t_points, y_list, order, stepsize, highorder_flag=True):
+def diff_method(t_points, y_list, order, stepsize):
     """Using multi-step difference method (Adams5) to calculate the coefficiant matrix.
     """
     final_A_mat = None
     final_b_mat = None
-    L = len(t_points)
-    D = L - 4    #Adams5
+    L_t = len(t_points)
+    L_y = y_list[0].shape[1]
+    gene = generate_complete_polynomail(L_y,order)
+    L_p = gene.shape[0]
+
+    D = L_t - 4    #Adams5
 
     for k in range(0,len(y_list)):
         y_points = y_list[k]
-        A_matrix = np.zeros((D*2, order+2), dtype=np.double)
-        b_matrix = np.zeros(D*2, dtype=np.double)
-        coef_matrix = np.zeros((L, order+2), dtype=np.double)
-        if highorder_flag == False:
-            coef_matrix = np.zeros((L, order+1), dtype=np.double)
-            A_matrix = np.zeros((D*2, order+1), dtype=np.double)
-        
-        #F[i] = [y[i]**4, y[i]**3, y[i]**2, y[i], 1]
-        if highorder_flag == True:
-            for i in range(0, L):
-                for j in range(1, order+2):
-                    coef_temp = y_points[i]**j
-                    coef_matrix[i][order+1-j] = coef_temp
-                coef_matrix[i][order+1] = 1
-        else:
-            for i in range(0, L):
-                for j in range(1, order+1):
-                    coef_temp = y_points[i]**j
-                    coef_matrix[i][order-j] = coef_temp
-                coef_matrix[i][order] = 1
-        
+        A_matrix = np.zeros((D*2, L_p), dtype=np.double)
+        b_matrix = np.zeros((D*2, L_y),  dtype=np.double)
+        coef_matrix = np.ones((L_t, L_p), dtype=np.double)
+        for i in range(0,L_t):
+            for j in range(0,L_p):
+                for l in range(0,L_y):
+                   coef_matrix[i][j] = coef_matrix[i][j] * (y_points[i][l] ** gene[j][l])
+
         # Adams5
         for i in range(0, 2*D):
             if i < D:     # forward
@@ -72,46 +72,34 @@ def diff_method(t_points, y_list, order, stepsize, highorder_flag=True):
 
     return final_A_mat, final_b_mat
 
-def draw(t,y):
-    """Draw
-    """
-    for temp_y in y:
-        plt.plot(t,temp_y)
-    plt.show()
-    return 0
-
-
-# def dydx1(t,y):
-#     dy_dx = -1.34*y**3+2.7*y**2-4*y+5.6
-#     return dy_dx
-
-# def dydx2(t,y):
-#     dy_dx = -1.34*y**3+9.8*y**2+6.5*y-23
-#     return dy_dx
-
-def infer_dynamic():
+def infer_dynamic(t_points, y_list, stepsize, order):
     """ The main function to infer a dynamic system.
     """
-    y0 = [[5],[1],[2],[3],[0],[-1],[-2]]
-    t_tuple = (0,4)
-    stepsize = 0.02
-
     start = time.time()
-    t_points, y_list = simulation_ode(dydx2, y0, t_tuple, stepsize)
-    end_simulation = time.time()
-    A, b = diff_method(t_points, y_list, 3, stepsize, highorder_flag=True)
+    A, b = diff_method(t_points, y_list, order, stepsize)
     end_diff = time.time()
-    g = linalg.pinv(A).dot(b.T)
+    # Moore-Penrose Inverse (pseudoinverse)
+    # g = linalg.pinv(A).dot(b) # using least-square solver
+    g = pinv2(A).dot(b) # using using its singular-value decomposition and including all 'large' singular values.
     end_pseudoinv = time.time()
+    return g.T, end_diff-start, end_pseudoinv-end_diff
 
-    print(g)
-
-    print("Total time: ", end_pseudoinv-start)
-    print("Simulation time: ", end_simulation-start)
-    print("Calc-diff time: ", end_diff-end_simulation)
-    print("Pseudoinv time: ", end_pseudoinv-end_diff)
-
-    draw(t_points, y_list)
 
 if __name__ == "__main__":
-    infer_dynamic()
+    y0 = [[5],[1],[2],[3],[0],[-1],[-2]]
+    t_tuple = (0,4)
+    stepsize = 0.01
+    order = 3
+    start = time.time()
+    t_points, y_list = simulation_ode(dydx1, y0, t_tuple, stepsize, eps=0)
+    end_simulation = time.time()
+    result_coef, calcdiff_time, pseudoinv_time = infer_dynamic(t_points, y_list, stepsize, order)
+    end_inference = time.time()
+    print(result_coef)
+    print()
+    print("Total time: ", end_inference-start)
+    print("Simulation time: ", end_simulation-start)
+    print("Calc-diff time: ", calcdiff_time)
+    print("Pseudoinv time: ", pseudoinv_time)
+    
+    draw(t_points, y_list)

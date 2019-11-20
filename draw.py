@@ -17,6 +17,14 @@ def draw2D(y):
     plt.show()
     return 0
 
+def draw2D_dots(y):
+    for temp_y in y:
+        y0_list = temp_y.T[0]
+        y1_list = temp_y.T[1]
+        plt.scatter(y0_list,y1_list,s=1)
+    plt.show()
+    return 0
+
 def draw3D(y):
     ax = plt.axes(projection='3d')
     for temp_y in y:

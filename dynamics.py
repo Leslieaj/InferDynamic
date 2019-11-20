@@ -27,3 +27,13 @@ def fvdp3_1(t,y):
     rho = 28
     dydt  = [sigma*(y1-y0), y0*(rho-y2)-y1, y0*y1-beta*y2]
     return dydt
+
+def mode2_1(t,y):
+    """ A hybrid automaton with 2 modes for an incubator.
+    """
+    y0, y1 = y
+    if y0 > 0:
+        dydt = [-0.026*(y0-y1), -1.0]
+    else:
+        dydt = [-0.026*(y0-y1), 1.0]
+    return dydt

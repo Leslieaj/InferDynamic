@@ -6,7 +6,7 @@ import sys, os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))) # ADD the path of the parent dir
 
 from dynamics import dydx1, dydx2, fvdp2
-from infer_multi import simulation_ode, infer_dynamic
+from infer_single import simulation_ode, infer_dynamic
 from draw import draw, draw2D
 
 def case1():

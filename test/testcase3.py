@@ -24,7 +24,8 @@ def case1():
     end_coedf = time.time()
 
     # x0 = np.ones((2*final_A_mat.shape[1], final_b_mat.shape[1]))*0.1
-    x0 = np.ones((1,2*final_A_mat.shape[1]*final_b_mat.shape[1]))*0.06
+    # x0 = np.ones((1,2*final_A_mat.shape[1]*final_b_mat.shape[1]))*0.06
+    x0 = np.array([-0.1,0.1,0, 0,0,1.0,-0.1,0.1,0, 0,0,1.0])
     results = infer_optimization(x0, final_A_mat, final_b_mat)
     end_optimization = time.time()
 

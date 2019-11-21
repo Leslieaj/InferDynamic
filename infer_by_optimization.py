@@ -75,4 +75,4 @@ def lambda_two_modes2(final_A_mat, final_b_mat):
 
 
 def infer_optimization(x0, A, b):
-    return minimize(lambda_two_modes(A,b), x0, method='nelder-mead', options={'xtol': 1e-8, 'disp': True})
+    return minimize(lambda_two_modes(A,b), x0, method='nelder-mead', options={'maxiter':100000, 'maxfev':100000, 'xatol': 1e-8, 'disp': True})

@@ -12,7 +12,7 @@ from infer_by_optimization import lambda_two_modes, get_coef, infer_optimization
 
 def case1():
     y0 = [[0,3]]
-    t_tuple = (0,10)
+    t_tuple = (0,20)
     stepsize = 0.01
     order = 1
 
@@ -23,7 +23,8 @@ def case1():
     final_A_mat, final_b_mat = get_coef(t_points, y_list, order, stepsize)
     end_coedf = time.time()
 
-    x0 = np.ones((2*final_A_mat.shape[1], final_b_mat.shape[1]))*0.1
+    # x0 = np.ones((2*final_A_mat.shape[1], final_b_mat.shape[1]))*0.1
+    x0 = np.ones((1,2*final_A_mat.shape[1]*final_b_mat.shape[1]))*0.06
     results = infer_optimization(x0, final_A_mat, final_b_mat)
     end_optimization = time.time()
 

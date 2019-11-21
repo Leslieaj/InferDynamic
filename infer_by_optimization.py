@@ -71,8 +71,48 @@ def lambda_two_modes2(final_A_mat, final_b_mat):
         return sum
     return two_modes
 
+def lambda_two_modes3(final_A_mat, final_b_mat):
+    def two_modes(x):
+        A_row = final_A_mat.shape[0]
+        A_col = final_A_mat.shape[1]
+        b_col = final_b_mat.shape[1]
+        sum = 0.0
+        for i in range(0, A_row):
+            mode1_sum = 0.0
+            mode2_sum = 0.0
+            for j in range(0, b_col):
+                mode1_sum = mode1_sum + (final_A_mat[i].dot(x[j*A_col:(j+1)*A_col])-final_b_mat[i][j])**2
+                mode2_sum = mode2_sum + (final_A_mat[i].dot(x[b_col*A_col + j*A_col : b_col*A_col + (j+1)*A_col])-final_b_mat[i][j])**2
+            sum = sum - np.log(np.exp(-mode1_sum)+np.exp(-mode2_sum))
+        return sum
+    return two_modes
 
-
+def lambda_two_modes3_der(final_A_mat, final_b_mat):
+    def two_modes(x):
+        A_row = final_A_mat.shape[0]
+        A_col = final_A_mat.shape[1]
+        b_col = final_b_mat.shape[1]
+        der = np.zeros((1,2*b_col*A_col))
+        mode1_sum = np.zeros((1,A_row))
+        mode2_sum = np.zeros((1,A_row))
+        for i in range(0, A_row):
+            for j in range(0, b_col):
+                mode1_sum[0][i] = mode1_sum[0][i] + (final_A_mat[i].dot(x[j*A_col:(j+1)*A_col])-final_b_mat[i][j])**2
+                mode2_sum[0][i] = mode2_sum[0][i] + (final_A_mat[i].dot(x[b_col*A_col + j*A_col : b_col*A_col + (j+1)*A_col])-final_b_mat[i][j])**2
+        
+        for j in range(0,b_col):
+            for k in range(0,A_col):
+                for i in range(0,A_row):
+                    der[0][j*A_col + k] = der[0][j*A_col + k] + np.exp(-mode1_sum[0][i])*final_A_mat[i][k]\
+                        *2*(final_A_mat[i].dot(x[j*A_col:(j+1)*A_col])-final_b_mat[i][j])/(np.exp(-mode1_sum[0][i])+np.exp(-mode2_sum[0][i]))
+        for j in range(0,b_col):
+            for k in range(0,A_col):
+                for i in range(0,A_row):
+                    der[0][b_col*A_col + j*A_col + k] = der[0][b_col*A_col + j*A_col + k] + np.exp(-mode2_sum[0][i])*final_A_mat[i][k]\
+                        *2*(final_A_mat[i].dot(x[b_col*A_col + j*A_col : b_col*A_col + (j+1)*A_col])-final_b_mat[i][j])/(np.exp(-mode1_sum[0][i])+np.exp(-mode2_sum[0][i]))
+        return der
+    return two_modes
 
 def infer_optimization(x0, A, b):
-    return minimize(lambda_two_modes(A,b), x0, method='nelder-mead', options={'maxiter':100000, 'maxfev':100000, 'xatol': 1e-8, 'disp': True})
+    # return minimize(lambda_two_modes3(A,b), x0, method='nelder-mead', options={'maxiter':100000, 'maxfev':100000, 'xatol': 1e-8, 'disp': True})
+    return minimize(lambda_two_modes3(A,b), x0, method='BFGS', jac=None, options={'maxiter':100000, 'gtol': 1e-03, 'disp': True})

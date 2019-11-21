@@ -1,4 +1,5 @@
 #The dynamic functions.
+import numpy as np
 from fractions import Fraction
 
 def dydx1(t,y):
@@ -33,7 +34,16 @@ def mode2_1(t,y):
     """
     y0, y1 = y
     if y0 > 0:
-        dydt = [-0.026*(y0-y1), -1.0]
+        dydt = [-0.26*(y0-y1), -1.0]
     else:
-        dydt = [-0.026*(y0-y1), 1.0]
+        dydt = [-0.26*(y0-y1), 1.0]
     return dydt
+
+def mode2_1_test(result_coef):
+    def ode(t,y):
+        y0, y1 = y
+        ode1_coef = result_coef[0]
+        ode2_coef = result_coef[1]
+        dydt = [ode1_coef.dot(np.array([y0**2, y0*y1, y1**2, y0,y1,1])), ode2_coef.dot(np.array([y0**2, y0*y1, y1**2, y0,y1,1]))]
+        return dydt
+    return ode

@@ -30,7 +30,7 @@ def case1():
     print(2*final_A_mat.shape[1]*final_b_mat.shape[1])
     x0 = np.random.uniform(-1,1,[2*final_A_mat.shape[1]*final_b_mat.shape[1]])
     # print(x0)
-    x1 = np.array([0,0,0,-0.26,0.26,0,0,0,0, 0,0,1.0,0,0,0,-0.26,0.26,0,0,0,0, 0,0,-1.0])
+    x1 = np.array([0,0,0,-0.26,0.26,0,0,0,0, 0,0,1.0, 0,0,0,-0.26,0.26,0, 0,0,0, 0,0,-1.0])
 
     pr = cProfile.Profile()
     pr.enable()

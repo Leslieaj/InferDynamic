@@ -36,15 +36,27 @@ def lambda_two_modes(final_A_mat, final_b_mat):
         A_row = final_A_mat.shape[0]
         A_col = final_A_mat.shape[1]
         b_col = final_b_mat.shape[1]
-        sum = 0.0
-        for i in range(0, A_row):
-            mode1_sum = 0.0
-            mode2_sum = 0.0
-            for j in range(0, b_col):
-                mode1_sum = mode1_sum + (final_A_mat[i].dot(x[j*A_col:(j+1)*A_col])-final_b_mat[i][j])**2
-                mode2_sum = mode2_sum + (final_A_mat[i].dot(x[b_col*A_col + j*A_col : b_col*A_col + (j+1)*A_col])-final_b_mat[i][j])**2
-            sum = sum +min(mode1_sum, mode2_sum)
-        return sum
+        x1, x2 = np.array_split(x,2)
+        x1 = np.mat(x1.reshape([A_col,b_col],order='F'))
+        y1 = np.matmul(final_A_mat,x1) - final_b_mat
+        y1 = np.multiply(y1,y1)
+        y1 = y1.sum(axis=1)
+        x2 = np.mat(x2.reshape([A_col,b_col],order='F'))
+        y2 = np.matmul(final_A_mat,x2) - final_b_mat
+        y2 = np.multiply(y2,y2)
+        y2 = y2.sum(axis=1)
+        go = np.minimum(y1,y2)
+        go = go.sum()
+        return go
+
+        # for i in range(0, A_row):
+        #     mode1_sum = 0.0
+        #     mode2_sum = 0.0
+        #     for j in range(0, b_col):
+        #         mode1_sum = mode1_sum + (final_A_mat[i].dot(x[j*A_col:(j+1)*A_col])-final_b_mat[i][j])**2
+        #         mode2_sum = mode2_sum + (final_A_mat[i].dot(x[b_col*A_col + j*A_col : b_col*A_col + (j+1)*A_col])-final_b_mat[i][j])**2
+        #     sum = sum +min(mode1_sum, mode2_sum)
+        # return sum
     return two_modes
 
 def lambda_two_modes2(final_A_mat, final_b_mat):
@@ -121,8 +133,7 @@ def lambda_two_modes3_der(final_A_mat, final_b_mat):
 
 def infer_optimization(x0, A, b):
     # print('result is:', lambda_two_modes3(A, b)(x0))
-    # return minimize(lambda_two_modes(A,b), x0, method='nelder-mead', options={'maxiter':30000, 'maxfev':100000, 'xatol': 1e-8, 'disp': True})
-    # return minimize(lambda_two_modes(A,b), x0, method='BFGS', jac=None, options={'maxiter':100000, 'gtol': 1e-05, 'disp': True})
-    # return minimize(lambda_two_modes3(A,b), x0, method='BFGS')
-    print(2*A.shape[1]*b.shape[1])
-    return dual_annealing(lambda_two_modes(A,b), bounds=[(-2,2)]*(2*A.shape[1]*b.shape[1]), maxfun=3000)
+    # return minimize(lambda_two_modes(A,b), x0, method='nelder-mead', options={'maxiter':100000, 'maxfev':100000, 'xatol': 1e-8, 'disp': True})
+    return minimize(lambda_two_modes(A,b), x0, method='BFGS', jac=None, options={'maxiter':100000, 'gtol': 1e-05, 'disp': True})
+    # return minimize(lambda_two_modes(A,b), x0, method='CG')
+    # return dual_annealing(lambda_two_modes(A,b), bounds=[(-2,2)]*(2*A.shape[1]*b.shape[1]))#, maxfun=3000)

@@ -1,6 +1,7 @@
 # Estimate the ODEs by optimization methods
 import numpy as np
-from scipy.optimize import minimize
+import time
+from scipy.optimize import minimize, dual_annealing
 from generator import generate_complete_polynomail
 
 def get_coef(t_points, y_list, order, stepsize):
@@ -76,6 +77,7 @@ def lambda_two_modes3(final_A_mat, final_b_mat):
         A_row = final_A_mat.shape[0]
         A_col = final_A_mat.shape[1]
         b_col = final_b_mat.shape[1]
+        alpha = 5.0
         sum = 0.0
         for i in range(0, A_row):
             mode1_sum = 0.0
@@ -83,7 +85,11 @@ def lambda_two_modes3(final_A_mat, final_b_mat):
             for j in range(0, b_col):
                 mode1_sum = mode1_sum + (final_A_mat[i].dot(x[j*A_col:(j+1)*A_col])-final_b_mat[i][j])**2
                 mode2_sum = mode2_sum + (final_A_mat[i].dot(x[b_col*A_col + j*A_col : b_col*A_col + (j+1)*A_col])-final_b_mat[i][j])**2
-            sum = sum - np.log(np.exp(-mode1_sum)+np.exp(-mode2_sum))
+            # print("mode1_sum", mode1_sum)
+            # print("mode2_sum", mode2_sum)
+            # print("min", -np.log(np.exp(-alpha*mode1_sum)+np.exp(-alpha*mode2_sum))/alpha)
+            sum = sum - np.log(np.exp(-alpha*mode1_sum)+np.exp(-alpha*mode2_sum))/alpha
+            # print("sum", sum)
         return sum
     return two_modes
 
@@ -114,5 +120,9 @@ def lambda_two_modes3_der(final_A_mat, final_b_mat):
     return two_modes
 
 def infer_optimization(x0, A, b):
-    # return minimize(lambda_two_modes3(A,b), x0, method='nelder-mead', options={'maxiter':100000, 'maxfev':100000, 'xatol': 1e-8, 'disp': True})
-    return minimize(lambda_two_modes3(A,b), x0, method='BFGS', jac=None, options={'maxiter':100000, 'gtol': 1e-03, 'disp': True})
+    # print('result is:', lambda_two_modes3(A, b)(x0))
+    # return minimize(lambda_two_modes(A,b), x0, method='nelder-mead', options={'maxiter':30000, 'maxfev':100000, 'xatol': 1e-8, 'disp': True})
+    # return minimize(lambda_two_modes(A,b), x0, method='BFGS', jac=None, options={'maxiter':100000, 'gtol': 1e-05, 'disp': True})
+    # return minimize(lambda_two_modes3(A,b), x0, method='BFGS')
+    print(2*A.shape[1]*b.shape[1])
+    return dual_annealing(lambda_two_modes(A,b), bounds=[(-2,2)]*(2*A.shape[1]*b.shape[1]), maxfun=3000)

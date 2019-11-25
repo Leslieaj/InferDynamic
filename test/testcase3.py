@@ -6,7 +6,8 @@ import sys, os
 import cProfile
 from pstats import Stats
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))) # ADD the path of the parent dir
-
+import matplotlib.pyplot as plt
+from mpl_toolkits import mplot3d
 from dynamics import mode2_1
 from infer_single import simulation_ode
 from draw import draw, draw2D, draw2D_dots, draw3D
@@ -52,8 +53,30 @@ def case1():
 
     print("Simulation time: ", end_simulation-start)
     print("Optimazation time: ", end_optimization-end_coedf)
-    draw2D_dots(y_list)
-    
+    # draw2D_dots(y_list)
+
+    A_row = final_A_mat.shape[0]
+    A_col = final_A_mat.shape[1]
+    b_col = final_b_mat.shape[1]
+    x1, x2 = np.array_split(results.x,2)
+    x1 = np.mat(x1.reshape([A_col,b_col],order='F'))
+    y1 = np.matmul(final_A_mat,x1) - final_b_mat
+    y1 = np.multiply(y1,y1)
+    y1 = y1.sum(axis=1)
+    x2 = np.mat(x2.reshape([A_col,b_col],order='F'))
+    y2 = np.matmul(final_A_mat,x2) - final_b_mat
+    y2 = np.multiply(y2,y2)
+    y2 = y2.sum(axis=1)
+    modet = np.zeros(A_row)
+    for i in range(0,A_row):
+        if y1[i] < y2[i]:
+            modet[i] = 1
+        else:
+            modet[i] = 2
+    plt.plot(t_points,y_list[0])   
+    plt.plot(t_points[:A_row],modet)
+    plt.show() 
+
 
 if __name__ == "__main__":
     case1()

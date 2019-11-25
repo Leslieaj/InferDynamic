@@ -52,7 +52,8 @@ def case1():
 
     print("Simulation time: ", end_simulation-start)
     print("Optimazation time: ", end_optimization-end_coedf)
-    # draw2D_dots(y_list)
+    draw2D_dots(y_list)
+    
 
 if __name__ == "__main__":
     case1()

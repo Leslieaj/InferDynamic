@@ -12,6 +12,7 @@ from dynamics import mode2_1
 from infer_single import simulation_ode
 from draw import draw, draw2D, draw2D_dots, draw3D
 from infer_by_optimization import lambda_two_modes, get_coef, infer_optimization, lambda_two_modes3
+from svmutil import *
 
 def case1():
     y0 = [[0,3]]
@@ -72,11 +73,54 @@ def case1():
         if y1[i] < y2[i]:
             modet[i] = 1
         else:
-            modet[i] = 2
-    plt.plot(t_points,y_list[0])   
-    plt.plot(t_points[:A_row],modet)
-    plt.show() 
+            modet[i] = -1
+    # plt.plot(t_points,y_list[0])   
+    # plt.plot(t_points[:A_row],modet)
+    # plt.show() 
+    y = []
+    x = []
+    for i in range(0,A_row):
+        y.append(modet[i])
+        x_0 = y_list[0][i][0]
+        x_1 = y_list[0][i][1]
+        x.append({1:x_0, 2:x_1})
+    
+    prob  = svm_problem(y, x)
+    param = svm_parameter('-t 0 -c 200 -b 1')
+    m = svm_train(prob, param)
+    svm_save_model('model_file', m)
+    nsv = m.get_nr_sv()
+    y0cof = 0.0
+    y1cof = 0.0
+    for i in range(0,nsv):
+        if m.get_SV()[i].__contains__(1):
+            y0cof = y0cof + m.get_sv_coef()[i][0]*m.get_SV()[i][1]
+        if m.get_SV()[i].__contains__(2):
+            y1cof = y1cof + m.get_sv_coef()[i][0]*m.get_SV()[i][2]
+    print(y0cof)
+    print(y1cof)
+    print(-m.rho[0])
 
+    mode1_y0 = []
+    mode1_y1 = []
+    mode2_y0 = []
+    mode2_y1 = []
+    for i in range(0,A_row):
+        if modet[i] > 0 :
+            mode1_y0.append(y_list[0][i][0])
+            mode1_y1.append(y_list[0][i][1])
+        else:
+            mode2_y0.append(y_list[0][i][0])
+            mode2_y1.append(y_list[0][i][1])
+    p_label, p_acc, p_val = svm_predict(y,x,m)
+    print(p_acc)
+    plt.scatter(mode1_y0,mode1_y1,c='r',s=0.1)
+    plt.scatter(mode2_y0,mode2_y1,c='g',s=0.1)
+    yy1 = np.arange(-3,3,0.001)
+    yy0 = (m.rho[0] - y1cof*yy1)/y0cof
+    plt.plot(yy0,yy1,)
+    plt.show()
+    
 
 if __name__ == "__main__":
     case1()

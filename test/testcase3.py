@@ -12,7 +12,10 @@ from dynamics import mode2_1
 from infer_single import simulation_ode
 from draw import draw, draw2D, draw2D_dots, draw3D
 from infer_by_optimization import lambda_two_modes, get_coef, infer_optimization, lambda_two_modes3
-from svmutil import *
+# from libsvm.svm import svm_problem, svm_parameter
+# from libsvm.svmutil import svm_train, svm_predict
+from libsvm.svmutil import *
+
 
 def case1():
     y0 = [[0,3]]

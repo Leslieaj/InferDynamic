@@ -34,13 +34,13 @@ def case1():
     # print(x0)
     x1 = np.array([0,0,0,-0.26,0.26,0,0,0,0, 0,0,1.0, 0,0,0,-0.26,0.26,0, 0,0,0, 0,0,-1.0])
 
-    pr = cProfile.Profile()
-    pr.enable()
+    # pr = cProfile.Profile()
+    # pr.enable()
     results = infer_optimization(x0, final_A_mat, final_b_mat)
-    p = Stats(pr)
-    p.strip_dirs()
-    p.sort_stats('cumtime')
-    p.print_stats(100)
+    # p = Stats(pr)
+    # p.strip_dirs()
+    # p.sort_stats('cumtime')
+    # p.print_stats(100)
     
     end_optimization = time.time()
     # print(results)
@@ -56,6 +56,7 @@ def case1():
     print("Optimazation time: ", end_optimization-end_coedf)
     # draw2D_dots(y_list)
 
+    start_svm = time.time()
     A_row = final_A_mat.shape[0]
     A_col = final_A_mat.shape[1]
     b_col = final_b_mat.shape[1]
@@ -89,6 +90,8 @@ def case1():
     param = svm_parameter('-t 0 -c 200 -b 1')
     m = svm_train(prob, param)
     svm_save_model('model_file', m)
+    end_svm_training = time.time()
+
     nsv = m.get_nr_sv()
     y0cof = 0.0
     y1cof = 0.0
@@ -97,9 +100,9 @@ def case1():
             y0cof = y0cof + m.get_sv_coef()[i][0]*m.get_SV()[i][1]
         if m.get_SV()[i].__contains__(2):
             y1cof = y1cof + m.get_sv_coef()[i][0]*m.get_SV()[i][2]
-    print(y0cof)
-    print(y1cof)
-    print(-m.rho[0])
+    print("y0 coef: ", y0cof)
+    print("y1 coef: ", y1cof)
+    print("constant: ", -m.rho[0])
 
     mode1_y0 = []
     mode1_y1 = []
@@ -113,12 +116,16 @@ def case1():
             mode2_y0.append(y_list[0][i][0])
             mode2_y1.append(y_list[0][i][1])
     p_label, p_acc, p_val = svm_predict(y,x,m)
+    end_svm_predict = time.time()
     print(p_acc)
+    print("SVM training time: ", end_svm_training-start_svm)
+    print("SVM predict time: ", end_svm_predict-end_svm_training)
+    print("total time: ", end_svm_predict-start)
     plt.scatter(mode1_y0,mode1_y1,c='r',s=0.1)
     plt.scatter(mode2_y0,mode2_y1,c='g',s=0.1)
     yy1 = np.arange(-3,3,0.001)
     yy0 = (m.rho[0] - y1cof*yy1)/y0cof
-    plt.plot(yy0,yy1,)
+    plt.plot(yy0,yy1)
     plt.show()
     
 

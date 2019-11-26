@@ -27,7 +27,7 @@ try:
 	if sys.platform == 'win32':
 		libsvm = CDLL(path.join(dirname, r'..\windows\libsvm.dll'))
 	else:
-		libsvm = CDLL(path.join(dirname, '../libsvm.so.2'))
+		libsvm = CDLL(path.join(dirname, '../lib/libsvm.so.2'))
 except:
 # For unix the prefix 'lib' is not considered.
 	if find_library('svm'):

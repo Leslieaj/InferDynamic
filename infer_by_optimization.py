@@ -19,7 +19,7 @@ def get_coef(t_points, y_list, order, stepsize):
                 for l in range(0,L_y):
                    coef_matrix[i][j] = coef_matrix[i][j] * (y_points[i][l] ** gene[j][l])
 
-        A_matrix = coef_matrix[:L_t-1]
+        A_matrix = (coef_matrix[:L_t-1] + coef_matrix[1:])/2
         b_matrix = (y_points[1:] - y_points[:L_t-1])/stepsize
 
         if k == 0:

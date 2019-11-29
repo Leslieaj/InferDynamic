@@ -1,6 +1,7 @@
 #The dynamic functions.
 import numpy as np
 from fractions import Fraction
+from generator import generate_complete_polynomail
 
 def dydx1(t,y):
     dy_dx = -1.34*y**3+2.7*y**2-4*y+5.6
@@ -39,11 +40,16 @@ def mode2_1(t,y):
         dydt = [-0.26*(y0-y1), 1.0]
     return dydt
 
-def mode2_1_test(result_coef):
+def mode2_1_test(result_coef,order):
     def ode(t,y):
         y0, y1 = y
         ode1_coef = result_coef[0]
         ode2_coef = result_coef[1]
-        dydt = [ode1_coef.dot(np.array([y0**2, y0*y1, y1**2, y0,y1,1])), ode2_coef.dot(np.array([y0**2, y0*y1, y1**2, y0,y1,1]))]
+        A = generate_complete_polynomail(2,order)
+        basicf = []
+        for i in range(0,A.shape[0]):
+            basicf.append(y0**A[i][0]*y1**A[i][1])
+        b = np.array(basicf)
+        dydt = [ode1_coef.dot(b), ode2_coef.dot(b)]
         return dydt
     return ode

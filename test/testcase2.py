@@ -85,9 +85,9 @@ def case3():
     draw3D(y_list)
 
 def case4():
-    y0 = [[0,3]]
-    t_tuple = (0,40)
-    stepsize = 0.001
+    y0 = [[0,3],[0,5]]
+    t_tuple = (0,20)
+    stepsize = 0.01
     order = 2
 
     start = time.time()
@@ -103,7 +103,7 @@ def case4():
     print("Calc-diff time: ", calcdiff_time)
     print("Pseudoinv time: ", pseudoinv_time)
 
-    t_points, y_list_test = simulation_ode(mode2_1_test(result_coef), y0, t_tuple, stepsize, eps=0)
+    t_points, y_list_test = simulation_ode(mode2_1_test(result_coef,order), y0, t_tuple, stepsize, eps=0)
     for temp_y in y_list:
         y0_list = temp_y.T[0]
         y1_list = temp_y.T[1]

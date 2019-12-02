@@ -134,6 +134,6 @@ def lambda_two_modes3_der(final_A_mat, final_b_mat):
 def infer_optimization(x0, A, b):
     # print('result is:', lambda_two_modes3(A, b)(x0))
     # return minimize(lambda_two_modes(A,b), x0, method='nelder-mead', options={'maxiter':100000, 'maxfev':100000, 'xatol': 1e-8, 'disp': True})
-    return minimize(lambda_two_modes(A,b), x0, method='BFGS', jac=None, options={'maxiter':100000, 'gtol': 1e-05, 'disp': True})
-    # return minimize(lambda_two_modes(A,b), x0, method='CG',options={'maxiter':100000})
-    # return dual_annealing(lambda_two_modes(A,b), bounds=[(-2,2)]*(2*A.shape[1]*b.shape[1]), maxfun=1000000, maxiter=100000)
+    # return minimize(lambda_two_modes(A,b), x0, method='BFGS', jac=None, options={'maxiter':100000, 'gtol': 1e-05, 'disp': True})
+    return minimize(lambda_two_modes(A,b), x0, method='CG',options={'maxiter':100000})
+    # return dual_annealing(lambda_two_modes(A,b), bounds=[(-5,5)]*(2*A.shape[1]*b.shape[1]), maxfun=1000000, maxiter=100000)

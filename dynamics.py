@@ -66,10 +66,10 @@ def conti_test(t,y):
 
 def conti_test1(t,y):
     y0, y1 = y
-    if y0 > 20:
-        dydt = [15*y0 - 100,1]
+    if y0 > 2:
+        dydt = [-1.5*y0 +5,1]
     else:
-        dydt = [-y0**2 + 25*y0 + 100,1]
+        dydt = [-y0**2 + 2.5*y0 + 1,1]
     return dydt
 
 def conti_test_test(result_coef,order):

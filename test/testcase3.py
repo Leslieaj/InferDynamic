@@ -133,8 +133,8 @@ def case1():
     
 
 def case2():
-    y0 = [[1,0],[4,0],[3,0]]
-    t_tuple = (0,0.1)
+    y0 = [[0.1,0],[0.4,0],[0.33,0]]
+    t_tuple = (0,1)
     stepsize = 0.001
     order = 2
 
@@ -148,9 +148,10 @@ def case2():
     # x0 = np.ones((2*final_A_mat.shape[1], final_b_mat.shape[1]))*0.1
     # x0 = np.ones((1,2*final_A_mat.shape[1]*final_b_mat.shape[1]))*0.1
     print(2*final_A_mat.shape[1]*final_b_mat.shape[1])
-    x0 = np.random.uniform(-100,100,[2*final_A_mat.shape[1]*final_b_mat.shape[1]])
+    x0 = np.random.uniform(-5,5,[2*final_A_mat.shape[1]*final_b_mat.shape[1]])
     # print(x0)
-    x1 = np.array([0,0,0,15,0,-100,0,0,0, 0,0,1.0, -1,0,0,25,0,100, 0,0,0, 0,0,1.0])
+    x1 = np.array([0,0,0,-1.5,0,5,0,0,0, 0,0,1.0, -1,0,0,2.5,0,1, 0,0,0, 0,0,1.0])
+    x2 = np.array([0,0,0,-1.5,0,5,0,0,0, 0,0,1.0, -1,0,0,2.5,0,1, 0,0,0, 0,0,1.0])
 
     # pr = cProfile.Profile()
     # pr.enable()
@@ -198,5 +199,5 @@ def case2():
     # plt.show()   
 
 if __name__ == "__main__":
-    # case1()
-    case2()
+    case1()
+    # case2()

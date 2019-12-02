@@ -53,3 +53,35 @@ def mode2_1_test(result_coef,order):
         dydt = [ode1_coef.dot(b), ode2_coef.dot(b)]
         return dydt
     return ode
+
+def conti_test(t,y):
+    y0, y1 = y
+    if y0 > 50:
+        dydt = [-y0**2 + 51*y0 + 3,1]
+    elif y0 > 20:
+        dydt = [y0 + 3,1]
+    else:
+        dydt = [-y0 + 43,1]
+    return dydt
+
+def conti_test1(t,y):
+    y0, y1 = y
+    if y0 > 20:
+        dydt = [15*y0 - 100,1]
+    else:
+        dydt = [-y0**2 + 25*y0 + 100,1]
+    return dydt
+
+def conti_test_test(result_coef,order):
+    def ode(t,y):
+        y0, y1 = y
+        ode1_coef = result_coef[0]
+        ode2_coef = result_coef[1]
+        A = generate_complete_polynomail(2,order)
+        basicf = []
+        for i in range(0,A.shape[0]):
+            basicf.append(y0**A[i][0]*y1**A[i][1])
+        b = np.array(basicf)
+        dydt = [ode1_coef.dot(b), ode2_coef.dot(b)]
+        return dydt
+    return ode

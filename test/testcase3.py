@@ -198,5 +198,5 @@ def case2():
     # plt.show()   
 
 if __name__ == "__main__":
-    # case1()
-    case2()
+    case1()
+    # case2()

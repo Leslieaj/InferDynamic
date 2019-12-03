@@ -150,7 +150,7 @@ def case2():
     print(2*final_A_mat.shape[1]*final_b_mat.shape[1])
     x0 = np.random.uniform(-5,5,[2*final_A_mat.shape[1]*final_b_mat.shape[1]])
     # print(x0)
-    x1 = np.array([0,0,0,-1.5,0,5,0,0,0, 0,0,1.0, -1,0,0,2.5,0,1, 0,0,0, 0,0,1.0])
+    x1 = np.array([0,0,0,-1,0,4,0,0,0, 0,0,1.0, -1,0,0,2.5,0,1, 0,0,0, 0,0,1.0])
     x2 = np.array([0,0,0,-1.5,0,5,0,0,0, 0,0,1.0, -1,0,0,2.5,0,1, 0,0,0, 0,0,1.0])
 
     # pr = cProfile.Profile()
@@ -173,31 +173,36 @@ def case2():
 
     print("Simulation time: ", end_simulation-start)
     print("Optimazation time: ", end_optimization-end_coedf)
-    draw2D_dots(y_list)
+    # draw2D_dots(y_list)
 
     # start_svm = time.time()
-    # A_row = final_A_mat.shape[0]
-    # A_col = final_A_mat.shape[1]
-    # b_col = final_b_mat.shape[1]
-    # x1, x2 = np.array_split(results.x,2)
-    # x1 = np.mat(x1.reshape([A_col,b_col],order='F'))
-    # y1 = np.matmul(final_A_mat,x1) - final_b_mat
-    # y1 = np.multiply(y1,y1)
-    # y1 = y1.sum(axis=1)
-    # x2 = np.mat(x2.reshape([A_col,b_col],order='F'))
-    # y2 = np.matmul(final_A_mat,x2) - final_b_mat
-    # y2 = np.multiply(y2,y2)
-    # y2 = y2.sum(axis=1)
-    # modet = np.zeros(A_row)
-    # for i in range(0,A_row):
-    #     if y1[i] < y2[i]:
-    #         modet[i] = 1
-    #     else:
-    #         modet[i] = -1
-    # plt.plot(t_points,y_list[0])   
-    # plt.plot(t_points[:A_row],modet)
-    # plt.show()   
+    A_row = final_A_mat.shape[0]
+    A_col = final_A_mat.shape[1]
+    b_col = final_b_mat.shape[1]
+    x1, x2 = np.array_split(results.x,2)
+    x1 = np.mat(x1.reshape([A_col,b_col],order='F'))
+    y1 = np.matmul(final_A_mat,x1) - final_b_mat
+    y1 = np.multiply(y1,y1)
+    y1 = y1.sum(axis=1)
+    x2 = np.mat(x2.reshape([A_col,b_col],order='F'))
+    y2 = np.matmul(final_A_mat,x2) - final_b_mat
+    y2 = np.multiply(y2,y2)
+    y2 = y2.sum(axis=1)
+    modet = np.zeros(A_row)
+    for i in range(0,A_row):
+        if y1[i] < y2[i]:
+            modet[i] = 1
+        else:
+            modet[i] = -1
+    modett = np.array_split(modet,len(y0))
+    print(A_row)
+    for i in range(0,len(y0)):
+        plt.plot(t_points,y_list[i])   
+        plt.plot(t_points[:len(modett[i])],modett[i])
+    # plt.plot(t_points,y_list[2])   
+    # plt.plot(t_points[:len(modett[0])],modett[2])
+    plt.show()   
 
 if __name__ == "__main__":
-    case1()
-    # case2()
+    # case1()
+    case2()

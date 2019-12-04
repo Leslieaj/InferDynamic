@@ -8,10 +8,10 @@ from pstats import Stats
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))) # ADD the path of the parent dir
 import matplotlib.pyplot as plt
 from mpl_toolkits import mplot3d
-from dynamics import mode2_1, conti_test1
+from dynamics import mode2_1, conti_test1, conti_test
 from infer_single import simulation_ode
 from draw import draw, draw2D, draw2D_dots, draw3D
-from infer_by_optimization import lambda_two_modes, get_coef, infer_optimization, lambda_two_modes3
+from infer_by_optimization import lambda_two_modes, get_coef, infer_optimization, lambda_two_modes3, infer_optimization3, lambda_three_modes
 # from libsvm.svm import svm_problem, svm_parameter
 # from libsvm.svmutil import svm_train, svm_predict
 from libsvm.svmutil import *
@@ -203,6 +203,83 @@ def case2():
     # plt.plot(t_points[:len(modett[0])],modett[2])
     plt.show()   
 
+def case3():
+    y0 = [[1,0],[0.4,0],[0.5,0]]
+    t_tuple = (0,3)
+    stepsize = 0.01
+    order = 2
+
+    start = time.time()
+    t_points, y_list = simulation_ode(conti_test, y0, t_tuple, stepsize, eps=0)
+    end_simulation = time.time()
+
+    final_A_mat, final_b_mat = get_coef(t_points, y_list, order, stepsize)
+    end_coedf = time.time()
+
+    # x0 = np.ones((2*final_A_mat.shape[1], final_b_mat.shape[1]))*0.1
+    # x0 = np.ones((1,2*final_A_mat.shape[1]*final_b_mat.shape[1]))*0.1
+    print(3*final_A_mat.shape[1]*final_b_mat.shape[1])
+    x0 = np.random.uniform(-5,5,[3*final_A_mat.shape[1]*final_b_mat.shape[1]])
+    # print(x0)
+    x1 = np.array([0,0,0,1,0,3,0,0,0,0,0,1, -1,0,0,5,0,5,0,0,0,0,0,1, 0,0,0,-1,0,4,0,0,0,0,0,1])
+
+    # pr = cProfile.Profile()
+    # pr.enable()
+    results = infer_optimization3(x0, final_A_mat, final_b_mat)
+    # p = Stats(pr)
+    # p.strip_dirs()
+    # p.sort_stats('cumtime')
+    # p.print_stats(100)
+    
+    end_optimization = time.time()
+    # print(results)
+    print(results.x)
+    print(lambda_three_modes(final_A_mat,final_b_mat)(x0))
+    print(lambda_three_modes(final_A_mat,final_b_mat)(results.x))
+    print(lambda_three_modes(final_A_mat,final_b_mat)(x1))
+    print(results.success)
+    print(results.message)
+
+
+    print("Simulation time: ", end_simulation-start)
+    print("Optimazation time: ", end_optimization-end_coedf)
+    draw2D_dots(y_list)
+
+    # start_svm = time.time()
+    A_row = final_A_mat.shape[0]
+    A_col = final_A_mat.shape[1]
+    b_col = final_b_mat.shape[1]
+    x1, x2, x3 = np.array_split(results.x,3)
+    x1 = np.mat(x1.reshape([A_col,b_col],order='F'))
+    y1 = np.matmul(final_A_mat,x1) - final_b_mat
+    y1 = np.multiply(y1,y1)
+    y1 = y1.sum(axis=1)
+    x2 = np.mat(x2.reshape([A_col,b_col],order='F'))
+    y2 = np.matmul(final_A_mat,x2) - final_b_mat
+    y2 = np.multiply(y2,y2)
+    y2 = y2.sum(axis=1)
+    x3 = np.mat(x3.reshape([A_col,b_col],order='F'))
+    y3 = np.matmul(final_A_mat,x3) - final_b_mat
+    y3 = np.multiply(y3,y3)
+    y3 = y3.sum(axis=1)
+    modet = np.zeros(A_row)
+    for i in range(0,A_row):
+        if y1[i] < y2[i] and y1[i] < y3[i]:
+            modet[i] = 1
+        if y2[i] < y1[i] and y2[i] < y3[i]:
+            modet[i] = 2
+        if y3[i] < y1[i] and y3[i] < y2[i]:
+            modet[i] = 3
+    modett = np.array_split(modet,len(y0))
+    print(A_row)
+    for i in range(0,len(y0)):
+        plt.plot(t_points,y_list[i])   
+        plt.plot(t_points[:len(modett[i])],modett[i])
+    # plt.plot(t_points,y_list[2])   
+    # plt.plot(t_points[:len(modett[0])],modett[2])
+    plt.show()   
+
 if __name__ == "__main__":
     # case1()
-    case2()
+    # case2()
+    case3()

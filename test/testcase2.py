@@ -122,8 +122,8 @@ def case4():
 
 
 def case5():
-    y0 = [[10,0],[4,0],[5,0],[14,0],[40,0],[23,0],[51,0],[60,0]]
-    t_tuple = (0,4)
+    y0 = [[1,0],[0.4,0],[0.5,0],[1.4,0],[2.6,0],[6.0,0]]
+    t_tuple = (0,3)
     stepsize = 0.01
     order = 6
 
@@ -143,19 +143,19 @@ def case5():
     for temp_y in y_list:
         y0_list = temp_y.T[0]
         y1_list = temp_y.T[1]
-        plt.scatter(y0_list,y1_list,s=1,c='b')
-        # plt.plot(y0_list,y1_list,c='b')
+        # plt.scatter(y0_list,y1_list,s=1,c='b')
+        plt.plot(y0_list,y1_list,c='b')
     for temp_y in y_list_test:
         y0_list = temp_y.T[0]
         y1_list = temp_y.T[1]
-        plt.scatter(y0_list,y1_list,s=1,c='r')
-        # plt.plot(y0_list,y1_list,c='r')
+        # plt.scatter(y0_list,y1_list,s=1,c='r')
+        plt.plot(y0_list,y1_list,c='r')
     plt.show()
 
 
 def case6():
     y0 = [[0.1,0],[0.4,0],[1.3,0],[1.7,0]]
-    t_tuple = (0,10)
+    t_tuple = (0,4)
     stepsize = 0.001
     order = 4
 
@@ -189,5 +189,5 @@ if __name__ == "__main__":
     # case2()
     # case3()
     # case4()
-    # case5()
-    case6()
+    case5()
+    # case6()

@@ -56,12 +56,12 @@ def mode2_1_test(result_coef,order):
 
 def conti_test(t,y):
     y0, y1 = y
-    if y0 > 50:
-        dydt = [-y0**2 + 51*y0 + 3,1]
-    elif y0 > 20:
+    if y0 > 5:
+        dydt = [-y0**2 + 5*y0 + 5,1]
+    elif y0 > 2:
         dydt = [y0 + 3,1]
     else:
-        dydt = [-y0 + 43,1]
+        dydt = [-y0 + 4,1]
     return dydt
 
 def conti_test1(t,y):

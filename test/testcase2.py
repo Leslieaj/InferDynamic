@@ -124,8 +124,8 @@ def case4():
 def case5():
     y0 = [[1,0],[0.4,0],[0.5,0],[1.4,0],[2.6,0],[6.0,0]]
     t_tuple = (0,3)
-    stepsize = 0.01
-    order = 6
+    stepsize = 0.001
+    order = 4
 
     start = time.time()
     t_points, y_list = simulation_ode(conti_test, y0, t_tuple, stepsize, eps=0)
@@ -154,10 +154,15 @@ def case5():
 
 
 def case6():
-    y0 = [[0.1,0],[0.4,0],[1.3,0],[1.7,0]]
+    y0 = [[0.1,0],[0.4,0],[1.3,0],[1.7,0],[2.3,0],[3.6,0]]
     t_tuple = (0,4)
     stepsize = 0.001
     order = 4
+    
+
+
+
+
 
     start = time.time()
     t_points, y_list = simulation_ode(conti_test1, y0, t_tuple, stepsize, eps=0)
@@ -189,5 +194,5 @@ if __name__ == "__main__":
     # case2()
     # case3()
     # case4()
-    case5()
-    # case6()
+    # case5()
+    case6()

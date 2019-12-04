@@ -133,10 +133,10 @@ def case1():
     
 
 def case2():
-    y0 = [[0.1,0],[0.4,0],[0.33,0]]
-    t_tuple = (0,1)
+    y0 = [[0.1,0],[0.4,0],[0.33,0],[2.3,0]]
+    t_tuple = (0,4)
     stepsize = 0.001
-    order = 2
+    order = 1
 
     start = time.time()
     t_points, y_list = simulation_ode(conti_test1, y0, t_tuple, stepsize, eps=0)
@@ -150,8 +150,8 @@ def case2():
     print(2*final_A_mat.shape[1]*final_b_mat.shape[1])
     x0 = np.random.uniform(-5,5,[2*final_A_mat.shape[1]*final_b_mat.shape[1]])
     # print(x0)
-    x1 = np.array([0,0,0,-1,0,4,0,0,0, 0,0,1.0, -1,0,0,2.5,0,1, 0,0,0, 0,0,1.0])
-    x2 = np.array([0,0,0,-1.5,0,5,0,0,0, 0,0,1.0, -1,0,0,2.5,0,1, 0,0,0, 0,0,1.0])
+    # x1 = np.array([0,0,0,-1,0,4,0,0,0, 0,0,1.0, 0,0,0,1,0,0, 0,0,0, 0,0,1.0])
+    x1 = np.array([-1,0,4, 0,0,1.0, 1,0,0, 0,0,1.0])
 
     # pr = cProfile.Profile()
     # pr.enable()
@@ -204,9 +204,9 @@ def case2():
     plt.show()   
 
 def case3():
-    y0 = [[1,0],[0.4,0],[0.5,0]]
+    y0 = [[1,0],[0.4,0],[0.5,0],[2.3,0]]
     t_tuple = (0,3)
-    stepsize = 0.01
+    stepsize = 0.005
     order = 2
 
     start = time.time()
@@ -221,7 +221,7 @@ def case3():
     print(3*final_A_mat.shape[1]*final_b_mat.shape[1])
     x0 = np.random.uniform(-5,5,[3*final_A_mat.shape[1]*final_b_mat.shape[1]])
     # print(x0)
-    x1 = np.array([0,0,0,1,0,3,0,0,0,0,0,1, -1,0,0,5,0,5,0,0,0,0,0,1, 0,0,0,-1,0,4,0,0,0,0,0,1])
+    x1 = np.array([0,0,0,1,0,0,0,0,0,0,0,1, -1,0,0,5,0,5,0,0,0,0,0,1, 0,0,0,-1,0,4,0,0,0,0,0,1])
 
     # pr = cProfile.Profile()
     # pr.enable()
@@ -243,7 +243,7 @@ def case3():
 
     print("Simulation time: ", end_simulation-start)
     print("Optimazation time: ", end_optimization-end_coedf)
-    draw2D_dots(y_list)
+    # draw2D_dots(y_list)
 
     # start_svm = time.time()
     A_row = final_A_mat.shape[0]
@@ -275,11 +275,12 @@ def case3():
     for i in range(0,len(y0)):
         plt.plot(t_points,y_list[i])   
         plt.plot(t_points[:len(modett[i])],modett[i])
+        plt.show()
     # plt.plot(t_points,y_list[2])   
     # plt.plot(t_points[:len(modett[0])],modett[2])
-    plt.show()   
+    # plt.show()   
 
 if __name__ == "__main__":
     # case1()
-    # case2()
-    case3()
+    case2()
+    # case3()

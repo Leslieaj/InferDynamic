@@ -159,11 +159,6 @@ def case6():
     stepsize = 0.001
     order = 4
     
-
-
-
-
-
     start = time.time()
     t_points, y_list = simulation_ode(conti_test1, y0, t_tuple, stepsize, eps=0)
     end_simulation = time.time()
@@ -193,6 +188,6 @@ if __name__ == "__main__":
     # case1()
     # case2()
     # case3()
-    # case4()
+    case4()
     # case5()
-    case6()
+    # case6()

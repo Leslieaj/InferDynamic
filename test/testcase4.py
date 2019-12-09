@@ -8,7 +8,7 @@ import sys, os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))) # ADD the path of the parent dir
 
 from dynamics import fvdp2_1, fvdp3_1, mode2_1, mode2_1_test, conti_test, conti_test_test, conti_test1
-from infer_multi import simulation_ode, infer_dynamic
+from infer_multi_ch import simulation_ode, infer_dynamic, parti
 
 import cProfile
 from pstats import Stats
@@ -22,15 +22,15 @@ from libsvm.svmutil import *
 
 
 def case1():
-    y0 = [[0,3],[0,5]]
-    t_tuple = (0,20)
+    y0 = [[0,3]]
+    t_tuple = [(0,20)]
     stepsize = 0.01
     order = 2
 
     start = time.time()
-    t_points, y_list = simulation_ode(mode2_1, y0, t_tuple, stepsize, eps=0)
+    t_list, y_list = simulation_ode(mode2_1, y0, t_tuple, stepsize, eps=0)
     end_simulation = time.time()
-    result_coef, calcdiff_time, pseudoinv_time = infer_dynamic(t_points, y_list, stepsize, order)
+    result_coef, calcdiff_time, pseudoinv_time = infer_dynamic(t_list, y_list, stepsize, order)
     end_inference = time.time()
 
     print(result_coef)
@@ -40,7 +40,12 @@ def case1():
     print("Calc-diff time: ", calcdiff_time)
     print("Pseudoinv time: ", pseudoinv_time)
 
-    t_points, y_list_test = simulation_ode(mode2_1_test(result_coef,order), y0, t_tuple, stepsize, eps=0)
+    tpar_list,ypar_list = parti(t_list,y_list)
+    print(len(ypar_list))
+    for i in range(0,len(ypar_list)):
+        print(ypar_list[i][-1][:])
+
+    t_list, y_list_test = simulation_ode(mode2_1_test(result_coef,order), y0, t_tuple, stepsize, eps=0)
     for temp_y in y_list:
         y0_list = temp_y.T[0]
         y1_list = temp_y.T[1]
@@ -51,7 +56,7 @@ def case1():
         plt.plot(y0_list,y1_list,'r')
     plt.show()
 
-
+    
 
 
 

@@ -135,7 +135,7 @@ def case1():
 def case2():
     y0 = [[0.1,0],[0.4,0],[0.33,0],[2.3,0]]
     t_tuple = (0,4)
-    stepsize = 0.001
+    stepsize = 0.01
     order = 1
 
     start = time.time()

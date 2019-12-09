@@ -136,7 +136,7 @@ def case2():
     y0 = [[0.1,0],[0.4,0],[0.33,0],[2.3,0]]
     t_tuple = (0,4)
     stepsize = 0.01
-    order = 1
+    order = 2
 
     start = time.time()
     t_points, y_list = simulation_ode(conti_test1, y0, t_tuple, stepsize, eps=0)
@@ -150,8 +150,8 @@ def case2():
     print(2*final_A_mat.shape[1]*final_b_mat.shape[1])
     x0 = np.random.uniform(-5,5,[2*final_A_mat.shape[1]*final_b_mat.shape[1]])
     # print(x0)
-    # x1 = np.array([0,0,0,-1,0,4,0,0,0, 0,0,1.0, 0,0,0,1,0,0, 0,0,0, 0,0,1.0])
-    x1 = np.array([-1,0,4, 0,0,1.0, 1,0,0, 0,0,1.0])
+    x1 = np.array([0,0,0,-1,0,4,0,0,0, 0,0,1.0, 0,0,0,1,0,0, 0,0,0, 0,0,1.0])
+    # x1 = np.array([-1,0,4, 0,0,1.0, 1,0,0, 0,0,1.0])
 
     # pr = cProfile.Profile()
     # pr.enable()

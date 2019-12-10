@@ -105,7 +105,7 @@ def parti(t_list,y_list):
         for i in range(0,row-2):
             parbool = 0
             for j in range(0,col):
-                if (diffmat[i][j] - diffmat[i+1][j])**2 > 1 :
+                if (diffmat[i][j] - diffmat[i+1][j])**2 > 0.0025 :
                     parbool = 1
             if parbool == 1:
                 tpar_list.append(t_points[parpo:i+1])

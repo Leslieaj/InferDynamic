@@ -41,9 +41,9 @@ def case1():
     print("Pseudoinv time: ", pseudoinv_time)
 
     tpar_list,ypar_list = parti(t_list,y_list)
-    print(len(ypar_list))
-    for i in range(0,len(ypar_list)):
-        print(ypar_list[i][-1][:])
+    print(len(tpar_list))
+    for i in range(0,len(tpar_list)):
+        print(tpar_list[i][-1])
 
     t_list, y_list_test = simulation_ode(mode2_1_test(result_coef,order), y0, t_tuple, stepsize, eps=0)
     for temp_y in y_list:

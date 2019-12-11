@@ -187,7 +187,7 @@ def case6():
 if __name__ == "__main__":
     # case1()
     # case2()
-    # case3()
-    case4()
+    case3()
+    # case4()
     # case5()
     # case6()

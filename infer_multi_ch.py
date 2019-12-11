@@ -3,9 +3,10 @@ from scipy.linalg import pinv, pinv2
 from scipy.integrate import odeint, solve_ivp
 import matplotlib.pyplot as plt
 import time
+import math
 # import random
 
-from dynamics import dydx1, dydx2, fvdp2, fvdp2_1
+from dynamics import dydx1, dydx2, fvdp2, fvdp2_1, ode_test
 from generator import generate_complete_polynomail
 from draw import draw, draw2D
 
@@ -116,23 +117,68 @@ def parti(t_list,y_list):
     return tpar_list, ypar_list
 
 
+def dist(y_list,y_list_test):
+    leny = len(y_list)
+    g = 0
+    for i in range(0,leny):
+        mat = y_list[i] - y_list_test[i]
+        mat = mat**2
+        cm = mat.sum(axis=1)
+        g = max(g,cm.max())
+        g = math.sqrt(g)
+    return g
+        
+
+def infer_dynamic_modes(t_list, y_list, stepsize, maxorder):
+    ep = 0.1
+    len_tr = len(y_list)
+    modes = []
+    coefs = []
+    for l in range(0,len_tr):
+        accept = 0
+        for i in range(0,len(modes)):
+            comt = [t_list[l]]
+            comy = [y_list[l]]
+            y0 = [y_list[l][0]]
+            t_tuple = [(t_list[l][0],t_list[l][-1])]
+            for j in range(0,len(modes[i])):
+                comt.append(t_list[modes[i][j]])
+                comy.append(y_list[modes[i][j]])
+                y0.append(y_list[modes[i][j]][0])
+                t_tuple.append((t_list[modes[i][j]][0],t_list[modes[i][j]][-1]))
+            A, b = diff_method(comt, comy, maxorder, stepsize)
+            g = pinv2(A).dot(b)
+            comttest, comytest = simulation_ode(ode_test(g.T,maxorder), y0, t_tuple, stepsize, eps=0)
+            if dist(comy,comytest) < ep :
+                modes[i].append(l)
+                coefs[i] = g.T
+                accept = 1
+                break
+        if accept == 0:
+            A, b = diff_method(t_list[l:l+1], y_list[l:l+1], maxorder, stepsize)
+            g = pinv2(A).dot(b)
+            modes.append([l])
+            coefs.append(g.T)
+
+    return modes, coefs
 
 if __name__ == "__main__":
     y0 = [[5],[1],[2],[3],[0],[-1],[-2]]
     t_tuple = [(0,4),(0,4),(0,4),(0,4),(0,4),(0,4),(0,4)]
-    stepsize = 0.001
-    order = 3
-    start = time.time()
+    stepsize = 0.002
+    maxorder = 3
+    # start = time.time()
     t_list, y_list = simulation_ode(dydx1, y0, t_tuple, stepsize, eps=0)
-    end_simulation = time.time()
-    result_coef, calcdiff_time, pseudoinv_time = infer_dynamic(t_list, y_list, stepsize, order)
-    end_inference = time.time()
-    print(result_coef)
-    print()
-    print("Total time: ", end_inference-start)
-    print("Simulation time: ", end_simulation-start)
-    print("Calc-diff time: ", calcdiff_time)
-    print("Pseudoinv time: ", pseudoinv_time)
+    # end_simulation = time.time()
+    modes, coefs = infer_dynamic_modes(t_list, y_list, stepsize, maxorder)
+    # end_inference = time.time()
+    # print(result_coef)
+    # print()
+    # print("Total time: ", end_inference-start)
+    # print("Simulation time: ", end_simulation-start)
+    # print("Calc-diff time: ", calcdiff_time)
+    # print("Pseudoinv time: ", pseudoinv_time)
+    print(modes,coefs)
     for i in range(0,len(y_list)):
         plt.plot(t_list[i], y_list[i])
     plt.show()

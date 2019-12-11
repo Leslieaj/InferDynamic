@@ -7,7 +7,7 @@ import time
 import sys, os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))) # ADD the path of the parent dir
 
-from dynamics import fvdp2_1, fvdp3_1, mode2_1, mode2_1_test, conti_test, conti_test_test, conti_test1
+from dynamics import fvdp2_1, fvdp3_1, mode2_1, mode2_1_test, conti_test, conti_test_test, conti_test1, ode_test
 from infer_multi_ch import simulation_ode, infer_dynamic, parti
 
 import cProfile
@@ -45,7 +45,7 @@ def case1():
     for i in range(0,len(tpar_list)):
         print(tpar_list[i][-1])
 
-    t_list, y_list_test = simulation_ode(mode2_1_test(result_coef,order), y0, t_tuple, stepsize, eps=0)
+    t_list_test, y_list_test = simulation_ode(ode_test(result_coef,order), y0, t_tuple, stepsize, eps=0)
     for temp_y in y_list:
         y0_list = temp_y.T[0]
         y1_list = temp_y.T[1]

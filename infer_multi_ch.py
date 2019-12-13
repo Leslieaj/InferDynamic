@@ -121,58 +121,136 @@ def dist(y_list,y_list_test):
     leny = len(y_list)
     g = 0
     for i in range(0,leny):
-        mat = y_list[i] - y_list_test[i]
-        mat = mat**2
-        cm = mat.sum(axis=1)
-        g = max(g,cm.max())
-        g = math.sqrt(g)
+        if y_list[i].shape[0] == y_list_test[i].shape[0] and y_list[i].shape[1] == y_list_test[i].shape[1]:
+            mat = y_list[i] - y_list_test[i]
+            mat = mat**2
+            g = max(g,mat.max())
+            g = math.sqrt(g)
+        else:
+            g = 9999
     return g
         
 
-def infer_dynamic_modes(t_list, y_list, stepsize, maxorder):
-    ep = 0.1
+def infer_dynamic_modes(t_list, y_list, stepsize, maxorder, ep=0.01):
     len_tr = len(y_list)
     modes = []
     coefs = []
     for l in range(0,len_tr):
-        accept = 0
+        dis = []
+        cgt = []
         for i in range(0,len(modes)):
-            comt = [t_list[l]]
-            comy = [y_list[l]]
-            y0 = [y_list[l][0]]
-            t_tuple = [(t_list[l][0],t_list[l][-1])]
+            comt = []
+            comy = []
+            y0 = []
+            t_tuple = []
             for j in range(0,len(modes[i])):
                 comt.append(t_list[modes[i][j]])
                 comy.append(y_list[modes[i][j]])
                 y0.append(y_list[modes[i][j]][0])
                 t_tuple.append((t_list[modes[i][j]][0],t_list[modes[i][j]][-1]))
+            comt.append(t_list[l])
+            comy.append(y_list[l])
+            y0.append(y_list[l][0])
+            t_tuple.append((t_list[l][0],t_list[l][-1]))
             A, b = diff_method(comt, comy, maxorder, stepsize)
             g = pinv2(A).dot(b)
             comttest, comytest = simulation_ode(ode_test(g.T,maxorder), y0, t_tuple, stepsize, eps=0)
-            if dist(comy,comytest) < ep :
-                modes[i].append(l)
-                coefs[i] = g.T
-                accept = 1
-                break
-        if accept == 0:
+            dis.append(dist(comy,comytest))
+            cgt.append(g.T)
+        if len(modes) == 0:
             A, b = diff_method(t_list[l:l+1], y_list[l:l+1], maxorder, stepsize)
             g = pinv2(A).dot(b)
             modes.append([l])
             coefs.append(g.T)
+        elif min(dis) >= ep:
+            A, b = diff_method(t_list[l:l+1], y_list[l:l+1], maxorder, stepsize)
+            g = pinv2(A).dot(b)
+            modes.append([l])
+            coefs.append(g.T)
+        else:
+            modes[dis.index(min(dis))].append(l)
+            coefs[dis.index(min(dis))] = cgt[dis.index(min(dis))]
 
     return modes, coefs
 
+def infer_dynamic_modes_ex(t_list, y_list, stepsize, maxorder, ep=0.01):
+    len_tr = len(y_list)
+    modes = []
+    coefs = []
+    mdors = []
+    for l in range(0,len_tr):
+        dis = []
+        for i in range(0,len(modes)):
+            t_list_l, y_list_l = simulation_ode(ode_test(coefs[i],mdors[i]), [y_list[l][0]], [(t_list[l][0],t_list[l][-1])], stepsize, eps=0)
+            dis.append(dist(y_list[l:l+1],y_list_l))
+
+        if len(modes) == 0:
+            dis = []
+            cgt = []
+            for order in range(0,maxorder+1):
+                A, b = diff_method(t_list[l:l+1], y_list[l:l+1], order, stepsize)
+                g = pinv2(A).dot(b)
+                t_list_l, y_list_l = simulation_ode(ode_test(g.T,order), [y_list[l][0]], [(t_list[l][0],t_list[l][-1])], stepsize, eps=0)
+                dis.append(dist(y_list[l:l+1],y_list_l))
+                cgt.append(g.T)
+            od = dis.index(min(dis))
+            modes.append([l])
+            coefs.append(cgt[od])
+            mdors.append(od)
+        elif min(dis) >= ep:
+            dis = []
+            cgt = []
+            for order in range(0,maxorder+1):
+                A, b = diff_method(t_list[l:l+1], y_list[l:l+1], order, stepsize)
+                g = pinv2(A).dot(b)
+                t_list_l, y_list_l = simulation_ode(ode_test(g.T,order), [y_list[l][0]], [(t_list[l][0],t_list[l][-1])], stepsize, eps=0)
+                dis.append(dist(y_list[l:l+1],y_list_l))
+                cgt.append(g.T)
+            od = dis.index(min(dis))
+            modes.append([l])
+            coefs.append(cgt[od])
+            mdors.append(od)
+        else:
+            od = dis.index(min(dis))
+            comt = []
+            comy = []
+            y0 = []
+            t_tuple = []
+            for j in range(0,len(modes[od])):
+                comt.append(t_list[modes[od][j]])
+                comy.append(y_list[modes[od][j]])
+                y0.append(y_list[modes[od][j]][0])
+                t_tuple.append((t_list[modes[od][j]][0],t_list[modes[od][j]][-1]))
+            comttest, comytest = simulation_ode(ode_test(coefs[od],mdors[od]), y0, t_tuple, stepsize, eps=0)
+            d1 = dist(comy,comytest)
+            comt.append(t_list[l])
+            comy.append(y_list[l])
+            y0.append(y_list[l][0])
+            t_tuple.append((t_list[l][0],t_list[l][-1]))
+            A, b = diff_method(comt, comy, mdors[od], stepsize)
+            g = pinv2(A).dot(b)
+            comttest, comytest = simulation_ode(ode_test(coefs[od],mdors[od]), y0, t_tuple, stepsize, eps=0)
+            d2 = dist(comy,comytest)
+            modes[od].append(l)
+            if d2 < d1 :
+                coefs[od] = g.T
+
+
+    return modes, coefs, mdors
+
 if __name__ == "__main__":
-    y0 = [[5],[1],[2],[3],[0],[-1],[-2]]
-    t_tuple = [(0,4),(0,4),(0,4),(0,4),(0,4),(0,4),(0,4)]
-    stepsize = 0.002
-    maxorder = 3
+    y0 = [[-1],[5],[1],[3],[0],[2],[-2]]
+    t_tuple = [(0,4),(0,4),(0,4),(0,4),(0,4),(0,4),(0,4),(0,4)]
+    stepsize = 0.01
+    order = 6
+    maxorder = 6
     # start = time.time()
     t_list, y_list = simulation_ode(dydx1, y0, t_tuple, stepsize, eps=0)
     # end_simulation = time.time()
-    modes, coefs = infer_dynamic_modes(t_list, y_list, stepsize, maxorder)
+    modes, coefs = infer_dynamic_modes(t_list, y_list, stepsize, maxorder,0.1)
+    result_coef, calcdiff_time, pseudoinv_time = infer_dynamic(t_list, y_list, stepsize, order)
     # end_inference = time.time()
-    # print(result_coef)
+    print(result_coef)
     # print()
     # print("Total time: ", end_inference-start)
     # print("Simulation time: ", end_simulation-start)

@@ -11,6 +11,10 @@ def dydx2(t,y):
     dy_dx = -1.34*y**3+9.8*y**2+6.5*y-23
     return dy_dx
 
+def dydx3(t,y):
+    dy_dx = y-10
+    return dy_dx
+
 def fvdp2(t,y):
     y0, y1 = y   # y0是需要求解的函数，y1是一阶导
     # 注意返回的顺序是[一阶导， 二阶导]，这就形成了一阶微分方程组
@@ -35,9 +39,9 @@ def mode2_1(t,y):
     """
     y0, y1 = y
     if y0 > 0:
-        dydt = [-0.26*(y0-y1), -1.0]
+        dydt = [-0.026*(y0-y1), -1.0]
     else:
-        dydt = [-0.26*(y0-y1), 1.0]
+        dydt = [-0.026*(y0-y1), 1.0]
     return dydt
 
 def mode2_1_test(result_coef,order):

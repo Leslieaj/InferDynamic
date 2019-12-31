@@ -63,7 +63,7 @@ def conti_test(t,y):
     if y0 > 5:
         dydt = [-y0**2 + 5*y0 + 9,1]
     elif y0 > 2:
-        dydt = [y0 ,1]
+        dydt = [y0 + 2.5 ,1]
     else:
         dydt = [-y0 + 3,1]
     return dydt

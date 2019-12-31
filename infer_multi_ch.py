@@ -102,7 +102,7 @@ def parti(t_list,y_list,ep=0.5,an=1/6):
         row = y_points.shape[0]
         col = y_points.shape[1]
         diffmat = (y_points[1:][:] - y_points[0:row-1][:])/stepsize
-        parpo = [0]
+        parpo = [-1]
         diffmat2 = np.multiply(diffmat,diffmat)
         diffvecm = diffmat2.sum(axis=1)
         for i in range(0,row-2):
@@ -111,12 +111,12 @@ def parti(t_list,y_list,ep=0.5,an=1/6):
                 parbool = 1
             if np.dot(diffmat[i+1],diffmat[i].T)/math.sqrt(diffvecm[i+1]*diffvecm[i]) < np.sin(an*np.pi):
                 parbool = 1
-            if parbool == 1 and parpo[-1] != i-1:
-                parpo.append(i)
+            if parbool == 1 and parpo[-1] != i:
+                parpo.append(i+1)
         parpo.append(row-1)
         for i in range(0,len(parpo)-1):
-            tpar_list.append(t_points[parpo[i]:parpo[i+1]+1])
-            ypar_list.append(y_points[parpo[i]:parpo[i+1]+1][:])
+            tpar_list.append(t_points[parpo[i]+1:parpo[i+1]])
+            ypar_list.append(y_points[parpo[i]+1:parpo[i+1]][:])
     return tpar_list, ypar_list
 
 
@@ -182,9 +182,13 @@ def infer_dynamic_modes_ex(t_list, y_list, stepsize, maxorder, ep=0.01):
     coefs = []
     mdors = []
     for l in range(0,len_tr):
+        print("trace"+str(l))
         dis = []
         for i in range(0,len(modes)):
+            start = time.time()
             t_list_l, y_list_l = simulation_ode(ode_test(coefs[i],mdors[i]), [y_list[l][0]], [(t_list[l][0],t_list[l][-1])], stepsize, eps=0)
+            end = time.time()
+            print("sim1time:",end - start)
             dis.append(dist(y_list[l:l+1],y_list_l))
 
         if len(modes) == 0:
@@ -201,19 +205,28 @@ def infer_dynamic_modes_ex(t_list, y_list, stepsize, maxorder, ep=0.01):
             coefs.append(cgt[od])
             mdors.append(od)
         elif min(dis) >= ep:
+            print("new")
             dis = []
             cgt = []
             for order in range(0,maxorder+1):
+                print(order)
+                startnew = time.time()
                 A, b = diff_method(t_list[l:l+1], y_list[l:l+1], order, stepsize)
                 g = pinv2(A).dot(b)
                 t_list_l, y_list_l = simulation_ode(ode_test(g.T,order), [y_list[l][0]], [(t_list[l][0],t_list[l][-1])], stepsize, eps=0)
                 dis.append(dist(y_list[l:l+1],y_list_l))
                 cgt.append(g.T)
+                endnew = time.time()
+                print("sim2time:",endnew - startnew)
+            startnewmode = time.time()
             od = dis.index(min(dis))
             modes.append([l])
             coefs.append(cgt[od])
             mdors.append(od)
+            endnewmode = time.time()
+            print("newmodetime:",endnewmode - startnewmode)
         else:
+            print("changeco")
             od = dis.index(min(dis))
             comt = []
             comy = []
@@ -238,6 +251,84 @@ def infer_dynamic_modes_ex(t_list, y_list, stepsize, maxorder, ep=0.01):
             if d2 < d1 :
                 coefs[od] = g.T
 
+
+    return modes, coefs, mdors
+
+
+def infer_dynamic_modes_exx(t_list, y_list, stepsize, maxorder, ep=0.01):
+    len_tr = len(y_list)
+    modes = []
+    coefs = []
+    mdors = []
+    for l in range(0,len_tr):
+        print("trace"+str(l))
+        dis = []
+        for i in range(0,len(modes)):
+            start = time.time()
+            t_list_l, y_list_l = simulation_ode(ode_test(coefs[i],mdors[i]), [y_list[l][0]], [(t_list[l][0],t_list[l][-1])], stepsize, eps=0)
+            end = time.time()
+            print("sim1time:",end - start)
+            dis.append(dist(y_list[l:l+1],y_list_l))
+
+        if len(modes) == 0:
+            dis = []
+            cgt = []
+            for order in range(0,maxorder+1):
+                A, b = diff_method(t_list[l:l+1], y_list[l:l+1], order, stepsize)
+                g = pinv2(A).dot(b)
+                t_list_l, y_list_l = simulation_ode(ode_test(g.T,order), [y_list[l][0]], [(t_list[l][0],t_list[l][-1])], stepsize, eps=0)
+                dis.append(dist(y_list[l:l+1],y_list_l))
+                cgt.append(g.T)
+            od = dis.index(min(dis))
+            modes.append([l])
+            coefs.append(cgt[od])
+            mdors.append(od)
+        elif min(dis) >= ep:
+            print("new")
+            dis = []
+            cgt = []
+            for order in range(0,maxorder+1):
+                print(order)
+                startnew = time.time()
+                A, b = diff_method(t_list[l:l+1], y_list[l:l+1], order, stepsize)
+                g = pinv2(A).dot(b)
+                t_list_l, y_list_l = simulation_ode(ode_test(g.T,order), [y_list[l][0]], [(t_list[l][0],t_list[l][-1])], stepsize, eps=0)
+                dis.append(dist(y_list[l:l+1],y_list_l))
+                cgt.append(g.T)
+                endnew = time.time()
+                print("sim2time:",endnew - startnew)
+            startnewmode = time.time()
+            od = dis.index(min(dis))
+            modes.append([l])
+            coefs.append(cgt[od])
+            mdors.append(od)
+            endnewmode = time.time()
+            print("newmodetime:",endnewmode - startnewmode)
+        else:
+            print("changeco")
+            od = dis.index(min(dis))
+            comt = []
+            comy = []
+            y0 = []
+            t_tuple = []
+            for j in range(0,len(modes[od])):
+                comt.append(t_list[modes[od][j]])
+                comy.append(y_list[modes[od][j]])
+                y0.append(y_list[modes[od][j]][0])
+                t_tuple.append((t_list[modes[od][j]][0],t_list[modes[od][j]][-1]))
+            comttest, comytest = simulation_ode(ode_test(coefs[od],mdors[od]), y0, t_tuple, stepsize, eps=0)
+            d1 = dist(comy,comytest)
+            comt.append(t_list[l])
+            comy.append(y_list[l])
+            y0.append(y_list[l][0])
+            t_tuple.append((t_list[l][0],t_list[l][-1]))
+            A, b = diff_method(comt, comy, mdors[od], stepsize)
+            g = pinv2(A).dot(b)
+            comttest, comytest = simulation_ode(ode_test(coefs[od],mdors[od]), y0, t_tuple, stepsize, eps=0)
+            d2 = dist(comy,comytest)
+            modes[od].append(l)
+            if d2 < d1 :
+                coefs[od] = g.T
 
     return modes, coefs, mdors
 

@@ -39,9 +39,9 @@ def mode2_1(t,y):
     """
     y0, y1 = y
     if y0 > 0:
-        dydt = [-0.026*(y0-y1), -1.0]
+        dydt = [-0.26*(y0-y1), -1.0]
     else:
-        dydt = [-0.026*(y0-y1), 1.0]
+        dydt = [-0.26*(y0-y1), 1.0]
     return dydt
 
 def mode2_1_test(result_coef,order):
@@ -61,11 +61,11 @@ def mode2_1_test(result_coef,order):
 def conti_test(t,y):
     y0, y1 = y
     if y0 > 5:
-        dydt = [-y0**2 + 5*y0 + 5,1]
+        dydt = [-y0**2 + 5*y0 + 9,1]
     elif y0 > 2:
         dydt = [y0 ,1]
     else:
-        dydt = [-y0 + 4,1]
+        dydt = [-y0 + 3,1]
     return dydt
 
 def conti_test1(t,y):

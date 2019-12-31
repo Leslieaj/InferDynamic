@@ -92,7 +92,7 @@ def infer_dynamic(t_list, y_list, stepsize, order):
     return g.T, end_diff-start, end_pseudoinv-end_diff
 
 
-def parti(t_list,y_list):
+def parti(t_list,y_list,ep=0.5,an=1/6):
     tpar_list = []
     ypar_list = []
     for l in range(0,len(y_list)):
@@ -102,18 +102,21 @@ def parti(t_list,y_list):
         row = y_points.shape[0]
         col = y_points.shape[1]
         diffmat = (y_points[1:][:] - y_points[0:row-1][:])/stepsize
-        parpo = 0
+        parpo = [0]
+        diffmat2 = np.multiply(diffmat,diffmat)
+        diffvecm = diffmat2.sum(axis=1)
         for i in range(0,row-2):
             parbool = 0
-            for j in range(0,col):
-                if (diffmat[i][j] - diffmat[i+1][j])**2 > 0.0025 :
-                    parbool = 1
-            if parbool == 1:
-                tpar_list.append(t_points[parpo:i+1])
-                ypar_list.append(y_points[parpo:i+1][:])
-                parpo = i+1
-        tpar_list.append(t_points[parpo:row])
-        ypar_list.append(y_points[parpo:row][:])
+            if diffvecm[i+1]/diffvecm[i] > 1+ep or diffvecm[i+1]/diffvecm[i] < 1-ep:
+                parbool = 1
+            if np.dot(diffmat[i+1],diffmat[i].T)/math.sqrt(diffvecm[i+1]*diffvecm[i]) < np.sin(an*np.pi):
+                parbool = 1
+            if parbool == 1 and parpo[-1] != i-1:
+                parpo.append(i)
+        parpo.append(row-1)
+        for i in range(0,len(parpo)-1):
+            tpar_list.append(t_points[parpo[i]:parpo[i+1]+1])
+            ypar_list.append(y_points[parpo[i]:parpo[i+1]+1][:])
     return tpar_list, ypar_list
 
 

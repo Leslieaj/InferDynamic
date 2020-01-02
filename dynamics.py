@@ -93,6 +93,7 @@ def conti_test_test(result_coef,order):
 
 def ode_test(result_coef,order):
     def ode(t,y):
+        # print("in")
         dim = result_coef.shape[0]
         A = generate_complete_polynomail(dim,order)
         basicf = []
@@ -105,6 +106,7 @@ def ode_test(result_coef,order):
         dydt = np.zeros(dim)
         for l in range(0,dim):
             dydt[l] = result_coef[l].dot(b)
+        # print("out")
         return dydt
     return ode
 

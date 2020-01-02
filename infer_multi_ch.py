@@ -25,8 +25,9 @@ def simulation_ode(ode_func, y0, t_tuple, stepsize, noise_type=1, eps=0):
     for k in range(0,len(y0)):
         t_start = t_tuple[k][0]
         t_end = t_tuple[k][1]
-        t_points = np.arange(t_start, t_end + stepsize, stepsize)
-        y_object = solve_ivp(ode_func, (t_start, t_end+stepsize), y0[k], t_eval = t_points, rtol=1e-7, atol=1e-9)
+        num = round((t_end - t_start)/stepsize + 1)
+        t_points = np.linspace(t_start, t_end, num)
+        y_object = solve_ivp(ode_func, (t_start, t_end + 1.1*stepsize), y0[k], t_eval = t_points, rtol=1e-7, atol=1e-9)
         y_points = y_object.y.T
         if eps > 0:
             for i in range(0,y_points.shape[0]):
@@ -126,9 +127,8 @@ def dist(y_list,y_list_test):
     for i in range(0,leny):
         if y_list[i].shape[0] == y_list_test[i].shape[0] and y_list[i].shape[1] == y_list_test[i].shape[1]:
             mat = y_list[i] - y_list_test[i]
-            mat = mat**2
-            g = max(g,mat.max())
-            g = math.sqrt(g)
+            mat = np.fabs(mat)
+            g = np.max(mat)
         else:
             g = 9999
     return g

@@ -25,34 +25,55 @@ from libsvm.svmutil import *
 
 def case1():
     y0 = [[0,7]]
-    t_tuple = [(0,30)]
+    t_tuple = [(0,25)]
     stepsize = 0.01
     order = 2
+    maxorder = 4
 
-    start = time.time()
+    # start = time.time()
     t_list, y_list = simulation_ode(mode2_1, y0, t_tuple, stepsize, eps=0)
-    end_simulation = time.time()
-    result_coef, calcdiff_time, pseudoinv_time = infer_dynamic(t_list, y_list, stepsize, order)
-    end_inference = time.time()
+    # end_simulation = time.time()
+    # result_coef, calcdiff_time, pseudoinv_time = infer_dynamic(t_list, y_list, stepsize, order)
+    # end_inference = time.time()
 
-    print(result_coef)
-    print()
-    print("Total time: ", end_inference-start)
-    print("Simulation time: ", end_simulation-start)
-    print("Calc-diff time: ", calcdiff_time)
-    print("Pseudoinv time: ", pseudoinv_time)
+    # print(result_coef)
+    # print()
+    # print("Total time: ", end_inference-start)
+    # print("Simulation time: ", end_simulation-start)
+    # print("Calc-diff time: ", calcdiff_time)
+    # print("Pseudoinv time: ", pseudoinv_time)
 
-    tpar_list,ypar_list = parti(t_list,y_list,0.1)
+    tpar_list,ypar_list = parti(t_list,y_list,0.05)
     print(len(tpar_list))
     for i in range(0,len(tpar_list)):
-        print(tpar_list[i][-1])
-        print(ypar_list[i][-1])
+        print(tpar_list[i][0],tpar_list[i][-1])
+        print(ypar_list[i][0],ypar_list[i][-1])
 
     for temp_y in y_list:
         y0_list = temp_y.T[0]
         y1_list = temp_y.T[1]
         plt.plot(y0_list,y1_list,'b')
     plt.show()
+    # result_coef, calcdiff_time, pseudoinv_time = infer_dynamic([tpar_list[0],tpar_list[1]], [ypar_list[0],ypar_list[1]], stepsize, 4)
+    # print(result_coef)
+    # tstart = time.time()
+    # comt,comy = simulation_ode(ode_test(result_coef,4), [ypar_list[0][0],ypar_list[1][0]], [(tpar_list[0][0], tpar_list[0][-1]),(tpar_list[1][0], tpar_list[1][-1])], stepsize,eps=0)
+    # tend = time.time()
+    # print(dist(comy,[ypar_list[0],ypar_list[1]]))
+    # print(tend-tstart)
+    # print(dist([ypar_list[0],ypar_list[2],ypar_list[4]],comy))
+    # result_coef = np.matrix([[ 0, 0, 0, -0.26, 0.26, 0], [0, 0, 0, 0, 0, -1]])
+    # comt,comy = simulation_ode(ode_test(result_coef,2), [ypar_list[0][0],ypar_list[2][0],ypar_list[4][0]], [(tpar_list[0][0], tpar_list[0][-1]),(tpar_list[2][0], tpar_list[2][-1]),(tpar_list[4][0], tpar_list[4][-1])], stepsize,eps=0)
+    # print(dist([ypar_list[0],ypar_list[2],ypar_list[4]],comy))
+    # result_coef = np.matrix([[ 0, 0, 0, -0.26, 0.26, 0], [0, 0, 0, 0, 0, 1]])
+    # comt,comy = simulation_ode(ode_test(result_coef,2), [ypar_list[1][0],ypar_list[3][0],ypar_list[5][0]], [(tpar_list[1][0], tpar_list[1][-1]),(tpar_list[3][0], tpar_list[3][-1]),(tpar_list[5][0], tpar_list[5][-1])], stepsize,eps=0)
+    # print(dist([ypar_list[1],ypar_list[3],ypar_list[5]],comy))
+    
+    modes, coefs, mdors = infer_dynamic_modes_exx(tpar_list, ypar_list, stepsize, maxorder, 0.01)
+    print(modes)
+    print(coefs)
+    print(mdors)
+
 
     
 def case2():
@@ -130,7 +151,7 @@ def case5():
     t_tuple = [(0,2.5),(0,2)]
     stepsize = 0.01
     order = 2
-    maxorder = 4
+    maxorder = 3
 
     
     t_list, y_list = simulation_ode(conti_test, y0, t_tuple, stepsize, eps=0)
@@ -160,23 +181,26 @@ def case5():
     ytest_list=[]
     ytest_list.append(ypar_list[0])
     ytest_list.append(ypar_list[1])
-    A, b = diff_method(ttest_list, ytest_list, 4, stepsize)
+    A, b = diff_method(ttest_list, ytest_list, 3, stepsize)
     g = pinv2(A).dot(b)
     print(g.T)
     t_start = tpar_list[0][0]
     t_end = tpar_list[0][-1]
     t_start = 0
-    t_end = 0.5
+    t_end = 0.01
     t_points = np.arange(t_start, t_end + stepsize, stepsize)
-    y_object = solve_ivp(ode_test(g.T,4), (t_start, t_end+stepsize), ypar_list[0][0], t_eval = t_points, rtol=1e-7, atol=1e-9)
+    tstart = time.time()
+    y_object = solve_ivp(ode_test(g.T,3), (t_start, t_end+stepsize), ypar_list[0][0], t_eval = t_points, rtol=1e-7, atol=1e-9)
     y_points = y_object.y.T
+    tend = time.time()
     print(y_points)
+    print(tend-tstart)
 
 
 if __name__ == "__main__":
-    # case1()
+    case1()
     # case2()
     # case3()
     # case4()
-    case5()
+    # case5()
     

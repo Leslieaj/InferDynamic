@@ -245,7 +245,7 @@ def infer_dynamic_modes_ex(t_list, y_list, stepsize, maxorder, ep=0.01):
             t_tuple.append((t_list[l][0],t_list[l][-1]))
             A, b = diff_method(comt, comy, mdors[od], stepsize)
             g = pinv2(A).dot(b)
-            comttest, comytest = simulation_ode(ode_test(coefs[od],mdors[od]), y0, t_tuple, stepsize, eps=0)
+            comttest, comytest = simulation_ode(ode_test(g.T,mdors[od]), y0, t_tuple, stepsize, eps=0)
             d2 = dist(comy,comytest)
             modes[od].append(l)
             if d2 < d1 :
@@ -257,80 +257,74 @@ def infer_dynamic_modes_ex(t_list, y_list, stepsize, maxorder, ep=0.01):
 
 def infer_dynamic_modes_exx(t_list, y_list, stepsize, maxorder, ep=0.01):
     len_tr = len(y_list)
-    modes = []
-    coefs = []
-    mdors = []
+    mode = []
+    mode_tls = []
+    mode_yls = []
+    mode_y0l = []
+    mode_tul = []
+    mode_coe = []
+    mode_ord = []
     for l in range(0,len_tr):
         print("trace"+str(l))
-        dis = []
-        for i in range(0,len(modes)):
-            start = time.time()
-            t_list_l, y_list_l = simulation_ode(ode_test(coefs[i],mdors[i]), [y_list[l][0]], [(t_list[l][0],t_list[l][-1])], stepsize, eps=0)
-            end = time.time()
-            print("sim1time:",end - start)
-            dis.append(dist(y_list[l:l+1],y_list_l))
-
-        if len(modes) == 0:
+        new = 1
+        if len(mode) != 0:
+            dism = []
+            disodm = []
+            for i in range(0,len(mode)):
+                print("try of mode"+str(i))
+                dis = []
+                disod = []
+                comt = mode_tls[i].copy()
+                comy = mode_yls[i].copy()
+                comy0 = mode_y0l[i].copy()
+                comtu = mode_tul[i].copy()
+                comt.append(t_list[l])
+                comy.append(y_list[l])
+                comy0.append(y_list[l][0])
+                comtu.append((t_list[l][0],t_list[l][-1]))
+                for od in range(0,maxorder+1):
+                    print("try of order"+str(od))
+                    A, b = diff_method(comt, comy, od, stepsize)
+                    g = pinv2(A).dot(b)
+                    comttest, comytest = simulation_ode(ode_test(g.T,od), comy0, comtu, stepsize, eps=0)
+                    dis.append(dist(comy,comytest))
+                    disod.append(od)
+                p = dis.index(min(dis))
+                dism.append(dis[p])
+                disodm.append(disod[p])
+            if min(dism)<ep:
+                new = 0
+                q = dism.index(min(dism))
+                mode[q].append(l)
+                mode_tls[q].append(t_list[l])
+                mode_yls[q].append(y_list[l])
+                mode_y0l[q].append(y_list[l][0])
+                mode_tul[q].append((t_list[l][0],t_list[l][-1]))
+                mode_ord[q] = disodm[q]
+                A, b = diff_method(mode_tls[q], mode_yls[q], mode_ord[q], stepsize)
+                g = pinv2(A).dot(b)
+                mode_coe[q] = g.T
+        
+        if new == 1:
             dis = []
             cgt = []
-            for order in range(0,maxorder+1):
-                A, b = diff_method(t_list[l:l+1], y_list[l:l+1], order, stepsize)
+            for od in range(0,maxorder+1):
+                print("new of order"+str(od))
+                A, b = diff_method(t_list[l:l+1], y_list[l:l+1], od, stepsize)
                 g = pinv2(A).dot(b)
-                t_list_l, y_list_l = simulation_ode(ode_test(g.T,order), [y_list[l][0]], [(t_list[l][0],t_list[l][-1])], stepsize, eps=0)
+                t_list_l, y_list_l = simulation_ode(ode_test(g.T,od), [y_list[l][0]], [(t_list[l][0],t_list[l][-1])], stepsize, eps=0)
                 dis.append(dist(y_list[l:l+1],y_list_l))
                 cgt.append(g.T)
-            od = dis.index(min(dis))
-            modes.append([l])
-            coefs.append(cgt[od])
-            mdors.append(od)
-        elif min(dis) >= ep:
-            print("new")
-            dis = []
-            cgt = []
-            for order in range(0,maxorder+1):
-                print(order)
-                startnew = time.time()
-                A, b = diff_method(t_list[l:l+1], y_list[l:l+1], order, stepsize)
-                g = pinv2(A).dot(b)
-                t_list_l, y_list_l = simulation_ode(ode_test(g.T,order), [y_list[l][0]], [(t_list[l][0],t_list[l][-1])], stepsize, eps=0)
-                dis.append(dist(y_list[l:l+1],y_list_l))
-                cgt.append(g.T)
-                endnew = time.time()
-                print("sim2time:",endnew - startnew)
-            startnewmode = time.time()
-            od = dis.index(min(dis))
-            modes.append([l])
-            coefs.append(cgt[od])
-            mdors.append(od)
-            endnewmode = time.time()
-            print("newmodetime:",endnewmode - startnewmode)
-        else:
-            print("changeco")
-            od = dis.index(min(dis))
-            comt = []
-            comy = []
-            y0 = []
-            t_tuple = []
-            for j in range(0,len(modes[od])):
-                comt.append(t_list[modes[od][j]])
-                comy.append(y_list[modes[od][j]])
-                y0.append(y_list[modes[od][j]][0])
-                t_tuple.append((t_list[modes[od][j]][0],t_list[modes[od][j]][-1]))
-            comttest, comytest = simulation_ode(ode_test(coefs[od],mdors[od]), y0, t_tuple, stepsize, eps=0)
-            d1 = dist(comy,comytest)
-            comt.append(t_list[l])
-            comy.append(y_list[l])
-            y0.append(y_list[l][0])
-            t_tuple.append((t_list[l][0],t_list[l][-1]))
-            A, b = diff_method(comt, comy, mdors[od], stepsize)
-            g = pinv2(A).dot(b)
-            comttest, comytest = simulation_ode(ode_test(coefs[od],mdors[od]), y0, t_tuple, stepsize, eps=0)
-            d2 = dist(comy,comytest)
-            modes[od].append(l)
-            if d2 < d1 :
-                coefs[od] = g.T
-
-    return modes, coefs, mdors
+            p = dis.index(min(dis))
+            mode.append([l])
+            mode_tls.append([t_list[l]])
+            mode_yls.append([y_list[l]])
+            mode_y0l.append([y_list[l][0]])
+            mode_tul.append([(t_list[l][0],t_list[l][-1])])
+            mode_coe.append(cgt[p])
+            mode_ord.append(p)
+    
+    return mode, mode_coe, mode_ord
 
 if __name__ == "__main__":
     y0 = [[-1],[5],[1],[3],[0],[2],[-2]]

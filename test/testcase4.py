@@ -8,7 +8,7 @@ import sys, os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))) # ADD the path of the parent dir
 
 from dynamics import dydx3, fvdp2_1, fvdp3_1, mode2_1, mode2_1_test, conti_test, conti_test_test, conti_test1, ode_test
-from infer_multi_ch import simulation_ode, infer_dynamic, parti, infer_dynamic_modes, infer_dynamic_modes_ex, dist
+from infer_multi_ch import simulation_ode, infer_dynamic, parti, infer_dynamic_modes, infer_dynamic_modes_ex, infer_dynamic_modes_exx, dist
 
 import cProfile
 from pstats import Stats
@@ -89,7 +89,7 @@ def case4():
     t_tuple = [(0,2.5),(0,2)]
     stepsize = 0.01
     order = 2
-    maxorder = 3
+    maxorder = 5
 
     # start = time.time()
     t_list, y_list = simulation_ode(conti_test, y0, t_tuple, stepsize, eps=0)
@@ -117,7 +117,8 @@ def case4():
         y1_list = temp_y.T[1]
         plt.plot(y0_list,y1_list,'b')
     plt.show()
-    modes, coefs, mdors = infer_dynamic_modes_ex(tpar_list, ypar_list, stepsize, maxorder, 0.01)
+    # modes, coefs, mdors = infer_dynamic_modes_ex(tpar_list, ypar_list, stepsize, maxorder, 0.01)
+    modes, coefs, mdors = infer_dynamic_modes_exx(tpar_list, ypar_list, stepsize, maxorder, 0.01)
     print(modes)
     print(coefs)
     print(mdors)

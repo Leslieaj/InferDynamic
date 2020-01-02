@@ -283,10 +283,12 @@ def infer_dynamic_modes_exx(t_list, y_list, stepsize, maxorder, ep=0.01):
                 comy0.append(y_list[l][0])
                 comtu.append((t_list[l][0],t_list[l][-1]))
                 for od in range(0,maxorder+1):
-                    print("try of order"+str(od))
+                    print("try of order"+str(od)+"diff")
                     A, b = diff_method(comt, comy, od, stepsize)
                     g = pinv2(A).dot(b)
+                    print("try of order"+str(od)+"simu")
                     comttest, comytest = simulation_ode(ode_test(g.T,od), comy0, comtu, stepsize, eps=0)
+                    print("try of order"+str(od)+"dist")
                     dis.append(dist(comy,comytest))
                     disod.append(od)
                 p = dis.index(min(dis))

@@ -27,7 +27,35 @@ def simulation_ode(ode_func, y0, t_tuple, stepsize, noise_type=1, eps=0):
         t_end = t_tuple[k][1]
         num = round((t_end - t_start)/stepsize + 1)
         t_points = np.linspace(t_start, t_end, num)
-        y_object = solve_ivp(ode_func, (t_start, t_end + 1.1*stepsize), y0[k], t_eval = t_points, rtol=1e-7, atol=1e-9)
+        y_object = solve_ivp(ode_func, (t_start, t_end + 1.1*stepsize), y0[k], t_eval = t_points, method ='RK45', rtol=1e-7, atol=1e-9)
+        y_points = y_object.y.T
+        if eps > 0:
+            for i in range(0,y_points.shape[0]):
+                for j in range(0,y_points.shape[1]):
+                    y_points[i][j] = y_points[i][j] + np.random.normal(0,eps)
+        t_list.append(t_points)
+        y_list.append(y_points)
+    return t_list, y_list
+
+
+def simulation_ode_stiff(ode_func, y0, t_tuple, stepsize, noise_type=1, eps=0):
+    """ Given a ODE function, some initial state, stepsize, then return the points.
+        @ode_func: ODE function 
+        @y0: inital state
+        @t_tuple: 
+        @stepsize: step size
+        @eps: guass noise (defult 0)
+    """
+
+    t_list = []
+    y_list = []
+
+    for k in range(0,len(y0)):
+        t_start = t_tuple[k][0]
+        t_end = t_tuple[k][1]
+        num = round((t_end - t_start)/stepsize + 1)
+        t_points = np.linspace(t_start, t_end, num)
+        y_object = solve_ivp(ode_func, (t_start, t_end + 1.1*stepsize), y0[k], t_eval = t_points, method ='LSODA', rtol=1e-7, atol=1e-9)
         y_points = y_object.y.T
         if eps > 0:
             for i in range(0,y_points.shape[0]):

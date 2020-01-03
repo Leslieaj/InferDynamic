@@ -10,7 +10,10 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))) # A
 from scipy.linalg import pinv, pinv2
 from scipy.integrate import odeint, solve_ivp
 from dynamics import dydx3, fvdp2_1, fvdp3_1, mode2_1, mode2_1_test, conti_test, conti_test_test, conti_test1, ode_test
-from infer_multi_ch import simulation_ode, infer_dynamic, parti, infer_dynamic_modes, infer_dynamic_modes_ex, infer_dynamic_modes_exx, dist, diff_method
+from infer_multi_ch import simulation_ode, simulation_ode_stiff, infer_dynamic, parti, infer_dynamic_modes, infer_dynamic_modes_ex, infer_dynamic_modes_exx, dist, diff_method
+
+import warnings
+warnings.filterwarnings('ignore')
 
 import cProfile
 from pstats import Stats
@@ -21,6 +24,7 @@ from infer_by_optimization import lambda_two_modes, get_coef, infer_optimization
 # from libsvm.svm import svm_problem, svm_parameter
 # from libsvm.svmutil import svm_train, svm_predict
 from libsvm.svmutil import *
+
 
 
 def case1():
@@ -57,7 +61,7 @@ def case1():
     # result_coef, calcdiff_time, pseudoinv_time = infer_dynamic([tpar_list[0],tpar_list[1]], [ypar_list[0],ypar_list[1]], stepsize, 4)
     # print(result_coef)
     # tstart = time.time()
-    # comt,comy = simulation_ode(ode_test(result_coef,4), [ypar_list[0][0],ypar_list[1][0]], [(tpar_list[0][0], tpar_list[0][-1]),(tpar_list[1][0], tpar_list[1][-1])], stepsize,eps=0)
+    # comt,comy = simulation_ode_stiff(ode_test(result_coef,4), [ypar_list[0][0],ypar_list[1][0]], [(tpar_list[0][0], tpar_list[0][-1]),(tpar_list[1][0], tpar_list[1][-1])], stepsize,eps=0)
     # tend = time.time()
     # print(dist(comy,[ypar_list[0],ypar_list[1]]))
     # print(tend-tstart)
@@ -68,11 +72,13 @@ def case1():
     # result_coef = np.matrix([[ 0, 0, 0, -0.26, 0.26, 0], [0, 0, 0, 0, 0, 1]])
     # comt,comy = simulation_ode(ode_test(result_coef,2), [ypar_list[1][0],ypar_list[3][0],ypar_list[5][0]], [(tpar_list[1][0], tpar_list[1][-1]),(tpar_list[3][0], tpar_list[3][-1]),(tpar_list[5][0], tpar_list[5][-1])], stepsize,eps=0)
     # print(dist([ypar_list[1],ypar_list[3],ypar_list[5]],comy))
-    
+    tstart = time.time()
     modes, coefs, mdors = infer_dynamic_modes_exx(tpar_list, ypar_list, stepsize, maxorder, 0.01)
+    tend = time.time()
     print(modes)
     print(coefs)
     print(mdors)
+    print(tend-tstart)
 
 
     
@@ -112,7 +118,7 @@ def case4():
     t_tuple = [(0,2.5),(0,2)]
     stepsize = 0.01
     order = 2
-    maxorder = 4
+    maxorder = 3
 
     # start = time.time()
     t_list, y_list = simulation_ode(conti_test, y0, t_tuple, stepsize, eps=0)
@@ -141,7 +147,7 @@ def case4():
         plt.plot(y0_list,y1_list,'b')
     plt.show()
     # modes, coefs, mdors = infer_dynamic_modes_ex(tpar_list, ypar_list, stepsize, maxorder, 0.01)
-    modes, coefs, mdors = infer_dynamic_modes_exx(tpar_list, ypar_list, stepsize, maxorder, 0.01)
+    modes, coefs, mdors = infer_dynamic_modes_exx(tpar_list, ypar_list, stepsize, maxorder, 0.0001)
     print(modes)
     print(coefs)
     print(mdors)
@@ -198,9 +204,9 @@ def case5():
 
 
 if __name__ == "__main__":
-    case1()
+    # case1()
     # case2()
     # case3()
-    # case4()
+    case4()
     # case5()
     

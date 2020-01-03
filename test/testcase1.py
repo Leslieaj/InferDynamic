@@ -50,8 +50,9 @@ def case2():
     for temp_y in y_list:
         plt.scatter(t_points,temp_y,s=0.1,c='r')
     for temp_y in y_list_test:
-        plt.scatter(t_points,temp_y,s=0.1,c='b'))
+        plt.scatter(t_points,temp_y,s=0.1,c='b')
     plt.show()
+
 def case3():
     y0 = [[5,-3],[2,0],[-2,3]]
     t_tuple = (0,10)

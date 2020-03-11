@@ -405,21 +405,14 @@ def infer_dynamic_modes_exx(t_list, y_list, stepsize, maxorder, ep=0.01):
     return mode, mode_coe, mode_ord
 
 
-def lineg
+# def lineg  求线性规划
 
 
-def distlg
+# def distlg 求距离
 
 
 def infer_dynamic_modes_pie(t_list, y_list, stepsize, maxorder, ep=0.01):
     len_tr = len(y_list)
-    mode = []
-    mode_tls = []
-    mode_yls = []
-    mode_y0l = []
-    mode_tul = []
-    mode_coe = []
-    mode_ord = []
     A_list = []
     b_list = []
     label_list=[]

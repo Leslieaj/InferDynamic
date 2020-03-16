@@ -10,7 +10,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))) # A
 from scipy.linalg import pinv, pinv2
 from scipy.integrate import odeint, solve_ivp
 from dynamics import dydx3, fvdp2_1, fvdp3_1, mode2_1, mode2_11, mode2_1_test, conti_test, conti_test_test, conti_test1, ode_test
-from infer_multi_ch import simulation_ode, simulation_ode_stiff, infer_dynamic, parti, infer_dynamic_modes_ex, infer_dynamic_modes_exx, dist, diff_method, infer_dynamic_modes_ex_dbs
+from infer_multi_ch import simulation_ode, simulation_ode_stiff, infer_dynamic, parti, infer_dynamic_modes_ex, infer_dynamic_modes_exx, dist, diff_method, infer_dynamic_modes_ex_dbs, infer_dynamic_modes_pie
 
 import dynamics
 import warnings
@@ -355,6 +355,72 @@ def case9():
     labels = infer_dynamic_modes_ex_dbs(tpar_list, ypar_list, stepsize, maxorder, 0.0001)
     print(labels)
 
+
+
+def case10():
+    y0 = [[0,0],[1,0],[0.3,0],[2.7,0]]
+    t_tuple = [(0,2.5),(0,2),(0,2),(0,1)]
+    stepsize = 0.01
+    order = 2
+    maxorder = 3
+
+    # start = time.time()
+    t_list, y_list = simulation_ode(conti_test, y0, t_tuple, stepsize, eps=0)
+    # end_simulation = time.time()
+    # result_coef, calcdiff_time, pseudoinv_time = infer_dynamic(t_list, y_list, stepsize, order)
+    # end_inference = time.time()
+
+    # print(result_coef)
+    # print()
+    # print("Total time: ", end_inference-start)
+    # print("Simulation time: ", end_simulation-start)
+    # print("Calc-diff time: ", calcdiff_time)
+    # print("Pseudoinv time: ", pseudoinv_time)
+
+    tpar_list,ypar_list = parti(t_list,y_list,0.2,1/3)
+    print(len(tpar_list))
+    for i in range(0,len(tpar_list)):
+        print(tpar_list[i][0])
+        print(tpar_list[i][-1])
+        print(ypar_list[i][0])
+        print(ypar_list[i][-1])
+
+    for temp_y in y_list:
+        y0_list = temp_y.T[0]
+        y1_list = temp_y.T[1]
+        plt.plot(y0_list,y1_list,'b')
+    plt.show()
+    G,labels = infer_dynamic_modes_pie(tpar_list, ypar_list, stepsize, maxorder, 0.15)
+    print(labels)
+    print(G)
+
+
+def case11():
+    y0 = [[1,7]]
+    t_tuple = [(0,25)]
+    stepsize = 0.01
+    order = 2
+    maxorder = 2
+    # start = time.time()
+    t_list, y_list = simulation_ode(mode2_1, y0, t_tuple, stepsize, eps=0)
+
+    for temp_y in y_list:
+        y0_list = temp_y.T[0]
+        y1_list = temp_y.T[1]
+        plt.plot(y0_list,y1_list,'b')
+    plt.show()
+    tpar_list,ypar_list = parti(t_list,y_list,0.2,1/3)
+    print(len(tpar_list))
+    for i in range(0,len(tpar_list)):
+        print(tpar_list[i][0])
+        print(tpar_list[i][-1])
+        print(ypar_list[i][0])
+        print(ypar_list[i][-1])
+    G,labels = infer_dynamic_modes_pie(tpar_list, ypar_list, stepsize, maxorder, 0.022)
+    print(labels)
+    print(G)
+
+
 if __name__ == "__main__":
     # case1()
     # case2()
@@ -362,7 +428,9 @@ if __name__ == "__main__":
     # case4()
     # case5()
     # case6()
-    case7()
+    # case7()
     # case8()
     # case9()
+    # case10()
+    case11()
     

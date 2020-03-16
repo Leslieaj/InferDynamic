@@ -13,6 +13,8 @@ from draw import draw, draw2D
 import sklearn.cluster as skc
 from sklearn import metrics   # 评估模型
 from sklearn.datasets.samples_generator import make_blobs
+from sklearn import linear_model
+from sklearn.linear_model import Ridge
 
 def simulation_ode(ode_func, y0, t_tuple, stepsize, noise_type=1, eps=0):
     """ Given a ODE function, some initial state, stepsize, then return the points.
@@ -405,13 +407,36 @@ def infer_dynamic_modes_exx(t_list, y_list, stepsize, maxorder, ep=0.01):
     return mode, mode_coe, mode_ord
 
 
-# def lineg  求线性规划
+def lineg(labell, A_list, b_list):
+    l = len(labell)
+    print(labell)
+    A = A_list[labell[0]]
+    b = b_list[labell[0]]
+    for i in range(0,l-1):
+        np.vstack((A,A_list[labell[i+1]]))
+        np.vstack((b,b_list[labell[i+1]]))
+    clf = linear_model.LinearRegression()
+    # clf=Ridge(alpha=0.1)
+    clf.fit(A,b)
+    g = clf.coef_
+    print("g=",g)
+    return g
 
 
-# def distlg 求距离
+
+def distlg(g,label,A_list, b_list):
+    A = A_list[label]
+    b = b_list[label]
+    bb = np.matmul(A, g.T)
+    dis = bb - b
+    maxx = dis.max()
+    minn = dis.min()
+    dist = max(np.fabs(maxx),np.fabs(minn))
+    print("dist = ",dist)
+    return dist
 
 
-def infer_dynamic_modes_pie(t_list, y_list, stepsize, maxorder, ep=0.01):
+def infer_dynamic_modes_pie(t_list, y_list, stepsize, maxorder, ep=0.1):
     len_tr = len(y_list)
     A_list = []
     b_list = []
@@ -424,21 +449,25 @@ def infer_dynamic_modes_pie(t_list, y_list, stepsize, maxorder, ep=0.01):
         b_list.append(b)
         label_list.append(l)
 
-    label = []
+    labell = []
     while len(label_list)>0:
-        label.append([])
+        label = []
+        print(label_list[0])
         g = lineg([label_list[0]],A_list,b_list)
         for l in range(0,len(label_list)):
             if distlg(g,label_list[l],A_list,b_list) < ep:
-                label_list.remove(label_list[l])
-                label[-1].append(label_list[l])
-        g = lineg(label[-1],A_list,b_list)
+                label.append(label_list[l])
+        for l in range(0,len(label)):
+            label_list.remove(label[l])
+        print(label)
+        g = lineg(label,A_list,b_list)
         G.append(g)
+        labell.append(label)
 
 
         
     
-    return G,label
+    return G,labell
 
 if __name__ == "__main__":
     y0 = [[-1],[5],[1],[3],[0],[2],[-2]]

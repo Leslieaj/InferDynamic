@@ -4,7 +4,7 @@ from scipy.integrate import odeint, solve_ivp
 import matplotlib.pyplot as plt
 import time
 import math
-# import random
+import random
 
 from dynamics import dydx1, dydx2, fvdp2, fvdp2_1, ode_test
 from generator import generate_complete_polynomail
@@ -468,6 +468,83 @@ def infer_dynamic_modes_pie(t_list, y_list, stepsize, maxorder, ep=0.1):
         
     
     return G,labell
+
+def diff_method_new(t_list, y_list, order, stepsize):
+    """Using multi-step difference method (bdf) to calculate the coefficiant matrix.
+    """
+    final_A_mat = None
+    final_b_mat = None
+    final_y_mat = None
+    
+    L_y = y_list[0].shape[1]
+    gene = generate_complete_polynomail(L_y,order)
+    L_p = gene.shape[0]
+
+    for k in range(0,len(y_list)):
+        t_points = t_list[k]
+        L_t = len(t_points)
+        D = L_t - 5    #order5
+        y_points = y_list[k]
+        A_matrix = np.zeros((D, L_p), dtype=np.double)
+        b_matrix = np.zeros((D, L_y),  dtype=np.double)
+        y_matrix = np.zeros((D, L_y),  dtype=np.double)
+        coef_matrix = np.ones((L_t, L_p), dtype=np.double)
+        for i in range(0,L_t):
+            for j in range(0,L_p):
+                for l in range(0,L_y):
+                   coef_matrix[i][j] = coef_matrix[i][j] * (y_points[i][l] ** gene[j][l])
+
+        # Adams5
+        for i in range(0, D):
+                # forward
+            A_matrix[i] = 60 * stepsize * coef_matrix[i+5]
+            b_matrix[i] = 137 * y_points[i+5] - 300 * y_points[i+4] + 300 * y_points[i+3] - 200 * y_points[i+2] + 75 * y_points[i+1] - 12 * y_points[i]
+            y_matrix[i] = y_points[i+5]
+        if k == 0:
+            final_A_mat = A_matrix
+            final_b_mat = b_matrix
+            final_y_mat = y_matrix
+
+        else :
+            final_A_mat = np.r_[final_A_mat,A_matrix]
+            final_b_mat = np.r_[final_b_mat,b_matrix]
+            final_y_mat = np.r_[final_y_mat,y_matrix]
+
+    return final_A_mat, final_b_mat, final_y_mat
+
+def compare(A,B,ep):
+    C = A - B
+    r = 1
+    for i in range(0,C.shape[0]):
+        for j in range(0,C.shape[1]):
+            if np.fabs(C[i][j]) > np.fabs(A[i][j])*ep:
+                r = 0
+    return r
+
+def infer_dynamic_modes_new(t_list, y_list, stepsize, maxorder, ep=0.1):
+
+    A, b, Y = diff_method_new(t_list, y_list, maxorder, stepsize)
+    leng = Y.shape[0]
+    label_list = []
+    for i in range(0,leng):
+        label_list.append(i)
+    while len(label_list)>0:
+        p = random.choice(label_list)
+        P = []
+        P.append(p)
+        clf = linear_model.LinearRegression()
+        clf.fit (np.mat(A[p]), np.mat(b[p]))
+        g = clf.coef_
+        pp = p
+        pre=clf.predict(np.mat(A[pp]))
+        while compare(np.mat(b[pp]),pre,ep):
+            
+
+
+        
+
+
+
 
 if __name__ == "__main__":
     y0 = [[-1],[5],[1],[3],[0],[2],[-2]]

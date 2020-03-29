@@ -521,24 +521,72 @@ def compare(A,B,ep):
                 r = 0
     return r
 
+def matrowex(matr,l):
+    finalmat = None
+    for i in range(0,len(l)):
+        finalmat = np.r_[finalmat,np.mat(matr[l[i]])]
+    return finalmat
+
 def infer_dynamic_modes_new(t_list, y_list, stepsize, maxorder, ep=0.1):
 
     A, b, Y = diff_method_new(t_list, y_list, maxorder, stepsize)
     leng = Y.shape[0]
     label_list = []
+    drop = []
     for i in range(0,leng):
         label_list.append(i)
+
+    P = []
+    G = []
+
     while len(label_list)>0:
         p = random.choice(label_list)
-        P = []
-        P.append(p)
         clf = linear_model.LinearRegression()
         clf.fit (np.mat(A[p]), np.mat(b[p]))
         g = clf.coef_
-        pp = p
-        pre=clf.predict(np.mat(A[pp]))
-        while compare(np.mat(b[pp]),pre,ep):
+        pp = [p]
+        pre = clf.predict(matrowex(A,pp))
+        while compare(matrowex(b,pp),pre,ep) ==1:
+            ppp = pp[:]
+            if pp[0]>0:
+                
+                pre1 = clf.predict(np.mat(A[pp[0]-1]))
+                if compare(np.mat(b[pp[0]-1]),pre1,ep) ==1 :
+                    pp.insert(0,pp[0]-1)
             
+            if pp[-1]<leng-1:
+                
+                pre2 = clf.predict(np.mat(A[pp[-1]+1]))
+                if compare(np.mat(b[pp[-1]+1]),pre2,ep) ==1 :
+                    pp.append(pp[0]-1)
+        
+        if len(ppp)<5:
+            label_list.remove(p)
+            drop.append(p)
+            continue
+        
+        pp = ppp[1:]
+
+        while len(ppp) > len(pp):
+            pp = ppp[:]
+            ppp = []
+            clf.fit (matrowex(A,pp), matrowex(b,pp))
+            for i in range(0,len(label_list)):
+                prew = clf.predict(np.mat(A[label_list[i]]))
+                if compare(np.mat(b[label_list[i]]),prew,ep) ==1 :
+                    ppp.append(label_list[i])
+        
+        gp = ppp[:]
+        g = clf.coef_
+        P.append(gp)
+        G.append(g)
+
+    return P,G
+
+
+        
+
+
 
 
         

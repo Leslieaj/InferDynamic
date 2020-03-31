@@ -517,14 +517,19 @@ def compare(A,B,ep):
     r = 1
     for i in range(0,C.shape[0]):
         for j in range(0,C.shape[1]):
-            if np.fabs(C[i][j]) > np.fabs(A[i][j])*ep:
+            c = abs(C[i,j])
+            a = abs(A[i,j])*ep
+            if c >= a:
                 r = 0
     return r
 
 def matrowex(matr,l):
     finalmat = None
     for i in range(0,len(l)):
-        finalmat = np.r_[finalmat,np.mat(matr[l[i]])]
+        if i == 0:
+            finalmat = np.mat(matr[l[i]])
+        else:
+            finalmat = np.r_[finalmat,np.mat(matr[l[i]])]
     return finalmat
 
 def infer_dynamic_modes_new(t_list, y_list, stepsize, maxorder, ep=0.1):
@@ -540,6 +545,7 @@ def infer_dynamic_modes_new(t_list, y_list, stepsize, maxorder, ep=0.1):
     G = []
 
     while len(label_list)>0:
+        print("label",len(label_list))
         p = random.choice(label_list)
         clf = linear_model.LinearRegression()
         clf.fit (np.mat(A[p]), np.mat(b[p]))
@@ -560,7 +566,7 @@ def infer_dynamic_modes_new(t_list, y_list, stepsize, maxorder, ep=0.1):
                 if compare(np.mat(b[pp[-1]+1]),pre2,ep) ==1 :
                     pp.append(pp[0]-1)
         
-        if len(ppp)<5:
+        if len(ppp)<3:
             label_list.remove(p)
             drop.append(p)
             continue
@@ -568,6 +574,7 @@ def infer_dynamic_modes_new(t_list, y_list, stepsize, maxorder, ep=0.1):
         pp = ppp[1:]
 
         while len(ppp) > len(pp):
+            print("ppp",len(ppp))
             pp = ppp[:]
             ppp = []
             clf.fit (matrowex(A,pp), matrowex(b,pp))
@@ -580,6 +587,9 @@ def infer_dynamic_modes_new(t_list, y_list, stepsize, maxorder, ep=0.1):
         g = clf.coef_
         P.append(gp)
         G.append(g)
+        for ele in gp:
+            label_list.remove(ele)
+        
 
     return P,G
 
@@ -588,7 +598,29 @@ def infer_dynamic_modes_new(t_list, y_list, stepsize, maxorder, ep=0.1):
 
 
 
+def test_infer_dynamic_modes_new(t_list, y_list, stepsize, maxorder, ep=0.1):
+    A, b, Y = diff_method_new(t_list, y_list, maxorder, stepsize)
+    P,G = infer_dynamic_modes_new(t_list, y_list, stepsize, maxorder, ep=0.1)
+    maxdis = 0
+    maxredis = 0
+    for i in range(0,len(P)):
+        P[i].sort()
+        for j in range(0,len(P[i])):
+            if P[i][j+1] - P[i][j] == 1:
+                y0 = [Y[P[i][j]]]
+                t_tuple = [(0,stepsize)]
+                ttestlist, ytestlist = simulation_ode(ode_test(G[i],order), y0, t_tuple, stepsize/100, eps=0)
+                disvec = np.mat(ytestlist[0][-1]) - np.mat(Y[P[i][j+1]])
+                for k in range(0,disvec.shape[1]):
+                    maxdis = max(maxdis,abs(disvec[0,k]))
+                    maxredis = max(maxredis,abs(disvec[0,k]/Y[P[i][j+1],k]))
+    
+    return maxdis,maxredis
 
+
+
+
+    
         
 
 

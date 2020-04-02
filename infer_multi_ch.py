@@ -494,7 +494,6 @@ def diff_method_new(t_list, y_list, order, stepsize):
                 for l in range(0,L_y):
                    coef_matrix[i][j] = coef_matrix[i][j] * (y_points[i][l] ** gene[j][l])
 
-        # Adams5
         for i in range(0, D):
                 # forward
             A_matrix[i] = 60 * stepsize * coef_matrix[i+5]
@@ -548,23 +547,37 @@ def infer_dynamic_modes_new(t_list, y_list, stepsize, maxorder, ep=0.1):
         print("label",len(label_list))
         p = random.choice(label_list)
         clf = linear_model.LinearRegression()
+        print("fitstart")
         clf.fit (np.mat(A[p]), np.mat(b[p]))
         g = clf.coef_
+        print("fitend")
         pp = [p]
         pre = clf.predict(matrowex(A,pp))
+        print("first")
+        retation = 0
         while compare(matrowex(b,pp),pre,ep) ==1:
+            retation += 1
+            print("compare",retation,len(pp))
             ppp = pp[:]
-            if pp[0]>0:
-                
+            reta = 0
+            # if pp[0]>0 and pp[0]-1 in label_list:
+            if pp[0]>0 :  
                 pre1 = clf.predict(np.mat(A[pp[0]-1]))
                 if compare(np.mat(b[pp[0]-1]),pre1,ep) ==1 :
                     pp.insert(0,pp[0]-1)
-            
-            if pp[-1]<leng-1:
-                
+                    reta = 1
+            # if pp[-1]<leng-1 and pp[-1]+1 in label_list:
+            if pp[-1]<leng-1:   
                 pre2 = clf.predict(np.mat(A[pp[-1]+1]))
                 if compare(np.mat(b[pp[-1]+1]),pre2,ep) ==1 :
-                    pp.append(pp[0]-1)
+                    pp.append(pp[-1]+1)
+                    reta = 1
+            
+            if reta == 0 or retation >= 10:
+                break
+
+            clf.fit (matrowex(A,pp), matrowex(b,pp))
+            pre = clf.predict(matrowex(A,pp))
         
         if len(ppp)<3:
             label_list.remove(p)
@@ -572,7 +585,7 @@ def infer_dynamic_modes_new(t_list, y_list, stepsize, maxorder, ep=0.1):
             continue
         
         pp = ppp[1:]
-
+        print("second")
         while len(ppp) > len(pp):
             print("ppp",len(ppp))
             pp = ppp[:]
@@ -591,7 +604,7 @@ def infer_dynamic_modes_new(t_list, y_list, stepsize, maxorder, ep=0.1):
             label_list.remove(ele)
         
 
-    return P,G
+    return P,G,drop
 
 
         

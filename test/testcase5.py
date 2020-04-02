@@ -33,7 +33,7 @@ def case1():
     t_tuple = [(0,25)]
     stepsize = 0.01
     order = 2
-    maxorder = 2
+    maxorder = 1
     # start = time.time()
     t_list, y_list = simulation_ode(mode2_1, y0, t_tuple, stepsize, eps=0)
 
@@ -43,9 +43,10 @@ def case1():
         plt.plot(y0_list,y1_list,'b')
     plt.show()
     
-    P,G = infer_dynamic_modes_new(t_list, y_list, stepsize, maxorder, 0.022)
+    P,G,D = infer_dynamic_modes_new(t_list, y_list, stepsize, maxorder, 0.005)
     print(P)
     print(G)
+    print(D)
 
 
 if __name__ == "__main__":

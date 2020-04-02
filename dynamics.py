@@ -41,9 +41,9 @@ def mode2_1(t,y):
     """
     y0, y1 = y
     if y0 > 0:
-        dydt = [-0.26*(y0-y1), -1.0]
+        dydt = [-0.26*(y0-y1), -0.5]
     else:
-        dydt = [-0.26*(y0-y1), 1.0]
+        dydt = [-0.26*(y0-y1), 0.5]
     return dydt
 
 

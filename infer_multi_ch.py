@@ -115,6 +115,59 @@ def diff_method(t_list, y_list, order, stepsize):
     return final_A_mat, final_b_mat
 
 
+def diff_method1(t_list, y_list, order, stepsize):
+    """Using multi-step difference method (Adams5) to calculate the coefficiant matrix.
+    """
+    final_A_mat = None
+    final_b_mat = None
+    
+    L_y = y_list[0].shape[1]
+    gene = generate_complete_polynomail(L_y,order)
+    L_p = gene.shape[0]
+
+    
+
+    for k in range(0,len(y_list)):
+        t_points = t_list[k]
+        L_t = len(t_points)
+        D = L_t - 5    #bdf5
+        y_points = y_list[k]
+        # A_matrix = np.zeros((D*2, L_p), dtype=np.double)
+        # b_matrix = np.zeros((D*2, L_y),  dtype=np.double)
+        A_matrix = np.zeros((D, L_p), dtype=np.double)
+        b_matrix = np.zeros((D, L_y),  dtype=np.double)
+        coef_matrix = np.ones((L_t, L_p), dtype=np.double)
+        for i in range(0,L_t):
+            for j in range(0,L_p):
+                for l in range(0,L_y):
+                   coef_matrix[i][j] = coef_matrix[i][j] * (y_points[i][l] ** gene[j][l])
+
+        # for i in range(0, 2*D):
+        #     if i < D:     # forward
+        #         A_matrix[i] = 60 * stepsize * coef_matrix[i+5]
+        #         b_matrix[i] = 137 * y_points[i+5] - 300 * y_points[i+4] + 300 * y_points[i+3] - 200 * y_points[i+2] + 75 * y_points[i+1] - 12 * y_points[i]
+        #         A_matrix[i] = (-19*coef_matrix[i]+106*coef_matrix[i+1]-264*coef_matrix[i+2]+646*coef_matrix[i+3]+251*coef_matrix[i+4])*stepsize/720
+        #         b_matrix[i] = y_points[i+4]-y_points[i+3]
+        #     else:         # backward
+        #         A_matrix[i] = 60 * stepsize * coef_matrix[i-D]
+        #         b_matrix[i] = 137 * y_points[i-D] - 300 * y_points[i-D+1] + 300 * y_points[i-D+2] - 200 * y_points[i-D+3] + 75 * y_points[i-D+4] - 12 * y_points[i-D+5]
+        #         A_matrix[i] = (-19*coef_matrix[i-D+4]+106*coef_matrix[i-D+3]-264*coef_matrix[i-D+2]+646*coef_matrix[i-D+1]+251*coef_matrix[i-D])*stepsize/720
+        #         b_matrix[i] = y_points[i-D+1]-y_points[i-D]
+        
+        for i in range(0, D):
+            A_matrix[i] = coef_matrix[i+5]
+            b_matrix[i] = (137 * y_points[i+5] - 300 * y_points[i+4] + 300 * y_points[i+3] - 200 * y_points[i+2] + 75 * y_points[i+1] - 12 * y_points[i])/(60 * stepsize)
+                
+
+        if k == 0:
+            final_A_mat = A_matrix
+            final_b_mat = b_matrix
+        else :
+            final_A_mat = np.r_[final_A_mat,A_matrix]
+            final_b_mat = np.r_[final_b_mat,b_matrix]
+
+    return final_A_mat, final_b_mat
+
 def extend_coe(GT, maxL_p):
     L_p = GT.shape[1]
     L_y = GT.shape[0]
@@ -415,8 +468,10 @@ def lineg(labell, A_list, b_list):
     for i in range(0,l-1):
         np.vstack((A,A_list[labell[i+1]]))
         np.vstack((b,b_list[labell[i+1]]))
-    clf = linear_model.LinearRegression()
+    clf = linear_model.LinearRegression(fit_intercept=False)
     # clf=Ridge(alpha=0.1)
+    print(A)
+    print(b)
     clf.fit(A,b)
     g = clf.coef_
     print("g=",g)
@@ -444,21 +499,22 @@ def infer_dynamic_modes_pie(t_list, y_list, stepsize, maxorder, ep=0.1):
     G = []
     for l in range(0,len_tr):
         print("trace"+str(l))
-        A, b = diff_method(t_list[l:l+1], y_list[l:l+1], maxorder, stepsize)
+        A, b = diff_method1(t_list[l:l+1], y_list[l:l+1], maxorder, stepsize)
         A_list.append(A)
         b_list.append(b)
         label_list.append(l)
-
+    print(label_list)
     labell = []
     while len(label_list)>0:
-        label = []
+        label = [label_list[0]]
         print(label_list[0])
         g = lineg([label_list[0]],A_list,b_list)
         for l in range(0,len(label_list)):
             if distlg(g,label_list[l],A_list,b_list) < ep:
                 label.append(label_list[l])
         for l in range(0,len(label)):
-            label_list.remove(label[l])
+            if label[l] in label_list:
+                label_list.remove(label[l])
         print(label)
         g = lineg(label,A_list,b_list)
         G.append(g)
@@ -511,6 +567,49 @@ def diff_method_new(t_list, y_list, order, stepsize):
 
     return final_A_mat, final_b_mat, final_y_mat
 
+
+def diff_method_new1(t_list, y_list, order, stepsize):
+    """Using multi-step difference method (bdf) to calculate the coefficiant matrix.
+    """
+    final_A_mat = None
+    final_b_mat = None
+    final_y_mat = None
+    
+    L_y = y_list[0].shape[1]
+    gene = generate_complete_polynomail(L_y,order)
+    L_p = gene.shape[0]
+
+    for k in range(0,len(y_list)):
+        t_points = t_list[k]
+        L_t = len(t_points)
+        D = L_t - 4    #order5
+        y_points = y_list[k]
+        A_matrix = np.zeros((D, L_p), dtype=np.double)
+        b_matrix = np.zeros((D, L_y),  dtype=np.double)
+        y_matrix = np.zeros((D, L_y),  dtype=np.double)
+        coef_matrix = np.ones((L_t, L_p), dtype=np.double)
+        for i in range(0,L_t):
+            for j in range(0,L_p):
+                for l in range(0,L_y):
+                   coef_matrix[i][j] = coef_matrix[i][j] * (y_points[i][l] ** gene[j][l])
+
+        for i in range(0, D):
+                # forward
+            A_matrix[i] = (-19*coef_matrix[i]+106*coef_matrix[i+1]-264*coef_matrix[i+2]+646*coef_matrix[i+3]+251*coef_matrix[i+4])*stepsize
+            b_matrix[i] = (y_points[i+4]-y_points[i+3])*720
+            y_matrix[i] = y_points[i+4]
+        if k == 0:
+            final_A_mat = A_matrix
+            final_b_mat = b_matrix
+            final_y_mat = y_matrix
+
+        else :
+            final_A_mat = np.r_[final_A_mat,A_matrix]
+            final_b_mat = np.r_[final_b_mat,b_matrix]
+            final_y_mat = np.r_[final_y_mat,y_matrix]
+
+    return final_A_mat, final_b_mat, final_y_mat
+
 def compare(A,B,ep):
     C = A - B
     r = 1
@@ -518,6 +617,7 @@ def compare(A,B,ep):
         for j in range(0,C.shape[1]):
             c = abs(C[i,j])
             a = abs(A[i,j])*ep
+            # a = ep
             if c >= a:
                 r = 0
     return r
@@ -546,7 +646,7 @@ def infer_dynamic_modes_new(t_list, y_list, stepsize, maxorder, ep=0.1):
     while len(label_list)>0:
         print("label",len(label_list))
         p = random.choice(label_list)
-        clf = linear_model.LinearRegression()
+        clf = linear_model.LinearRegression(fit_intercept=False)
         print("fitstart")
         clf.fit (np.mat(A[p]), np.mat(b[p]))
         g = clf.coef_
@@ -602,7 +702,8 @@ def infer_dynamic_modes_new(t_list, y_list, stepsize, maxorder, ep=0.1):
         G.append(g)
         for ele in gp:
             label_list.remove(ele)
-        
+
+    drop.sort() 
 
     return P,G,drop
 
@@ -613,7 +714,7 @@ def infer_dynamic_modes_new(t_list, y_list, stepsize, maxorder, ep=0.1):
 
 def test_infer_dynamic_modes_new(t_list, y_list, stepsize, maxorder, ep=0.1):
     A, b, Y = diff_method_new(t_list, y_list, maxorder, stepsize)
-    P,G = infer_dynamic_modes_new(t_list, y_list, stepsize, maxorder, ep=0.1)
+    P,G,D = infer_dynamic_modes_new(t_list, y_list, stepsize, maxorder, ep=0.1)
     maxdis = 0
     maxredis = 0
     for i in range(0,len(P)):
@@ -631,6 +732,7 @@ def test_infer_dynamic_modes_new(t_list, y_list, stepsize, maxorder, ep=0.1):
     return maxdis,maxredis
 
 
+ 
 
 
     

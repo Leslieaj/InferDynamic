@@ -31,7 +31,7 @@ def generate_complete_polynomail(m,n):
 
 if __name__ == "__main__":
     start = time.time()
-    A = generate_complete_polynomail(1,2)
+    A = generate_complete_polynomail(2,2)
     end = time.time()
     print(A)
     print(end-start)

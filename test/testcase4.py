@@ -85,11 +85,13 @@ def case1():
 
     
 def case2():
-    y0 = [[1,3],[-1,-2],[-3,-5],[2,4],[-2,3],[-4,5],[4,7],[-2,-10],[5,8]]
-    t_tuple = [(0,2),(0,3),(0,4),(0,5),(0,1),(0,1),(0,5),(0,6),(0,6)]
+    # y0 = [[1,3],[-1,-2],[-3,-5],[2,4],[-2,3],[-4,5],[4,7],[-2,-10],[5,8]]
+    # t_tuple = [(0,2),(0,3),(0,4),(0,5),(0,1),(0,1),(0,5),(0,6),(0,6)]
+    y0 = [[1,3]]
+    t_tuple = [(0,2)]
     stepsize = 0.01
     order = 2
-    maxorder = 6
+    maxorder = 4
     t_list, y_list = simulation_ode(mode2_1, y0, t_tuple, stepsize, eps=0)
     # modes, coefs = infer_dynamic_modes(t_list, y_list, stepsize, maxorder, 0.001)
     modes, coefs, mdors = infer_dynamic_modes_ex(t_list, y_list, stepsize, maxorder, 0.01)
@@ -396,8 +398,8 @@ def case10():
 
 
 def case11():
-    y0 = [[1,7]]
-    t_tuple = [(0,25)]
+    y0 = [[1,7],[2,6]]
+    t_tuple = [(0,2),(0,2)]
     stepsize = 0.01
     order = 2
     maxorder = 2
@@ -416,8 +418,12 @@ def case11():
         print(tpar_list[i][-1])
         print(ypar_list[i][0])
         print(ypar_list[i][-1])
-    G,labels = infer_dynamic_modes_pie(tpar_list, ypar_list, stepsize, maxorder, 0.022)
-    print(labels)
+    G,labels = infer_dynamic_modes_pie(tpar_list, ypar_list, stepsize, maxorder, 0.02)
+    # modes, coefs, mdors = infer_dynamic_modes_ex(tpar_list, ypar_list, stepsize, maxorder, 0.01)
+    # print(modes)
+    # print(coefs)
+    # print(mdors)
+    print(len(labels))
     print(G)
 
 

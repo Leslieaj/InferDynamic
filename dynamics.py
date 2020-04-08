@@ -38,18 +38,29 @@ def fvdp3_1(t,y):
     dydt  = [sigma*(y1-y0), y0*(rho-y2)-y1, y0*y1-beta*y2]
     return dydt
 
-def mode2_1(t,y):
-    """ A hybrid automaton with 2 modes for an incubator.
+mode2_params = [
+    [-0.26, -1, -0.26, 1],
+]
 
-    Returns derivative at point y = (y0, y1).
+def get_mode2(param_id):
+    a1, b1, a2, b2 = mode2_params[param_id]
 
-    """
-    y0, y1 = y
-    if y0 > 0:
-        dydt = [-0.26*(y0-y1), -1]
-    else:
-        dydt = [-0.26*(y0-y1), 1]
-    return dydt
+    def mode2_1(t,y):
+        """ A hybrid automaton with 2 modes for an incubator.
+
+        Returns derivative at point y = (y0, y1).
+
+        """
+        y0, y1 = y
+        if y0 > 0:
+            dydt = [a1 * (y0-y1), b1]
+        else:
+            dydt = [a2 * (y0-y1), b2]
+        return dydt
+    
+    return mode2_1
+
+mode2_1 = get_mode2(0)
 
 
 def mode2_11(t,y):

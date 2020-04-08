@@ -12,7 +12,7 @@ from scipy.linalg import pinv, pinv2
 from scipy.integrate import odeint, solve_ivp
 from dynamics import dydx3, fvdp2_1, fvdp3_1, mode2_1, mode2_11, mode2_1_test, conti_test, conti_test_test, conti_test1, ode_test
 from infer_multi_ch import simulation_ode, simulation_ode_stiff, infer_dynamic, parti, infer_dynamic_modes_ex, infer_dynamic_modes_exx, dist, diff_method, infer_dynamic_modes_ex_dbs, infer_dynamic_modes_pie, infer_dynamic_modes_new, diff_method_new1, diff_method_new
-
+from generator import generate_complete_polynomail
 import dynamics
 import warnings
 warnings.filterwarnings('ignore')
@@ -49,11 +49,11 @@ def case1():
     # start = time.time()
     t_list, y_list = simulation_ode(mode2_1, y0, t_tuple, stepsize, eps=0)
 
-    for temp_y in y_list:
-        y0_list = temp_y.T[0]
-        y1_list = temp_y.T[1]
-        plt.plot(y0_list,y1_list,'b')
-    plt.show()
+    # for temp_y in y_list:
+    #     y0_list = temp_y.T[0]
+    #     y1_list = temp_y.T[1]
+    #     plt.plot(y0_list,y1_list,'b')
+    # plt.show()
     
     A, b, Y = diff_method_new1(t_list, y_list, maxorder, stepsize)
     P,G,D = infer_dynamic_modes_new(t_list, y_list, stepsize, maxorder, 0.01)
@@ -73,7 +73,7 @@ def case1():
         x.append({1:Y[P[1][j],0], 2:Y[P[1][j],1]})
 
     prob  = svm_problem(y, x)
-    param = svm_parameter('-t 1 -d 3 -c 10 -b 0 -r 1.5')
+    param = svm_parameter('-t 1 -d 1 -c 10 -b 0 ')
     m = svm_train(prob, param)
     svm_save_model('model_file', m)
     yt = [-1,-1,1,1]
@@ -87,24 +87,78 @@ def case1():
     # print(nsv)
     # print(svc)
     # print(sv)
-    def clafun(x,y):
-        g = -m.rho[0]
-        for i in range(0,nsv):
-            g = g + svc[i][0] * ((0.5 * (x*sv[i][1] + y*sv[i][2]) + 1.5)**3)
-        return np.sign(g)
     
-    fig = plt.figure()
-    ax = Axes3D(fig)
-    x = np.arange(-3,3,0.1)
-    y = np.arange(-3,3,0.1)
-    X,Y = np.meshgrid(x,y)#创建网格，这个是关键
-    Z = clafun(X,Y)
-    plt.xlabel('x')
-    plt.ylabel('y')
+    # def clafun(x):
+    #     g = -m.rho[0]
+    #     for i in range(0,nsv):
+    #         g = g + svc[i][0] * ((0.5 * (x[0]*sv[i][1] + x[1]*sv[i][2]))**3)
+    #     return g
+
+    g = -m.rho[0]
+    a1 = 0
+    a2 = 0
+    for i in range(0,nsv):
+        a1 = a1 + svc[i][0] * 0.5 * sv[i][1]
+        a2 = a2 + svc[i][0] * 0.5 * sv[i][2]
+
+    print("a1",a1/a1)
+    print("a2",a2/a1)
+    print("g",g/a1)
+    
+    # fig = plt.figure()
+    # ax = Axes3D(fig)
+    # x = np.arange(-3,3,0.1)
+    # y = np.arange(-3,3,0.1)
+    # X,Y = np.meshgrid(x,y)#创建网格，这个是关键
+    # Z = clafun(X,Y)
+    # plt.xlabel('x')
+    # plt.ylabel('y')
+    
  
-    ax.plot_surface(X,Y,Z,rstride=1,cstride=1,cmap='rainbow')
+    # ax.plot_surface(X,Y,Z,rstride=1,cstride=1,cmap='rainbow')
+    # plt.show()
+    dim = G[0].shape[0]
+    A = generate_complete_polynomail(dim,maxorder)
+    def odepre(t,y):
+        # print("in")
+        basicf = []
+        for i in range(0,A.shape[0]):
+            ap = 1
+            for j in range(0,A.shape[1]):
+                ap = ap*(y[j]**A[i][j])
+            basicf.append(ap)
+        b = np.array(basicf)
+        dydt = np.zeros(dim)
+        if a1 * y[0] + a2 * y[1] + g > 0: 
+            for l in range(0,dim):
+                dydt[l] = G[0][l].dot(b)
+        else:
+            for l in range(0,dim):
+                dydt[l] = G[1][l].dot(b)
+        # print("out")
+        return dydt
+    py0 = [[2,4],[-1,-3]]
+    pt_tuple = [(0,10),(0,10)]
+    start = time.time()
+    print("origin")
+    tp_list, yp_list = simulation_ode(mode2_1, py0, pt_tuple, stepsize, eps=0)
+    end1 = time.time()
+    print("predict")
+    tpre_list, ypre_list = simulation_ode(odepre, py0, pt_tuple, stepsize, eps=0)
+    end2 = time.time()
+    print("simutime",end1-start)
+    print("predtime",end2-end1)
+
+    for temp_y in yp_list:
+        y0_list = temp_y.T[0]
+        y1_list = temp_y.T[1]
+        plt.plot(y0_list,y1_list,'b')
+    for temp_y in ypre_list:
+        y0_list = temp_y.T[0]
+        y1_list = temp_y.T[1]
+        plt.plot(y0_list,y1_list,'r')
     plt.show()
-    
+
 
 
 def case2():

@@ -712,24 +712,37 @@ def infer_dynamic_modes_new(t_list, y_list, stepsize, maxorder, ep=0.1):
 
 
 
-def test_infer_dynamic_modes_new(t_list, y_list, stepsize, maxorder, ep=0.1):
-    A, b, Y = diff_method_new(t_list, y_list, maxorder, stepsize)
-    P,G,D = infer_dynamic_modes_new(t_list, y_list, stepsize, maxorder, ep=0.1)
-    maxdis = 0
-    maxredis = 0
-    for i in range(0,len(P)):
-        P[i].sort()
-        for j in range(0,len(P[i])):
-            if P[i][j+1] - P[i][j] == 1:
-                y0 = [Y[P[i][j]]]
-                t_tuple = [(0,stepsize)]
-                ttestlist, ytestlist = simulation_ode(ode_test(G[i],order), y0, t_tuple, stepsize/100, eps=0)
-                disvec = np.mat(ytestlist[0][-1]) - np.mat(Y[P[i][j+1]])
-                for k in range(0,disvec.shape[1]):
-                    maxdis = max(maxdis,abs(disvec[0,k]))
-                    maxredis = max(maxredis,abs(disvec[0,k]/Y[P[i][j+1],k]))
+# def test_infer_dynamic_modes_new(t_list, y_list, stepsize, maxorder, ep=0.1):
+#     A, b, Y = diff_method_new(t_list, y_list, maxorder, stepsize)
+#     P,G,D = infer_dynamic_modes_new(t_list, y_list, stepsize, maxorder, ep=0.1)
+#     DD = D[:]
+#     for i in range(0,len(D)):
+#         print("drop",i)
+#         r = 1
+#         for j in range(0,len(G)):
+#             print("simu",j)
+#             rj1 = 0
+#             rj2 = 0
+#             y0 = [Y[D[i] - 1],Y[D[i]]]
+#             t_tuple = [(0,stepsize),(0,stepsize)]
+#             ttestlist, ytestlist = simulation_ode(ode_test(G[j],maxorder), y0, t_tuple, stepsize/100, eps=0)
+#             disvec1 = np.mat(ytestlist[0][-1]) - np.mat(Y[D[i]])
+#             disvec2 = np.mat(ytestlist[1][-1]) - np.mat(Y[D[i]+1])
+#             for l in range(0,Y.shape[1]):
+#                 rj1 = max(rj1,abs(disvec1[0,l]/Y[D[i],l]))
+#                 rj2 = max(rj2,abs(disvec2[0,l]/Y[D[i]+1,l]))
+            
+#             if rj1 < r or rj2 < r:
+#                 ch = j
+#                 r = min(rj1,rj2)
+#         if r < 0.01:
+#             P[ch].append(D[i])
+#             DD.remove(D[i])
+
+#     for i in range(0,len(P)):
+#         P[i].sort()
     
-    return maxdis,maxredis
+#     return P,G,DD
 
 
  

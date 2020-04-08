@@ -6,7 +6,7 @@ import time
 # import random
 
 from dynamics import dydx1, dydx2, fvdp2, fvdp2_1
-from generator import generate_complete_polynomail
+from generator import generate_complete_polynomial
 from draw import draw, draw2D
 
 def simulation_ode(ode_func, y0, t_tuple, stepsize, noise_type=1, eps=0):
@@ -39,7 +39,7 @@ def diff_method(t_points, y_list, order, stepsize):
     final_b_mat = None
     L_t = len(t_points)
     L_y = y_list[0].shape[1]
-    gene = generate_complete_polynomail(L_y,order)
+    gene = generate_complete_polynomial(L_y,order)
     L_p = gene.shape[0]
 
     D = L_t - 4    #Adams5

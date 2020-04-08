@@ -19,7 +19,15 @@ def generator_items(m, n):
         A = np.r_[A,D]
     return A
 
-def generate_complete_polynomail(m,n):
+def generate_complete_polynomial(m,n):
+    """
+    @m: number of variables
+    @n: maximum order.
+
+    E.g. output for m = 2, n = 2:
+    array([2, 0], [1, 1], [0, 2], [1, 0], [0, 1], [0, 0]).
+
+    """
     A = None
     for i in range(0, n+1):
         g = generator_items(m,n-i)
@@ -31,7 +39,7 @@ def generate_complete_polynomail(m,n):
 
 if __name__ == "__main__":
     start = time.time()
-    A = generate_complete_polynomail(2,2)
+    A = generate_complete_polynomial(2,2)
     end = time.time()
     print(A)
     print(end-start)

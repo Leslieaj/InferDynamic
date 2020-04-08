@@ -2,14 +2,14 @@
 import numpy as np
 import time
 from scipy.optimize import minimize, dual_annealing
-from generator import generate_complete_polynomail
+from generator import generate_complete_polynomial
 
 def get_coef(t_points, y_list, order, stepsize):
     final_A_mat = None
     final_b_mat = None
     L_t = len(t_points)
     L_y = y_list[0].shape[1]
-    gene = generate_complete_polynomail(L_y,order)
+    gene = generate_complete_polynomial(L_y,order)
     L_p = gene.shape[0]
     for k in range(0,len(y_list)):
         y_points = y_list[k]

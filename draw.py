@@ -34,4 +34,3 @@ def draw3D(y):
         ax.plot3D(y0_list, y1_list, y2_list)
     plt.show()
     return 0
-    

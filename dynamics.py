@@ -1,7 +1,7 @@
 #The dynamic functions.
 import numpy as np
 from fractions import Fraction
-from generator import generate_complete_polynomail
+from generator import generate_complete_polynomial
 
 model = 0
 
@@ -24,11 +24,13 @@ def fvdp2(t,y):
     return dydt
 
 def fvdp2_1(t,y):
+    """Single mode, order 2."""
     y0, y1 = y
     dydt = [2*y0-y0*y1, 2*y0**2-y1]
     return dydt
 
 def fvdp3_1(t,y):
+    """Lorenz attractor."""
     y0, y1, y2 = y
     sigma = 10
     beta = Fraction(8,3)
@@ -38,6 +40,9 @@ def fvdp3_1(t,y):
 
 def mode2_1(t,y):
     """ A hybrid automaton with 2 modes for an incubator.
+
+    Returns derivative at point y = (y0, y1).
+
     """
     y0, y1 = y
     if y0 > 0:
@@ -71,7 +76,7 @@ def mode2_1_test(result_coef,order):
         y0, y1 = y
         ode1_coef = result_coef[0]
         ode2_coef = result_coef[1]
-        A = generate_complete_polynomail(2,order)
+        A = generate_complete_polynomial(2,order)
         basicf = []
         for i in range(0,A.shape[0]):
             basicf.append(y0**A[i][0]*y1**A[i][1])
@@ -103,7 +108,7 @@ def conti_test_test(result_coef,order):
         y0, y1 = y
         ode1_coef = result_coef[0]
         ode2_coef = result_coef[1]
-        A = generate_complete_polynomail(2,order)
+        A = generate_complete_polynomial(2,order)
         basicf = []
         for i in range(0,A.shape[0]):
             basicf.append(y0**A[i][0]*y1**A[i][1])
@@ -114,10 +119,11 @@ def conti_test_test(result_coef,order):
 
 
 def ode_test(result_coef,order):
+    """Used to simulate ODE during evaluation."""
     def ode(t,y):
         # print("in")
         dim = result_coef.shape[0]
-        A = generate_complete_polynomail(dim,order)
+        A = generate_complete_polynomial(dim,order)
         basicf = []
         for i in range(0,A.shape[0]):
             ap = 1
@@ -131,7 +137,3 @@ def ode_test(result_coef,order):
         # print("out")
         return dydt
     return ode
-
-         
-    
-    

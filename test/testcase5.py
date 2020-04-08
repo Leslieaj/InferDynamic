@@ -11,8 +11,8 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))) # A
 from scipy.linalg import pinv, pinv2
 from scipy.integrate import odeint, solve_ivp
 from dynamics import dydx3, fvdp2_1, fvdp3_1, mode2_1, mode2_11, mode2_1_test, conti_test, conti_test_test, conti_test1, ode_test
-from infer_multi_ch import simulation_ode, simulation_ode_stiff, infer_dynamic, parti, infer_dynamic_modes_ex, infer_dynamic_modes_exx, dist, diff_method, infer_dynamic_modes_ex_dbs, infer_dynamic_modes_pie, infer_dynamic_modes_new, diff_method_new1, diff_method_new
-from generator import generate_complete_polynomail
+from infer_multi_ch import simulation_ode, infer_dynamic, parti, infer_dynamic_modes_ex, infer_dynamic_modes_exx, dist, diff_method, infer_dynamic_modes_ex_dbs, infer_dynamic_modes_pie, infer_dynamic_modes_new, diff_method_new1, diff_method_new
+from generator import generate_complete_polynomial
 import dynamics
 import warnings
 warnings.filterwarnings('ignore')
@@ -118,7 +118,7 @@ def case1():
     # ax.plot_surface(X,Y,Z,rstride=1,cstride=1,cmap='rainbow')
     # plt.show()
     dim = G[0].shape[0]
-    A = generate_complete_polynomail(dim,maxorder)
+    A = generate_complete_polynomial(dim,maxorder)
     def odepre(t,y):
         # print("in")
         basicf = []

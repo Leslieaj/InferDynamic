@@ -7,7 +7,7 @@ import math
 import random
 
 from dynamics import dydx1, dydx2, fvdp2, fvdp2_1, ode_test
-from generator import generate_complete_polynomail
+from generator import generate_complete_polynomial
 from draw import draw, draw2D
 
 import sklearn.cluster as skc
@@ -16,13 +16,22 @@ from sklearn.datasets.samples_generator import make_blobs
 from sklearn import linear_model
 from sklearn.linear_model import Ridge
 
-def simulation_ode(ode_func, y0, t_tuple, stepsize, noise_type=1, eps=0):
+def simulation_ode(ode_func, y0, t_tuple, stepsize, noise_type=1, eps=0, solve_method='RK45'):
     """ Given a ODE function, some initial state, stepsize, then return the points.
+
+        Use RK45 method for solving ODE.
+
         @ode_func: ODE function 
         @y0: inital state
         @t_tuple: 
         @stepsize: step size
-        @eps: guass noise (defult 0)
+        @noise_type: type of noise (e.g. 1 for Gaussian)
+        @eps: guass noise (default 0 for no noise)
+
+        Returns:
+        @t_list: list of list of time points.
+        @y_list: list of points at each time point.
+
     """
 
     t_list = []
@@ -33,7 +42,7 @@ def simulation_ode(ode_func, y0, t_tuple, stepsize, noise_type=1, eps=0):
         t_end = t_tuple[k][1]
         num = round((t_end - t_start)/stepsize + 1)
         t_points = np.linspace(t_start, t_end, num)
-        y_object = solve_ivp(ode_func, (t_start, t_end + 1.1*stepsize), y0[k], t_eval = t_points, method ='RK45', rtol=1e-7, atol=1e-9, max_step = stepsize/100)
+        y_object = solve_ivp(ode_func, (t_start, t_end + 1.1*stepsize), y0[k], t_eval = t_points, method=solve_method, rtol=1e-7, atol=1e-9, max_step = stepsize/100)
         y_points = y_object.y.T
         if eps > 0:
             for i in range(0,y_points.shape[0]):
@@ -44,32 +53,34 @@ def simulation_ode(ode_func, y0, t_tuple, stepsize, noise_type=1, eps=0):
     return t_list, y_list
 
 
-def simulation_ode_stiff(ode_func, y0, t_tuple, stepsize, noise_type=1, eps=0):
-    """ Given a ODE function, some initial state, stepsize, then return the points.
-        @ode_func: ODE function 
-        @y0: inital state
-        @t_tuple: 
-        @stepsize: step size
-        @eps: guass noise (defult 0)
-    """
+# def simulation_ode_stiff(ode_func, y0, t_tuple, stepsize, noise_type=1, eps=0):
+#     """ Given a ODE function, some initial state, stepsize, then return the points.
 
-    t_list = []
-    y_list = []
 
-    for k in range(0,len(y0)):
-        t_start = t_tuple[k][0]
-        t_end = t_tuple[k][1]
-        num = round((t_end - t_start)/stepsize + 1)
-        t_points = np.linspace(t_start, t_end, num)
-        y_object = solve_ivp(ode_func, (t_start, t_end + 1.1*stepsize), y0[k], t_eval = t_points, method ='BDF', rtol=1e-7, atol=1e-9)
-        y_points = y_object.y.T
-        if eps > 0:
-            for i in range(0,y_points.shape[0]):
-                for j in range(0,y_points.shape[1]):
-                    y_points[i][j] = y_points[i][j] + np.random.normal(0,eps)
-        t_list.append(t_points)
-        y_list.append(y_points)
-    return t_list, y_list
+#         @ode_func: ODE function 
+#         @y0: inital state
+#         @t_tuple: 
+#         @stepsize: step size
+#         @eps: guass noise (defult 0)
+#     """
+
+#     t_list = []
+#     y_list = []
+
+#     for k in range(0,len(y0)):
+#         t_start = t_tuple[k][0]
+#         t_end = t_tuple[k][1]
+#         num = round((t_end - t_start)/stepsize + 1)
+#         t_points = np.linspace(t_start, t_end, num)
+#         y_object = solve_ivp(ode_func, (t_start, t_end + 1.1*stepsize), y0[k], t_eval = t_points, method ='BDF', rtol=1e-7, atol=1e-9)
+#         y_points = y_object.y.T
+#         if eps > 0:
+#             for i in range(0,y_points.shape[0]):
+#                 for j in range(0,y_points.shape[1]):
+#                     y_points[i][j] = y_points[i][j] + np.random.normal(0,eps)
+#         t_list.append(t_points)
+#         y_list.append(y_points)
+#     return t_list, y_list
 
 def diff_method(t_list, y_list, order, stepsize):
     """Using multi-step difference method (Adams5) to calculate the coefficiant matrix.
@@ -78,7 +89,7 @@ def diff_method(t_list, y_list, order, stepsize):
     final_b_mat = None
     
     L_y = y_list[0].shape[1]
-    gene = generate_complete_polynomail(L_y,order)
+    gene = generate_complete_polynomial(L_y,order)
     L_p = gene.shape[0]
 
     
@@ -116,22 +127,33 @@ def diff_method(t_list, y_list, order, stepsize):
 
 
 def diff_method1(t_list, y_list, order, stepsize):
-    """Using multi-step difference method (Adams5) to calculate the coefficiant matrix.
+    """Using multi-step difference method (backward differential formula)
+    to compute the estimated derivative at each point.
+
+    @t_list: list of time points.
+    @y_list: list of points at every time point.
+    @order: 
+
     """
     final_A_mat = None
     final_b_mat = None
     
+    # Number of variables
     L_y = y_list[0].shape[1]
-    gene = generate_complete_polynomail(L_y,order)
+    gene = generate_complete_polynomial(L_y,order)
+
+    # Number of monomials
     L_p = gene.shape[0]
 
-    
-
-    for k in range(0,len(y_list)):
+    # For every trajectory
+    for k in range(len(y_list)):
         t_points = t_list[k]
+        y_points = y_list[k]
+
+        # L_t: number of total time points. D: number of points we will get
         L_t = len(t_points)
         D = L_t - 5    #bdf5
-        y_points = y_list[k]
+
         # A_matrix = np.zeros((D*2, L_p), dtype=np.double)
         # b_matrix = np.zeros((D*2, L_y),  dtype=np.double)
         A_matrix = np.zeros((D, L_p), dtype=np.double)
@@ -157,75 +179,93 @@ def diff_method1(t_list, y_list, order, stepsize):
         for i in range(0, D):
             A_matrix[i] = coef_matrix[i+5]
             b_matrix[i] = (137 * y_points[i+5] - 300 * y_points[i+4] + 300 * y_points[i+3] - 200 * y_points[i+2] + 75 * y_points[i+1] - 12 * y_points[i])/(60 * stepsize)
-                
 
         if k == 0:
             final_A_mat = A_matrix
             final_b_mat = b_matrix
-        else :
+        else:
             final_A_mat = np.r_[final_A_mat,A_matrix]
             final_b_mat = np.r_[final_b_mat,b_matrix]
 
     return final_A_mat, final_b_mat
 
-def extend_coe(GT, maxL_p):
-    L_p = GT.shape[1]
-    L_y = GT.shape[0]
-    NGT = np.zeros((L_y,maxL_p))
-    # print(L_p)
-    # print(L_y)
-    # print(maxL_p)
-    # print(GT)
-    # print(NGT)
-    for i in range(0,L_y):
-        for j in range(0,L_p):
-            NGT[i][-j-1] = GT[i][-j-1]
-    # print(NGT)
-    return NGT
-
 
 def infer_dynamic(t_list, y_list, stepsize, order):
-    """ The main function to infer a dynamic system.
+    """Infer the ODE from a trajectory assumed to be in a single mode.
+
+    Uses pseudoinverse computation.
+
+    Returns the coefficients of the ODE.
+
     """
     start = time.time()
     A, b = diff_method(t_list, y_list, order, stepsize)
     end_diff = time.time()
+
     # Moore-Penrose Inverse (pseudoinverse)
-    # g = linalg.pinv(A).dot(b) # using least-square solver
-    g = pinv2(A).dot(b) # using using its singular-value decomposition and including all 'large' singular values.
+    # g = linalg.pinv(A).dot(b)  # using least-square solver
+
+    # Using its singular-value decomposition and including all 'large' singular values.
+    # Faster than pinv.
+    g = pinv2(A).dot(b)
     end_pseudoinv = time.time()
     return g.T, end_diff-start, end_pseudoinv-end_diff
 
 
-def parti(t_list,y_list,ep=0.5,an=1/6):
+def parti(t_list, y_list, ep=0.5, an=1/6):
+    """Partition method.
+
+    @an: angle.
+
+    """
     tpar_list = []
     ypar_list = []
-    for l in range(0,len(y_list)):
+
+    for l in range(len(y_list)):
         t_points = t_list[l]
         y_points = y_list[l]
         stepsize = t_list[l][1] - t_list[l][0]
+
+        # Number of data points
         row = y_points.shape[0]
+
+        # Number of variables
         col = y_points.shape[1]
+
+        # Difference between consecutive points
         diffmat = (y_points[1:][:] - y_points[0:row-1][:])/stepsize
+
+        # parpo stands for partition position
         parpo = [-1]
+
+        # Find sum of square of difference at each point
         diffmat2 = np.multiply(diffmat,diffmat)
         diffvecm = diffmat2.sum(axis=1)
-        for i in range(0,row-2):
+
+        for i in range(row-2):
             parbool = 0
+            # Detect of sum of squares changes by a lot
             if diffvecm[i+1]/diffvecm[i] > 1+ep or diffvecm[i+1]/diffvecm[i] < 1-ep:
                 parbool = 1
+            # If angle between consecutive derivatives is larger than limit
             if np.dot(diffmat[i+1],diffmat[i].T)/math.sqrt(diffvecm[i+1]*diffvecm[i]) < np.sin(an*np.pi):
                 parbool = 1
+            # Then start a new mode (if not at start of a mode already)
             if parbool == 1 and parpo[-1] != i:
                 parpo.append(i+1)
         parpo.append(row-1)
+        # Add the rest
         for i in range(0,len(parpo)-1):
             tpar_list.append(t_points[parpo[i]+1:parpo[i+1]])
             ypar_list.append(y_points[parpo[i]+1:parpo[i+1]][:])
+
     return tpar_list, ypar_list
 
 
-def dist(y_list,y_list_test):
+def dist(y_list, y_list_test):
+    """Maximum distance between two lists of matrices.
+
+    """
     leny = len(y_list)
     g = 0
     for i in range(0,leny):
@@ -239,6 +279,11 @@ def dist(y_list,y_list_test):
         
 
 def infer_dynamic_modes(t_list, y_list, stepsize, maxorder, ep=0.01):
+    """Implementation of a clustering method.
+
+    Later methods (infer_dynamic_modes_ex) should be better.
+
+    """
     len_tr = len(y_list)
     modes = []
     coefs = []
@@ -281,6 +326,9 @@ def infer_dynamic_modes(t_list, y_list, stepsize, maxorder, ep=0.01):
     return modes, coefs
 
 def infer_dynamic_modes_ex(t_list, y_list, stepsize, maxorder, ep=0.01):
+    """Implementation of a clustering method.
+
+    """
     len_tr = len(y_list)
     mode = []
     mode_tls = []
@@ -307,12 +355,12 @@ def infer_dynamic_modes_ex(t_list, y_list, stepsize, maxorder, ep=0.01):
                 comtu.append((t_list[l][0],t_list[l][-1]))
                 A, b = diff_method(comt, comy, od, stepsize)
                 g = pinv2(A).dot(b)
-                comttest, comytest = simulation_ode_stiff(ode_test(g.T,od), comy0, comtu, stepsize, eps=0)
+                comttest, comytest = simulation_ode(ode_test(g.T,od), comy0, comtu, stepsize, eps=0, solve_method='BDF')
                 dis.append(dist(comy,comytest))
                 cgt.append(g.T)
             A, b = diff_method(t_list[l:l+1], y_list[l:l+1], od, stepsize)
             g = pinv2(A).dot(b)
-            t_list_l, y_list_l = simulation_ode_stiff(ode_test(g.T,od), [y_list[l][0]], [(t_list[l][0],t_list[l][-1])], stepsize, eps=0)
+            t_list_l, y_list_l = simulation_ode(ode_test(g.T,od), [y_list[l][0]], [(t_list[l][0],t_list[l][-1])], stepsize, eps=0, solve_method='BDF')
             dis.append(dist(y_list[l:l+1],y_list_l))
             cgt.append(g.T)
             if min(dis) < ep:
@@ -347,7 +395,32 @@ def infer_dynamic_modes_ex(t_list, y_list, stepsize, maxorder, ep=0.01):
 
     return mode, mode_coe, mode_ord
 
+def extend_coe(GT, maxL_p):
+    """
+    Extend GT with to maxL_p monomials. Insert 0 for the new values. 
+
+    Used in infer_dynamic_modes_ex_dbs.
+    
+    """
+    # Number of monomials
+    L_p = GT.shape[1]
+
+    # Number of variables
+    L_y = GT.shape[0]
+
+    NGT = np.zeros((L_y,maxL_p))
+    for i in range(0,L_y):
+        for j in range(0,L_p):
+            NGT[i][-j-1] = GT[i][-j-1]
+
+    return NGT
+
 def infer_dynamic_modes_ex_dbs(t_list, y_list, stepsize, maxorder, ep=0.01):
+    """Implementation of clustering performed by DBSCAN.
+
+    Clustering based on coefficient of each mode.
+
+    """
     len_tr = len(y_list)
     mode = []
     mode_tls = []
@@ -356,7 +429,7 @@ def infer_dynamic_modes_ex_dbs(t_list, y_list, stepsize, maxorder, ep=0.01):
     mode_tul = []
     mode_coe = []
     mode_ord = []
-    gene = generate_complete_polynomail(y_list[0].shape[1],maxorder)
+    gene = generate_complete_polynomial(y_list[0].shape[1],maxorder)
     maxL_p = gene.shape[0]
     coefsing = np.zeros((len_tr,y_list[0].shape[1]*maxL_p))
     for l in range(0,len_tr):
@@ -366,7 +439,7 @@ def infer_dynamic_modes_ex_dbs(t_list, y_list, stepsize, maxorder, ep=0.01):
             print("try of order"+str(od))
             A, b = diff_method(t_list[l:l+1], y_list[l:l+1], od, stepsize)
             g = pinv2(A).dot(b)
-            t_list_l, y_list_l = simulation_ode_stiff(ode_test(g.T,od), [y_list[l][0]], [(t_list[l][0],t_list[l][-1])], stepsize, eps=0)
+            t_list_l, y_list_l = simulation_ode(ode_test(g.T,od), [y_list[l][0]], [(t_list[l][0],t_list[l][-1])], stepsize, eps=0, solve_method='BDF')
             dis = dist(y_list[l:l+1],y_list_l)
             cgt = g.T
             if dis < ep:
@@ -382,11 +455,18 @@ def infer_dynamic_modes_ex_dbs(t_list, y_list, stepsize, maxorder, ep=0.01):
         # print(matarr)
 
 
+        # Can also consider using KMeans, etc.
         db = skc.DBSCAN(eps=0.1, min_samples=2).fit(coefsing)
         labels = db.labels_
     return labels
 
 def infer_dynamic_modes_exx(t_list, y_list, stepsize, maxorder, ep=0.01):
+    """Similar to infer_dynamic_modes_ex.
+    
+    Don't try higher orders if lower order is already good enough
+    (according to ep).
+
+    """
     len_tr = len(y_list)
     mode = []
     mode_tls = []
@@ -418,7 +498,7 @@ def infer_dynamic_modes_exx(t_list, y_list, stepsize, maxorder, ep=0.01):
                     A, b = diff_method(comt, comy, od, stepsize)
                     g = pinv2(A).dot(b)
                     print("try of order"+str(od)+"simu")
-                    comttest, comytest = simulation_ode_stiff(ode_test(g.T,od), comy0, comtu, stepsize, eps=0)
+                    comttest, comytest = simulation_ode(ode_test(g.T,od), comy0, comtu, stepsize, eps=0, solve_method='BDF')
                     print("try of order"+str(od)+"dist")
                     dis.append(dist(comy,comytest))
                     disod.append(od)
@@ -445,7 +525,7 @@ def infer_dynamic_modes_exx(t_list, y_list, stepsize, maxorder, ep=0.01):
                 print("new of order"+str(od))
                 A, b = diff_method(t_list[l:l+1], y_list[l:l+1], od, stepsize)
                 g = pinv2(A).dot(b)
-                t_list_l, y_list_l = simulation_ode_stiff(ode_test(g.T,od), [y_list[l][0]], [(t_list[l][0],t_list[l][-1])], stepsize, eps=0)
+                t_list_l, y_list_l = simulation_ode(ode_test(g.T,od), [y_list[l][0]], [(t_list[l][0],t_list[l][-1])], stepsize, eps=0, solve_method='BDF')
                 dis.append(dist(y_list[l:l+1],y_list_l))
                 cgt.append(g.T)
             p = dis.index(min(dis))
@@ -461,6 +541,12 @@ def infer_dynamic_modes_exx(t_list, y_list, stepsize, maxorder, ep=0.01):
 
 
 def lineg(labell, A_list, b_list):
+    """Perform linear regression (try to stack).
+
+    @A_list: matrix A.
+    @b_list: vector b.
+
+    """
     l = len(labell)
     print(labell)
     A = A_list[labell[0]]
@@ -478,8 +564,10 @@ def lineg(labell, A_list, b_list):
     return g
 
 
-
-def distlg(g,label,A_list, b_list):
+def distlg(g, label, A_list, b_list):
+    """Distance between A * g and b (maximum of absolute value of difference).
+    
+    """
     A = A_list[label]
     b = b_list[label]
     bb = np.matmul(A, g.T)
@@ -492,6 +580,11 @@ def distlg(g,label,A_list, b_list):
 
 
 def infer_dynamic_modes_pie(t_list, y_list, stepsize, maxorder, ep=0.1):
+    """Another clustering method (assume trajectory is already partitioned).
+
+    Works on the coefficients of the ODE.
+
+    """
     len_tr = len(y_list)
     A_list = []
     b_list = []
@@ -520,20 +613,19 @@ def infer_dynamic_modes_pie(t_list, y_list, stepsize, maxorder, ep=0.1):
         G.append(g)
         labell.append(label)
 
-
-        
-    
-    return G,labell
+    return G, labell
 
 def diff_method_new(t_list, y_list, order, stepsize):
-    """Using multi-step difference method (bdf) to calculate the coefficiant matrix.
+    """Using multi-step difference method (BDF) to calculate the
+    coefficient matrix.
+
     """
     final_A_mat = None
     final_b_mat = None
     final_y_mat = None
     
     L_y = y_list[0].shape[1]
-    gene = generate_complete_polynomail(L_y,order)
+    gene = generate_complete_polynomial(L_y,order)
     L_p = gene.shape[0]
 
     for k in range(0,len(y_list)):
@@ -569,14 +661,16 @@ def diff_method_new(t_list, y_list, order, stepsize):
 
 
 def diff_method_new1(t_list, y_list, order, stepsize):
-    """Using multi-step difference method (bdf) to calculate the coefficiant matrix.
+    """Using multi-step difference method (Adams) to calculate the
+    coefficient matrix.
+
     """
     final_A_mat = None
     final_b_mat = None
     final_y_mat = None
     
     L_y = y_list[0].shape[1]
-    gene = generate_complete_polynomail(L_y,order)
+    gene = generate_complete_polynomial(L_y,order)
     L_p = gene.shape[0]
 
     for k in range(0,len(y_list)):
@@ -611,6 +705,10 @@ def diff_method_new1(t_list, y_list, order, stepsize):
     return final_A_mat, final_b_mat, final_y_mat
 
 def compare(A,B,ep):
+    """Check the relative difference |A - B| / A is larger/smaller
+    than ep.
+    
+    """
     C = A - B
     r = 1
     for i in range(0,C.shape[0]):
@@ -622,7 +720,8 @@ def compare(A,B,ep):
                 r = 0
     return r
 
-def matrowex(matr,l):
+def matrowex(matr, l):
+    """Pick some rows of a matrix to form a new matrix."""
     finalmat = None
     for i in range(0,len(l)):
         if i == 0:
@@ -632,7 +731,9 @@ def matrowex(matr,l):
     return finalmat
 
 def infer_dynamic_modes_new(t_list, y_list, stepsize, maxorder, ep=0.1):
+    """Implementation of Alur's method (extended to nonlinear case).
 
+    """
     A, b, Y = diff_method_new(t_list, y_list, maxorder, stepsize)
     leng = Y.shape[0]
     label_list = []

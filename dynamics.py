@@ -35,6 +35,37 @@ def fvdp3_1(t,y):
     sigma = 10
     beta = Fraction(8,3)
     rho = 28
+
+    dydt  = [sigma*(y1-y0), y0*(rho-y2)-y1, y0*y1-beta*y2]
+    return dydt
+
+
+def fvdp3_2(t,y):
+    """Lorenz attractor."""
+    y0, y1, y2 = y
+    # sigma = 10
+    # beta = Fraction(8,3)
+    # rho = 28
+    sigma = 28
+    beta = 4
+    rho = 46.92
+
+    dydt  = [sigma*(y1-y0), y0*(rho-y2)-y1, y0*y1-beta*y2]
+    return dydt
+
+
+def fvdp3_3(t,y):
+    """Lorenz attractor."""
+    y0, y1, y2 = y
+    if y1+y0>0:
+        sigma = 10
+        beta = Fraction(8,3)
+        rho = 28
+    else:
+        sigma = 28
+        beta = 4
+        rho = 46.92
+
     dydt  = [sigma*(y1-y0), y0*(rho-y2)-y1, y0*y1-beta*y2]
     return dydt
 

@@ -6,12 +6,16 @@ from mpl_toolkits import mplot3d
 # from scipy.integrate import odeint, solve_ivp
 import time
 import sys, os
+import random
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))) # ADD the path of the parent dir
 
 from scipy.linalg import pinv, pinv2
 from scipy.integrate import odeint, solve_ivp
 from dynamics import dydx3, fvdp2_1, fvdp3_1, fvdp3_2, fvdp3_3, mode2_1, mode2_11, mode2_1_test, conti_test, conti_test_test, conti_test1, ode_test
-from infer_multi_ch import simulation_ode, infer_dynamic, parti, infer_dynamic_modes_ex, infer_dynamic_modes_exx, dist, diff_method, infer_dynamic_modes_ex_dbs, infer_dynamic_modes_pie, infer_dynamic_modes_new, diff_method_new1, diff_method_new
+from infer_multi_ch import simulation_ode, infer_dynamic, parti, infer_dynamic_modes_ex, \
+    infer_dynamic_modes_exx, dist, diff_method, infer_dynamic_modes_ex_dbs, infer_dynamic_modes_pie, \
+    infer_dynamic_modes_new, diff_method_new1, diff_method_new
+import infer_multi_ch
 from generator import generate_complete_polynomial
 import dynamics
 import warnings
@@ -292,8 +296,26 @@ def case4():
     # print("a3",a3)
     # print("g",g)
 
+
+def case5():
+    y0 = [[5,5,5], [2,2,2]]
+    t_tuple = [(0,5),(0,5)]
+    stepsize = 0.01
+    maxorder = 2
+    t_list, y_list = simulation_ode(fvdp3_3, y0, t_tuple, stepsize, eps=0)
+    clfs, boundary = infer_multi_ch.infer_multi_linear(t_list, y_list, stepsize, maxorder)
+    for clf in clfs:
+        print(clf.coef_)
+    print(boundary)
+    num_pt0 = y_list[0].shape[0]
+    for i in range(10):
+        index = random.choice(range(num_pt0))
+        x = y_list[0][index]
+        print(infer_multi_ch.test_classify(fvdp3_3, clfs, boundary, maxorder, x))
+
+
 if __name__ == "__main__":
     # case1()
     # case2()
     # case3()
-    case4()
+    case5()

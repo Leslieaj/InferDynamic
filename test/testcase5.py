@@ -17,7 +17,8 @@ from dynamics import dydx3, fvdp2_1, fvdp3_1, fvdp3_2, fvdp3_3, \
     incubator_mode1, incubator_mode2, event1
 from infer_multi_ch import simulation_ode, infer_dynamic, parti, infer_dynamic_modes_ex, \
     infer_dynamic_modes_exx, dist, diff_method, infer_dynamic_modes_ex_dbs, infer_dynamic_modes_pie, \
-    infer_dynamic_modes_new, diff_method_new1, diff_method_new, simulation_ode_2
+    infer_dynamic_modes_new, diff_method_new1, diff_method_new, simulation_ode_2, diff_method_backandfor
+
 import infer_multi_ch
 from generator import generate_complete_polynomial
 import dynamics
@@ -208,10 +209,13 @@ def case3():
     t_list, y_list = simulation_ode(fvdp3_3, y0, t_tuple, stepsize, eps=0)
     draw3D(y_list)
     A, b, Y = diff_method_new1(t_list, y_list, maxorder, stepsize)
-    P,G,D = infer_dynamic_modes_new(t_list, y_list, stepsize, maxorder, 0.02)
-    print(P)
-    print(G)
-    print(D)
+    A, b1, b2, Y = diff_method_backandfor(t_list, y_list, maxorder, stepsize)
+    print(b1)
+    print(b2)
+    # P,G,D = infer_dynamic_modes_new(t_list, y_list, stepsize, maxorder, 0.02)
+    # print(P)
+    # print(G)
+    # print(D)
     # y = []
     # x = []
 
@@ -311,10 +315,21 @@ def case5():
         print(clf.coef_)
     print(boundary)
     num_pt0 = y_list[0].shape[0]
-    for i in range(10):
-        index = random.choice(range(num_pt0))
-        x = y_list[0][index]
+    num_pt1 = y_list[1].shape[0]
+    sum = 0
+    for i in range(100):
+
+        # index = random.choice(range(num_pt0))
+        x = y_list[0][i]
+        # sum += infer_multi_ch.test_classify(fvdp3_3, clfs, boundary, maxorder, x)
         print(infer_multi_ch.test_classify(fvdp3_3, clfs, boundary, maxorder, x))
+    # for i in range(num_pt1):
+
+    #     # index = random.choice(range(num_pt0))
+    #     x = y_list[1][i]
+    #     sum += infer_multi_ch.test_classify(fvdp3_3, clfs, boundary, maxorder, x)
+    
+    # print(sum/(num_pt0+num_pt1))
 
 
 def case6():
@@ -337,5 +352,5 @@ if __name__ == "__main__":
     # case1()
     # case2()
     # case3()
-    # case5()
-    case6()
+    case5()
+    # case6()

@@ -18,6 +18,7 @@ from sklearn.linear_model import Ridge
 from libsvm.svmutil import *
 
 
+
 def simulation_ode(ode_func, y0, t_tuple, stepsize, noise_type=1, eps=0, solve_method='RK45'):
     """ Given a ODE function, some initial state, stepsize, then return the points.
 
@@ -139,6 +140,12 @@ def simulation_ode_2(modelist, event, y0, t_tuple, stepsize):
 #         t_list.append(t_points)
 #         y_list.append(y_points)
 #     return t_list, y_list
+
+def norm(V):
+    s = 0
+    for i in range(0,V.shape[0]):
+        s= s+ V[i]**2
+    return np.sqrt(s)
 
 def diff_method(t_list, y_list, order, stepsize):
     """Using multi-step difference method (Adams5) to calculate the coefficiant matrix.
@@ -719,6 +726,58 @@ def diff_method_new(t_list, y_list, order, stepsize):
     return final_A_mat, final_b_mat, final_y_mat
 
 
+def diff_method_backandfor(t_list, y_list, order, stepsize):
+    """Using multi-step difference method (BDF) to calculate the
+    coefficient matrix.
+
+    """
+    final_A_mat = None
+    final_b1_mat = None
+    final_b2_mat = None
+    final_y_mat = None
+    
+    L_y = y_list[0].shape[1]
+    gene = generate_complete_polynomial(L_y,order)
+    L_p = gene.shape[0]
+
+    for k in range(0,len(y_list)):
+        t_points = t_list[k]
+        L_t = len(t_points)
+        D = L_t - 5    #order5
+        y_points = y_list[k]
+        A_matrix = np.zeros((D-5, L_p), dtype=np.double)
+        b1_matrix = np.zeros((D-5, L_y),  dtype=np.double)
+        b2_matrix = np.zeros((D-5, L_y),  dtype=np.double)
+        y_matrix = np.zeros((D-5, L_y),  dtype=np.double)
+        coef_matrix = np.ones((L_t, L_p), dtype=np.double)
+        for i in range(0,L_t):
+            for j in range(0,L_p):
+                for l in range(0,L_y):
+                   coef_matrix[i][j] = coef_matrix[i][j] * (y_points[i][l] ** gene[j][l])
+
+        for i in range(5, D):
+                # forward
+            A_matrix[i-5] = coef_matrix[i]
+            b1_matrix[i-5] = (137 * y_points[i] - 300 * y_points[i-1] + 300 * y_points[i-2] -
+                           200 * y_points[i-3] + 75 * y_points[i-4] - 12 * y_points[i-5]) / (60 * stepsize)
+            b2_matrix[i-5] = (-137 * y_points[i] + 300 * y_points[i+1] - 300 * y_points[i+2] + 
+                            200 * y_points[i+3] - 75 * y_points[i+4] + 12 * y_points[i+5])/ (60 * stepsize)
+            y_matrix[i-5] = y_points[i]
+        if k == 0:
+            final_A_mat = A_matrix
+            final_b1_mat = b1_matrix
+            final_b2_mat = b2_matrix
+            final_y_mat = y_matrix
+
+        else :
+            final_A_mat = np.r_[final_A_mat,A_matrix]
+            final_b1_mat = np.r_[final_b1_mat,b1_matrix]
+            final_b2_mat = np.r_[final_b2_mat,b2_matrix]
+            final_y_mat = np.r_[final_y_mat,y_matrix]
+
+    return final_A_mat, final_b1_mat, final_b2_mat, final_y_mat
+
+
 def diff_method_new1(t_list, y_list, order, stepsize):
     """Using multi-step difference method (Adams) to calculate the
     coefficient matrix.
@@ -971,6 +1030,118 @@ def infer_multi_linear(t_list, y_list, stepsize, maxorder, ep=0.001):
     return clfs, [a1, a2, a3, g]
 
 
+
+
+def infer_multi_linear_new(t_list, y_list, stepsize, maxorder, ep=0.001):
+    num_neigh = 30
+    num_step = 50
+    num_mode = 2
+
+    # First apply Linear Multistep Method
+    A, b1, b2, Y = diff_method_backandfor(t_list, y_list, maxorder, stepsize)
+    num_pt = Y.shape[0]
+
+    
+    def valid(p):
+        if norm(b1[p]-b2[p])/(norm(b1[p])+norm(b2[p])) < 0.02:
+            return True
+        else:
+            return False
+
+    
+    # Get neighborhood of a point
+    def get_neigh(p):
+        dists = [((A[p]-A[i]).dot(A[p]-A[i]), i) for i in range(num_pt) if valid(i)]
+        dists = sorted(dists)
+        return [i for _, i in dists[:num_neigh]]
+
+    # Predict for a given point
+    def predict_for_pt(p):
+        clf = linear_model.LinearRegression(fit_intercept=False)
+        
+        neigh = get_neigh(p)
+        clf.fit(matrowex(A, neigh), matrowex(b1, neigh))
+        diff_mat = clf.predict(matrowex(A, neigh)) - matrowex(b1, neigh)
+        return np.square(diff_mat).sum(), clf.coef_
+
+    # Apply KMeans
+    res = []
+    chosen_pts = list(np.random.permutation(num_pt)[:num_step])
+    for p in chosen_pts:
+        if valid(p):
+            err, coef = predict_for_pt(p)
+            if err < ep:
+                res.append((err, p, coef))
+
+    num_coeff = res[0][2].shape[0] * res[0][2].shape[1]
+    cluster_res = [res[i][2].reshape((num_coeff,)) for i in range(len(res))]
+    kmeans = skc.KMeans(n_clusters=num_mode, random_state=0)
+    kmeans.fit(cluster_res)
+
+    # Collect point for each mode and fit again
+    mode_pts = []
+    for i in range(num_mode):
+        mode_pts.append([])
+    for i, lab in enumerate(kmeans.labels_):
+        mode_pts[lab].extend(get_neigh(res[i][1]))
+    for i in range(num_mode):
+        mode_pts[i] = sorted(list(set(mode_pts[i])))
+
+    # Get final results
+    clfs = []
+    for i in range(num_mode):
+        clf = linear_model.LinearRegression(fit_intercept=False)
+
+        clf.fit(matrowex(A, mode_pts[i]), matrowex(b1, mode_pts[i]))
+        clfs.append(clf)
+
+    # Perform classification using SVM
+    def predict_point(p):
+        diffs = []
+        for i in range(num_mode):
+            pred_b = clfs[i].predict(matrowex(A, [p]))
+            actual_b = matrowex(b1, [p])
+            diff = np.square(pred_b - actual_b).sum()
+            diffs.append((diff, i))
+        return sorted(diffs)[0][1]
+
+    labels = []
+    positions = []
+    for i in range(num_pt):
+        if valid(i):
+            if predict_point(i) == 0:
+                labels.append(-1)
+            else:
+                labels.append(1)
+            positions.append({1: Y[i,0], 2: Y[i,1], 3: Y[i,2]})
+
+    prob = svm_problem(labels, positions)
+    param = svm_parameter('-t 1 -d 1 -c 10 -b 0')
+    m = svm_train(prob, param)
+    svm_save_model('model_file', m)
+    p_label, p_acc, p_val = svm_predict(labels, positions, m)
+
+    nsv = m.get_nr_sv()
+    svc = m.get_sv_coef()
+    sv = m.get_SV()
+
+    g = -m.rho[0]
+    a1 = 0
+    a2 = 0
+    a3 = 0
+    for i in range(0,nsv):
+        a1 = a1 + svc[i][0] * 0.5 * sv[i][1]
+        a2 = a2 + svc[i][0] * 0.5 * sv[i][2]
+        a2 = a2 + svc[i][0] * 0.5 * sv[i][3]
+
+    print("a1",a1)
+    print("a2",a2)
+    print("a3",a3)
+    print("g",g)
+
+    return clfs, [a1, a2, a3, g]
+
+
 def test_classify(f, clfs, boundary, maxorder, x):
     """Test a classification."""
     a1, a2, a3, g = boundary
@@ -994,10 +1165,14 @@ def test_classify(f, clfs, boundary, maxorder, x):
         else:
             return clfs[0].predict(poly_pt)
 
-    diff1 = f(0.0, x)
-    diff2 = predict_deriv(x)
-    err = diff1 - diff2
-    return np.sqrt(np.square(err).sum())
+    diff1 = np.array(f(0.0, x))
+    # print('diff1',diff1)
+    # print('nd1',norm(diff1))
+    diff2 = predict_deriv(x).ravel()
+    # print('diff2',diff2)
+    # print('nd2',norm(diff2))
+    err = norm(diff1-diff2)/(norm(diff1)+norm(diff2))
+    return err
 
 
 # def test_infer_dynamic_modes_new(t_list, y_list, stepsize, maxorder, ep=0.1):

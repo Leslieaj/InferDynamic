@@ -2,7 +2,7 @@
 import numpy as np
 from fractions import Fraction
 from generator import generate_complete_polynomial
-
+from functools import wraps
 model = 0
 
 def dydx1(t,y):
@@ -179,3 +179,41 @@ def ode_test(result_coef,order):
         # print("out")
         return dydt
     return ode
+
+
+def incubator_mode1(t,y):
+    """ A hybrid automaton with 2 modes for an incubator.
+
+    Returns derivative at point y = (y0, y1).
+
+        """
+    y0, y1 = y
+    dydt = [-0.26 * (y0-y1), -1]
+    return dydt
+
+def incubator_mode2(t,y):
+    """ A hybrid automaton with 2 modes for an incubator.
+
+    Returns derivative at point y = (y0, y1).
+
+        """
+    y0, y1 = y
+    dydt = [-0.26 * (y0-y1), 1]
+    return dydt
+
+
+def eventAttr():
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            return func(*args, **kwargs)
+        wrapper.direction = 0
+        wrapper.terminal = True
+        return wrapper
+    return decorator
+
+
+@eventAttr()
+def event1(t,y):
+    y0, y1 = y
+    return y0

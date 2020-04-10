@@ -55,6 +55,62 @@ def simulation_ode(ode_func, y0, t_tuple, stepsize, noise_type=1, eps=0, solve_m
     return t_list, y_list
 
 
+def simulation_ode_2(modelist, event, y0, t_tuple, stepsize):
+    
+    t_list = []
+    y_list = []
+
+    for k in range(0,len(y0)):
+        t_start = t_tuple[k][0]
+        t_end = t_tuple[k][1]
+        yinitial = y0[k]
+
+        num = round((t_end - t_start)/stepsize + 1)
+        t_points = np.linspace(t_start, t_end, num)
+        T_points = np.linspace(t_start, t_end, num)
+        # change = 1
+        status = 1
+        if event(0,y0[k])>0:
+            label = 0
+        else:
+            label = 1
+        ite = 0
+        # while change > 0:
+        while status == 1:
+            ite = ite + 1
+            print(ite)
+            print(yinitial)
+            y_object = solve_ivp(modelist[label], (t_start, t_end + 1.1*stepsize), yinitial, t_eval = t_points, method='RK45', rtol=1e-7, atol=1e-9, max_step = stepsize/10, events=[event], dense_output=True)
+            # change = y_object.t_events[0].shape[0]
+            status = y_object.status
+            if status == 1:
+                if label == 1:
+                    label = 0
+                else:
+                    label = 1
+                t_start = y_object.t_events[0][0]
+                l = t_points.shape[0]
+                for i in range(0,l):
+                    if t_points[i] > t_start:
+                        break
+                t_points=t_points[i:]
+                sol = y_object.sol
+                yinitial = sol.__call__(t_start + stepsize/100)
+                y_points = y_object.y.T
+                y_points = y_points[0:i]
+            else: 
+                y_points = y_object.y.T
+
+            if ite == 1:
+                Y_points = y_points
+            else:
+                Y_points = np.r_[Y_points,y_points]
+        t_list.append(T_points)
+        y_list.append(Y_points)
+    return t_list, y_list
+
+
+
 # def simulation_ode_stiff(ode_func, y0, t_tuple, stepsize, noise_type=1, eps=0):
 #     """ Given a ODE function, some initial state, stepsize, then return the points.
 
@@ -751,13 +807,13 @@ def infer_dynamic_modes_new(t_list, y_list, stepsize, maxorder, ep=0.1):
         print("label",len(label_list))
         p = random.choice(label_list)
         clf = linear_model.LinearRegression(fit_intercept=False)
-        print("fitstart")
-        clf.fit (np.mat(A[p]), np.mat(b[p]))
-        g = clf.coef_
-        print("fitend")
-        pp = [p]
+        # print("fitstart")
+        # print("fitend")
+        pp = [p-1,p,p+1]
+        clf.fit (matrowex(A,pp), matrowex(b,pp))
         pre = clf.predict(matrowex(A,pp))
-        print("first")
+        ppp = pp[:]
+        # print("first")
         retation = 0
         while compare(matrowex(b,pp),pre,ep) ==1:
             retation += 1
@@ -777,13 +833,13 @@ def infer_dynamic_modes_new(t_list, y_list, stepsize, maxorder, ep=0.1):
                     pp.append(pp[-1]+1)
                     reta = 1
             
-            if reta == 0 or retation >= 10:
+            if reta == 0 or retation >= 30:
                 break
 
             clf.fit (matrowex(A,pp), matrowex(b,pp))
             pre = clf.predict(matrowex(A,pp))
         
-        if len(ppp)<3:
+        if len(ppp)<10:
             label_list.remove(p)
             drop.append(p)
             continue
@@ -801,11 +857,14 @@ def infer_dynamic_modes_new(t_list, y_list, stepsize, maxorder, ep=0.1):
                     ppp.append(label_list[i])
         
         gp = ppp[:]
-        g = clf.coef_
-        P.append(gp)
-        G.append(g)
-        for ele in gp:
-            label_list.remove(ele)
+        if len(gp) < 10:
+            label_list.remove(p)
+        else:
+            g = clf.coef_
+            P.append(gp)
+            G.append(g)
+            for ele in gp:
+                label_list.remove(ele)
 
     drop.sort() 
 

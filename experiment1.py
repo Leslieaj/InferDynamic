@@ -91,20 +91,17 @@ def event1(t,y):
     return y0
 
 
-def case(y0,t_tuple,stepsize,maxorder,modelist,event,ep,method):
+def case(y0, t_tuple, stepsize, maxorder, modelist, event, ep, method):
+    # print('Simulating')
     t_list, y_list = simulation_ode_2(modelist, event, y0, t_tuple, stepsize)
-    
-    
+
     if method == "new":
-        
-        
+        # print('Classifying')
         A, b, Y = diff_method_new(t_list, y_list, maxorder, stepsize)
-        P,G,D = infer_dynamic_modes_new(t_list, y_list, stepsize, maxorder, ep)
-        P,G = reclass(A,b,P,ep)
-        P,D=dropclass(P,G,D,A,b,Y,ep,stepsize)
-        print(len(P))
-        
-        
+        P, G, D = infer_dynamic_modes_new(t_list, y_list, stepsize, maxorder, ep)
+        P, G = reclass(A, b, P, ep)
+        P, D = dropclass(P, G, D, A, b, Y, ep, stepsize)
+        # print('Number of modes:', len(P))
 
         y = []
         x = []
@@ -118,7 +115,7 @@ def case(y0,t_tuple,stepsize,maxorder,modelist,event,ep,method):
             x.append({1:Y[P[1][j],0], 2:Y[P[1][j],1]})
 
         prob  = svm_problem(y, x)
-        param = svm_parameter('-t 1 -d 1 -c 10 -r 1 -b 0 ')
+        param = svm_parameter('-t 1 -d 1 -c 10 -r 1 -b 0 -q')
         m = svm_train(prob, param)
         svm_save_model('model_file', m)
         nsv = m.get_nr_sv()
@@ -167,7 +164,7 @@ def case(y0,t_tuple,stepsize,maxorder,modelist,event,ep,method):
             for j in range(diff.shape[1]):
                 c=c+diff[0,j]**2
                 a=a+exact[0,j]**2
-                b=b+exact[0,j]**2
+                b=b+predict[0,j]**2
             f1 = np.sqrt(c)
             f2 = np.sqrt(a)+np.sqrt(b)
             sum = sum + f1/f2
@@ -175,20 +172,11 @@ def case(y0,t_tuple,stepsize,maxorder,modelist,event,ep,method):
     return sum/num
 
 
+if __name__ == "__main__":
+    y0 = [[1,3],[-1,-2]]
+    t_tuple = [(0,20),(0,10)]
+    stepsize = 0.01
+    maxorder = 2
 
-
-
-
-y0 = [[1,3],[-1,-2]]
-t_tuple = [(0,20),(0,10)]
-stepsize = 0.01
-maxorder = 2
-
-a = case(y0,t_tuple,stepsize,maxorder,mode2,event1,0.01,"new")
-print(a)
-
-            
-
-                
-
-
+    a = case(y0,t_tuple,stepsize,maxorder,mode2,event1,0.01,"new")
+    print(a)

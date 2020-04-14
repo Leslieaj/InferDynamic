@@ -95,8 +95,8 @@ def case(y0,t_tuple,stepsize,maxorder,modelist,event,ep,method):
         A, b, Y = diff_method_new(t_list, y_list, maxorder, stepsize)
         P,G,D = infer_dynamic_modes_new(t_list, y_list, stepsize, maxorder, 0.01)
         P,D=dropclass(P,G,D,A,b,Y,0.01,stepsize)
-        print(len(P))
-        print(G)
+        # print(len(P))
+        # print(G)
         
 
         y = []
@@ -111,10 +111,10 @@ def case(y0,t_tuple,stepsize,maxorder,modelist,event,ep,method):
             x.append({1:Y[P[1][j],0], 2:Y[P[1][j],1]})
 
         prob  = svm_problem(y, x)
-        param = svm_parameter('-t 1 -d 2 -r 1 -c 10 -b 0')
+        param = svm_parameter('-t 1 -d 2 -r 1 -c 10 -b 0 -q')
         m = svm_train(prob, param)
         svm_save_model('model_file', m)
-        p_label, p_acc, p_val = svm_predict(y, x, m)
+        # p_label, p_acc, p_val = svm_predict(y, x, m)
         nsv = m.get_nr_sv()
         svc = m.get_sv_coef()
         sv = m.get_SV()
@@ -157,7 +157,7 @@ def case(y0,t_tuple,stepsize,maxorder,modelist,event,ep,method):
             for j in range(diff.shape[1]):
                 c=c+diff[0,j]**2
                 a=a+exact[0,j]**2
-                b=b+exact[0,j]**2
+                b=b+predict[0,j]**2
             f1 = np.sqrt(c)
             f2 = np.sqrt(a)+np.sqrt(b)
             sum = sum + f1/f2
@@ -165,9 +165,10 @@ def case(y0,t_tuple,stepsize,maxorder,modelist,event,ep,method):
     return sum/num
 
 
-y0 = [[0,1],[0,2],[0,3],[0,4],[0,5]]
-t_tuple = [(0,20),(0,20),(0,20),(0,20),(0,20)]
-stepsize = 0.01
-maxorder = 3
-a = case(y0,t_tuple,stepsize,maxorder,mode,event1,0.01,"new")
-print(a)
+if __name__ == "__main__":
+    y0 = [[0,1],[0,2],[0,3],[0,4],[0,5]]
+    t_tuple = [(0,20),(0,20),(0,20),(0,20),(0,20)]
+    stepsize = 0.01
+    maxorder = 3
+    a = case(y0,t_tuple,stepsize,maxorder,mode,event1,0.01,"new")
+    print(a)

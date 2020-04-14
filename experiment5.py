@@ -108,13 +108,11 @@ def case(y0,t_tuple,stepsize,maxorder,modelist,eventlist,labeltest,ep,method):
     t_list, y_list = simulation_ode_3(modelist, eventlist, labeltest, y0, t_tuple, stepsize)
 
     if method == "new":
-        
-        
         A, b, Y = diff_method_new(t_list, y_list, maxorder, stepsize)
         P,G,D = infer_dynamic_modes_new(t_list, y_list, stepsize, maxorder, ep)
         P,G = reclass(A,b,P,ep)
         P,D = dropclass(P,G,D,A,b,Y,ep,stepsize)
-        print(G)
+        # print(G)
 
         for i in range(0,len(P)):
             y0_list = []
@@ -123,8 +121,8 @@ def case(y0,t_tuple,stepsize,maxorder,modelist,eventlist,labeltest,ep,method):
                 y0_list.append(Y[P[i][j],0])
                 y1_list.append(Y[P[i][j],1])
         
-            plt.scatter(y0_list,y1_list,s=1)
-        plt.show()
+            # plt.scatter(y0_list,y1_list,s=1)
+        # plt.show()
 
         y=[]
         x=[]
@@ -142,7 +140,7 @@ def case(y0,t_tuple,stepsize,maxorder,modelist,eventlist,labeltest,ep,method):
             x.append({1:Y[P[0][j],0], 2:Y[P[0][j],1]})
 
         prob  = svm_problem(y, x)
-        param = svm_parameter('-t 1 -d 1 -c 100 -r 1 -b 0')
+        param = svm_parameter('-t 1 -d 1 -c 100 -r 1 -b 0 -q')
         m = svm_train(prob, param)
         svm_save_model('model_file1', m)
         nsv = m.get_nr_sv()
@@ -162,8 +160,6 @@ def case(y0,t_tuple,stepsize,maxorder,modelist,eventlist,labeltest,ep,method):
                 g = g + svc[i][0] * (0.5*(x[0]*sv[i][1]+x[1]*sv[i][2])+1)
             return g>0
 
-        
-
         x=[]
         y=[]
 
@@ -176,10 +172,10 @@ def case(y0,t_tuple,stepsize,maxorder,modelist,eventlist,labeltest,ep,method):
             x.append({1:Y[P[0][j],0], 2:Y[P[0][j],1]})
 
         prob  = svm_problem(y, x)
-        param = svm_parameter('-t 1 -d 1 -c 100 -r 1 -b 0')
+        param = svm_parameter('-t 1 -d 1 -c 100 -r 1 -b 0 -q')
         n = svm_train(prob, param)
         svm_save_model('model_file2', n)
-        p_label, p_acc, p_val = svm_predict(y, x, n)
+        # p_label, p_acc, p_val = svm_predict(y, x, n)
         nsv1 = n.get_nr_sv()
         svc1 = n.get_sv_coef()
         sv1 = n.get_SV()
@@ -228,17 +224,19 @@ def case(y0,t_tuple,stepsize,maxorder,modelist,eventlist,labeltest,ep,method):
             for j in range(diff.shape[1]):
                 c=c+diff[0,j]**2
                 a=a+exact[0,j]**2
-                b=b+exact[0,j]**2
+                b=b+predict[0,j]**2
             f1 = np.sqrt(c)
             f2 = np.sqrt(a)+np.sqrt(b)
             sum = sum + f1/f2
 
     return sum/num
 
-y0 = [[-1,1],[1,4],[2,-3]]
-t_tuple = [(0,5),(0,5),(0,5)]
-stepsize = 0.01
-maxorder = 2
-eventlist=[eventtr_1,eventtr_2,eventtr_2]
-a = case(y0,t_tuple,stepsize,maxorder,modetr,eventlist,labeltest,0.01,"new")
-print(a)
+
+if __name__ == "__main__":
+    y0 = [[-1,1],[1,4],[2,-3]]
+    t_tuple = [(0,5),(0,5),(0,5)]
+    stepsize = 0.01
+    maxorder = 2
+    eventlist=[eventtr_1,eventtr_2,eventtr_2]
+    a = case(y0,t_tuple,stepsize,maxorder,modetr,eventlist,labeltest,0.01,"new")
+    print(a)

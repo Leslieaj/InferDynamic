@@ -12,7 +12,6 @@ from draw import draw, draw2D
 
 import sklearn.cluster as skc
 from sklearn import metrics   # 评估模型
-from sklearn.datasets.samples_generator import make_blobs
 from sklearn import linear_model
 from sklearn.linear_model import Ridge
 from libsvm.svmutil import *
@@ -56,7 +55,7 @@ def simulation_ode(ode_func, y0, t_tuple, stepsize, noise_type=1, eps=0, solve_m
     return t_list, y_list
 
 
-def simulation_ode_2(modelist, event, y0, t_tuple, stepsize):
+def simulation_ode_2(modelist, event, y0, t_tuple, stepsize, verbose=False):
     
     t_list = []
     y_list = []
@@ -79,8 +78,8 @@ def simulation_ode_2(modelist, event, y0, t_tuple, stepsize):
         # while change > 0:
         while status == 1:
             ite = ite + 1
-            print(ite)
-            print(yinitial)
+            if verbose:
+                print('Round', str(ite) + ':', 'y =', yinitial)
             y_object = solve_ivp(modelist[label], (t_start, t_end + 1.1*stepsize), yinitial, t_eval = t_points, method='RK45', rtol=1e-7, atol=1e-9, max_step = stepsize/10, events=[event], dense_output=True)
             # change = y_object.t_events[0].shape[0]
             status = y_object.status
@@ -90,7 +89,8 @@ def simulation_ode_2(modelist, event, y0, t_tuple, stepsize):
                 else:
                     label = 1
                 t_start = y_object.t_events[0][0]
-                print(t_start)
+                if verbose:
+                    print('tstart =', t_start)
                 l = t_points.shape[0]
                 for i in range(0,l):
                     if t_points[i] > t_start:
@@ -143,7 +143,7 @@ def simulation_ode_3(modelist, eventlist, labelfun, y0, t_tuple, stepsize):
                 if label>2:
                     label = 0
                 t_start = y_object.t_events[0][0]
-                print(t_start)
+                # print(t_start)
                 l = t_points.shape[0]
                 for i in range(0,l):
                     if t_points[i] > t_start:
@@ -939,7 +939,7 @@ def infer_dynamic_modes_new(t_list, y_list, stepsize, maxorder, ep=0.1):
     G = []
 
     while len(label_list)>0:
-        print("label",len(label_list))
+        # print("label", len(label_list))
         p = random.choice(label_list)
         clf = linear_model.LinearRegression(fit_intercept=False)
         # print("fitstart")
@@ -985,9 +985,9 @@ def infer_dynamic_modes_new(t_list, y_list, stepsize, maxorder, ep=0.1):
             continue
         
         pp = ppp[1:]
-        print("second")
+        # print("second")
         while len(ppp) > len(pp):
-            print("ppp",len(ppp))
+            # print("ppp",len(ppp))
             pp = ppp[:]
             ppp = []
             clf.fit (matrowex(A,pp), matrowex(b,pp))
@@ -1053,7 +1053,6 @@ def reclass(A,b,P,ep):
 
 
     return newP,G
-            
 
 
 def dropclass(P,G,D,A,b,Y,ep,stepsize):
@@ -1077,18 +1076,6 @@ def dropclass(P,G,D,A,b,Y,ep,stepsize):
                     break
 
     return P,D
-            
-                
-
-
-        
-
-
-
-
-
-
-
 
 
 def infer_multi_linear(t_list, y_list, stepsize, maxorder, ep=0.001):
@@ -1189,8 +1176,6 @@ def infer_multi_linear(t_list, y_list, stepsize, maxorder, ep=0.001):
     print("g",g)
 
     return clfs, [a1, a2, a3, g]
-
-
 
 
 def infer_multi_linear_new(t_list, y_list, stepsize, maxorder, ep=0.001):
@@ -1350,14 +1335,6 @@ def test_classify(f, clfs, boundary, maxorder, x):
     err = norm(diff1-diff2)/(norm(diff1)+norm(diff2))
     return err
 
- 
-
-
-    
-        
-
-
-
 
 if __name__ == "__main__":
     y0 = [[-1],[5],[1],[3],[0],[2],[-2]]
@@ -1381,4 +1358,3 @@ if __name__ == "__main__":
     for i in range(0,len(y_list)):
         plt.plot(t_list[i], y_list[i])
     plt.show()
-    

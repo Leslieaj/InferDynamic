@@ -90,6 +90,7 @@ def simulation_ode_2(modelist, event, y0, t_tuple, stepsize):
                 else:
                     label = 1
                 t_start = y_object.t_events[0][0]
+                print(t_start)
                 l = t_points.shape[0]
                 for i in range(0,l):
                     if t_points[i] > t_start:
@@ -111,6 +112,57 @@ def simulation_ode_2(modelist, event, y0, t_tuple, stepsize):
     return t_list, y_list
 
 
+
+def simulation_ode_3(modelist, eventlist, labelfun, y0, t_tuple, stepsize):
+    
+    t_list = []
+    y_list = []
+
+    for k in range(0,len(y0)):
+        t_start = t_tuple[k][0]
+        t_end = t_tuple[k][1]
+        yinitial = y0[k]
+
+        num = round((t_end - t_start)/stepsize + 1)
+        t_points = np.linspace(t_start, t_end, num)
+        T_points = np.linspace(t_start, t_end, num)
+        # change = 1
+        status = 1
+        label = labelfun(y0[k])
+        # while change > 0:
+        ite = 0
+        while status == 1:
+            ite = ite + 1
+            # print(ite)
+            # print(yinitial)
+            y_object = solve_ivp(modelist[label], (t_start, t_end + 1.1*stepsize), yinitial, t_eval = t_points, method='RK45', rtol=1e-7, atol=1e-9, max_step = stepsize/10, events=[eventlist[label]], dense_output=True)
+            # change = y_object.t_events[0].shape[0]
+            status = y_object.status
+            if status == 1:
+                label = label+1
+                if label>2:
+                    label = 0
+                t_start = y_object.t_events[0][0]
+                print(t_start)
+                l = t_points.shape[0]
+                for i in range(0,l):
+                    if t_points[i] > t_start:
+                        break
+                t_points=t_points[i:]
+                sol = y_object.sol
+                yinitial = sol.__call__(t_start + stepsize/100)
+                y_points = y_object.y.T
+                y_points = y_points[0:i]
+            else: 
+                y_points = y_object.y.T
+
+            if ite == 1:
+                Y_points = y_points
+            else:
+                Y_points = np.r_[Y_points,y_points]
+        t_list.append(T_points)
+        y_list.append(Y_points)
+    return t_list, y_list
 
 # def simulation_ode_stiff(ode_func, y0, t_tuple, stepsize, noise_type=1, eps=0):
 #     """ Given a ODE function, some initial state, stepsize, then return the points.
@@ -218,6 +270,10 @@ def diff_method1(t_list, y_list, order, stepsize):
         # L_t: number of total time points. D: number of points we will get
         L_t = len(t_points)
         D = L_t - 5    #bdf5
+        if D < 1:
+            continue
+
+        # print(D,L_p)
 
         # A_matrix = np.zeros((D*2, L_p), dtype=np.double)
         # b_matrix = np.zeros((D*2, L_y),  dtype=np.double)
@@ -321,8 +377,9 @@ def parti(t_list, y_list, ep=0.5, an=1/6):
         parpo.append(row-1)
         # Add the rest
         for i in range(0,len(parpo)-1):
-            tpar_list.append(t_points[parpo[i]+1:parpo[i+1]])
-            ypar_list.append(y_points[parpo[i]+1:parpo[i+1]][:])
+            if parpo[i+1] - parpo[i]+1 > 5:
+                tpar_list.append(t_points[parpo[i]+1:parpo[i+1]])
+                ypar_list.append(y_points[parpo[i]+1:parpo[i+1]][:])
 
     return tpar_list, ypar_list
 
@@ -487,26 +544,28 @@ def infer_dynamic_modes_ex_dbs(t_list, y_list, stepsize, maxorder, ep=0.01):
 
     """
     len_tr = len(y_list)
-    mode = []
-    mode_tls = []
-    mode_yls = []
-    mode_y0l = []
-    mode_tul = []
-    mode_coe = []
-    mode_ord = []
+    # mode = []
+    # mode_tls = []
+    # mode_yls = []
+    # mode_y0l = []
+    # mode_tul = []
+    # mode_coe = []
+    # mode_ord = []
     gene = generate_complete_polynomial(y_list[0].shape[1],maxorder)
     maxL_p = gene.shape[0]
     coefsing = np.zeros((len_tr,y_list[0].shape[1]*maxL_p))
     for l in range(0,len_tr):
-        print("trace"+str(l))
+        # print("trace"+str(l))
         
         for od in range(0,maxorder):
-            print("try of order"+str(od))
+            od = maxorder
+            # print("try of order"+str(od))
             A, b = diff_method(t_list[l:l+1], y_list[l:l+1], od, stepsize)
             g = pinv2(A).dot(b)
             t_list_l, y_list_l = simulation_ode(ode_test(g.T,od), [y_list[l][0]], [(t_list[l][0],t_list[l][-1])], stepsize, eps=0, solve_method='BDF')
             dis = dist(y_list[l:l+1],y_list_l)
             cgt = g.T
+        
             if dis < ep:
                 matarr = extend_coe(cgt,maxL_p).reshape(-1)
                 # print(matarr)
@@ -523,6 +582,10 @@ def infer_dynamic_modes_ex_dbs(t_list, y_list, stepsize, maxorder, ep=0.01):
         # Can also consider using KMeans, etc.
         db = skc.DBSCAN(eps=0.1, min_samples=2).fit(coefsing)
         labels = db.labels_
+        # num_mode = 3
+        # kmeans = skc.KMeans(n_clusters=num_mode, random_state=0)
+        # kmeans.fit(coefsing)
+        # labels = kmeans.labels_
     return labels
 
 def infer_dynamic_modes_exx(t_list, y_list, stepsize, maxorder, ep=0.01):
@@ -633,6 +696,7 @@ def distlg(g, label, A_list, b_list):
     """Distance between A * g and b (maximum of absolute value of difference).
     
     """
+    
     A = A_list[label]
     b = b_list[label]
     bb = np.matmul(A, g.T)
@@ -829,13 +893,25 @@ def compare(A,B,ep):
     """
     C = A - B
     r = 1
+    # for i in range(0,C.shape[0]):
+    #     for j in range(0,C.shape[1]):
+    #         c = abs(C[i,j])
+    #         a = abs(A[i,j])*ep
+    #         # a = ep
+    #         if c >= a:
+    #             r = 0
     for i in range(0,C.shape[0]):
+        a = 0
+        b = 0
+        c = 0
         for j in range(0,C.shape[1]):
-            c = abs(C[i,j])
-            a = abs(A[i,j])*ep
-            # a = ep
-            if c >= a:
-                r = 0
+            c += C[i,j]**2
+            a += A[i,j]**2
+            b += B[i,j]**2
+        f1 = np.sqrt(c)
+        f2 = np.sqrt(a) + np.sqrt(b)
+        if f1 > ep*f2:
+            r = 0
     return r
 
 def matrowex(matr, l):
@@ -868,7 +944,12 @@ def infer_dynamic_modes_new(t_list, y_list, stepsize, maxorder, ep=0.1):
         clf = linear_model.LinearRegression(fit_intercept=False)
         # print("fitstart")
         # print("fitend")
-        pp = [p-1,p,p+1]
+        if p > 0 and p < leng - 1:
+            pp = [p-1,p,p+1]
+        elif p == 0:
+            pp = [p,p+1,p+2]
+        else:
+            pp = [p-2,p-1,p]
         clf.fit (matrowex(A,pp), matrowex(b,pp))
         pre = clf.predict(matrowex(A,pp))
         ppp = pp[:]
@@ -876,7 +957,7 @@ def infer_dynamic_modes_new(t_list, y_list, stepsize, maxorder, ep=0.1):
         retation = 0
         while compare(matrowex(b,pp),pre,ep) ==1:
             retation += 1
-            print("compare",retation,len(pp))
+            # print("compare",retation,len(pp))
             ppp = pp[:]
             reta = 0
             # if pp[0]>0 and pp[0]-1 in label_list:
@@ -892,7 +973,7 @@ def infer_dynamic_modes_new(t_list, y_list, stepsize, maxorder, ep=0.1):
                     pp.append(pp[-1]+1)
                     reta = 1
             
-            if reta == 0 or retation >= 30:
+            if reta == 0 or retation >= 20:
                 break
 
             clf.fit (matrowex(A,pp), matrowex(b,pp))
@@ -928,6 +1009,86 @@ def infer_dynamic_modes_new(t_list, y_list, stepsize, maxorder, ep=0.1):
     drop.sort() 
 
     return P,G,drop
+
+
+def reclass(A,b,P,ep):
+    lenofp = [(len(P[i]), i) for i in range(len(P))]
+    lenofp = sorted(lenofp,reverse=True)
+    sortl = [i for _, i in lenofp]
+    sortP = []
+    for i in sortl:
+        sortP.append(P[i])
+    
+    # print(sortP)
+    newP = []
+    while len(sortP) > 1:
+        ssortP = sortP[:]
+        l = [0]
+        for i in range(1,len(sortP)):
+            pp = ssortP[0]+ssortP[i]
+            # print(pp)
+            clf = linear_model.LinearRegression(fit_intercept=False)
+            clf.fit (matrowex(A,pp), matrowex(b,pp))
+            pre = clf.predict(matrowex(A,pp))
+            if compare(matrowex(b,pp),pre,ep) ==1 :
+                l.append(i)
+        
+        pp = []
+        for j in l:
+            pp.extend(ssortP[j])
+            sortP.remove(ssortP[j])
+        
+        newP.append(pp)
+    
+    if len(sortP) == 1:
+        newP.append(sortP[0])
+
+    G = []
+    for i in range(len(newP)):
+        clf = linear_model.LinearRegression(fit_intercept=False)
+        clf.fit (matrowex(A,newP[i]), matrowex(b,newP[i]))
+        g = clf.coef_
+        G.append(g)
+
+
+
+    return newP,G
+            
+
+
+def dropclass(P,G,D,A,b,Y,ep,stepsize):
+    DD = D[:]
+    for i in DD:
+        if i<(Y.shape[0] - 5):
+            co = np.mat(A[i])
+            forw = np.mat(b[i])
+            # print(forw.shape)
+            back = (-137 * Y[i] + 300 * Y[i+1] - 300 * Y[i+2] + 
+                            200 * Y[i+3] - 75 * Y[i+4] + 12 * Y[i+5])/ (60 * stepsize)
+            back = np.mat(back)
+            # print(back.shape)
+            for j in range(0,len(G)):
+                g = G[j]
+                der = np.matmul(co,g.T)
+                # print(der.shape)
+                if compare(forw,der,ep) or compare(back,der,ep):
+                    P[j].append(i)
+                    D.remove(i)
+                    break
+
+    return P,D
+            
+                
+
+
+        
+
+
+
+
+
+
+
 
 
 def infer_multi_linear(t_list, y_list, stepsize, maxorder, ep=0.001):
@@ -1040,7 +1201,7 @@ def infer_multi_linear_new(t_list, y_list, stepsize, maxorder, ep=0.001):
     # First apply Linear Multistep Method
     A, b1, b2, Y = diff_method_backandfor(t_list, y_list, maxorder, stepsize)
     num_pt = Y.shape[0]
-
+    num_dim = Y.shape[1]
     
     def valid(p):
         if norm(b1[p]-b2[p])/(norm(b1[p])+norm(b2[p])) < 0.02:
@@ -1113,10 +1274,14 @@ def infer_multi_linear_new(t_list, y_list, stepsize, maxorder, ep=0.001):
                 labels.append(-1)
             else:
                 labels.append(1)
-            positions.append({1: Y[i,0], 2: Y[i,1], 3: Y[i,2]})
+            dic = dict()
+            for j in range(num_dim): 
+                dic[j+1] = Y[i,j]
+
+            positions.append(dic)
 
     prob = svm_problem(labels, positions)
-    param = svm_parameter('-t 1 -d 1 -c 10 -b 0')
+    param = svm_parameter('-t 1 -d 1 -c 10 -r 1 -b 0')
     m = svm_train(prob, param)
     svm_save_model('model_file', m)
     p_label, p_acc, p_val = svm_predict(labels, positions, m)
@@ -1124,30 +1289,41 @@ def infer_multi_linear_new(t_list, y_list, stepsize, maxorder, ep=0.001):
     nsv = m.get_nr_sv()
     svc = m.get_sv_coef()
     sv = m.get_SV()
+    # print('svc',svc)
+    # print('sv',sv)
 
     g = -m.rho[0]
-    a1 = 0
-    a2 = 0
-    a3 = 0
+    # a1 = 0
+    # a2 = 0
+    # a3 = 0
+    a = np.zeros(num_dim)
+    # print('a',a)
+    for j in range(num_dim):
+        for i in range(0,nsv):
+            # a1 = a1 + svc[i][0] * 0.5 * sv[i][1]
+            # a2 = a2 + svc[i][0] * 0.5 * sv[i][2]
+            # a2 = a2 + svc[i][0] * 0.5 * sv[i][3]
+            a[j] = a[j] + svc[i][0] * 0.5 * sv[i][j+1]
+    
     for i in range(0,nsv):
-        a1 = a1 + svc[i][0] * 0.5 * sv[i][1]
-        a2 = a2 + svc[i][0] * 0.5 * sv[i][2]
-        a2 = a2 + svc[i][0] * 0.5 * sv[i][3]
+        g = g + svc[i][0]*1
 
-    print("a1",a1)
-    print("a2",a2)
-    print("a3",a3)
-    print("g",g)
+    # print("a1",a1)
+    # print("a2",a2)
+    # print("a3",a3)
+    # print("g",g)
 
-    return clfs, [a1, a2, a3, g]
+    return clfs, [a, g]
 
 
 def test_classify(f, clfs, boundary, maxorder, x):
     """Test a classification."""
-    a1, a2, a3, g = boundary
+    # print('bound',boundary)
+    a, g = boundary
 
     def classify_mode(x):
-        return a1 * x[0] + a2 * x[1] + a3 * x[2] + g > 0
+        # return a1 * x[0] + a2 * x[1] + a3 * x[2] + g > 0
+        return a.dot(x.T) + g >0
 
     def get_poly_pt(x):
         gene = generate_complete_polynomial(len(x), maxorder)
@@ -1173,40 +1349,6 @@ def test_classify(f, clfs, boundary, maxorder, x):
     # print('nd2',norm(diff2))
     err = norm(diff1-diff2)/(norm(diff1)+norm(diff2))
     return err
-
-
-# def test_infer_dynamic_modes_new(t_list, y_list, stepsize, maxorder, ep=0.1):
-#     A, b, Y = diff_method_new(t_list, y_list, maxorder, stepsize)
-#     P,G,D = infer_dynamic_modes_new(t_list, y_list, stepsize, maxorder, ep=0.1)
-#     DD = D[:]
-#     for i in range(0,len(D)):
-#         print("drop",i)
-#         r = 1
-#         for j in range(0,len(G)):
-#             print("simu",j)
-#             rj1 = 0
-#             rj2 = 0
-#             y0 = [Y[D[i] - 1],Y[D[i]]]
-#             t_tuple = [(0,stepsize),(0,stepsize)]
-#             ttestlist, ytestlist = simulation_ode(ode_test(G[j],maxorder), y0, t_tuple, stepsize/100, eps=0)
-#             disvec1 = np.mat(ytestlist[0][-1]) - np.mat(Y[D[i]])
-#             disvec2 = np.mat(ytestlist[1][-1]) - np.mat(Y[D[i]+1])
-#             for l in range(0,Y.shape[1]):
-#                 rj1 = max(rj1,abs(disvec1[0,l]/Y[D[i],l]))
-#                 rj2 = max(rj2,abs(disvec2[0,l]/Y[D[i]+1,l]))
-            
-#             if rj1 < r or rj2 < r:
-#                 ch = j
-#                 r = min(rj1,rj2)
-#         if r < 0.01:
-#             P[ch].append(D[i])
-#             DD.remove(D[i])
-
-#     for i in range(0,len(P)):
-#         P[i].sort()
-    
-#     return P,G,DD
-
 
  
 

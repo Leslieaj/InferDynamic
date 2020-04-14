@@ -202,6 +202,56 @@ def incubator_mode2(t,y):
     return dydt
 
 
+def mode1(t,y):
+    
+    y0, y1 = y
+    dydt = [0.1*y0**2 + 0.04*y1**3, -0.9*y0]
+    return dydt
+
+def mode2(t,y):
+    
+    y0, y1 = y
+    dydt = [-0.1*y0**2 + 0.06*y1**3, -0.7*y0]
+    return dydt
+
+def mmode1(t,y):
+    
+    y0, y1, y2, y3 = y
+    dydt = [-y1,y0-5,y3,-0.1*(y2+5)**2]
+    return dydt
+
+def mmode2(t,y):
+    
+    y0, y1, y2, y3 = y
+    dydt = [-y1,y0-5,y3,0.1*(y0 - y2)**2]
+    return dydt
+
+def mmode(t,y):
+    y0, y1, y2, y3 = y
+    if y2 > 0:
+        dydt = [-y1,y0-5,y3,-0.1*(y2+5)**2]
+    else:
+        dydt = [-y1,y0-5,y3,0.1*(y0 - y2)**2]
+    return dydt
+
+
+
+def modetr_1(t,y):
+    y0, y1= y
+    dydt = dydt = [0.5*y0**2 + 0.5*y1, 3-9*y0]
+    return dydt
+
+def modetr_2(t,y):
+    y0, y1= y
+    dydt = dydt = [5, -10-0.1*y0]
+    return dydt
+
+def modetr_3(t,y):
+    y0, y1= y
+    dydt = dydt = [-7 , -y0]
+    return dydt
+
+
 def eventAttr():
     def decorator(func):
         @wraps(func)
@@ -217,3 +267,26 @@ def eventAttr():
 def event1(t,y):
     y0, y1 = y
     return y0
+
+
+@eventAttr()
+def event2(t,y):
+    y0, y1 = y
+    return y1 - 0.2*y0**2
+
+@eventAttr()
+def event3(t,y):
+    y0, y1, y2, y3= y
+    return y2
+
+
+@eventAttr()
+def eventtr_1(t,y):
+    y0, y1= y
+    return y0
+
+
+@eventAttr()
+def eventtr_2(t,y):
+    y0, y1= y
+    return y1

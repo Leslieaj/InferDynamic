@@ -1336,6 +1336,121 @@ def test_classify(f, clfs, boundary, maxorder, x):
     return err
 
 
+def get_poly_pt(x, maxorder):
+    """Obtain the monomial terms corresponding to a position."""
+    gene = generate_complete_polynomial(len(x), maxorder)
+    val = []
+    for i in range(gene.shape[0]):
+        val.append(1.0)
+        for j in range(gene.shape[1]):
+            val[i] = val[i] * (x[j] ** gene[i,j])
+    poly_pt = np.mat(val)
+    return poly_pt
+
+def mat_norm(A):
+    return math.sqrt(np.square(A).sum())
+
+def get_coeffs(svm_model, order=1):
+    """From model returned by SVM, obtain the coefficients."""
+    nsv = svm_model.get_nr_sv()
+    svc = svm_model.get_sv_coef()
+    sv = svm_model.get_SV()
+
+    L_y = len(sv[0])        # Number of dimensions
+
+    if order == 1:
+        g = -svm_model.rho[0]   # Constant term
+        list_a = [0] * L_y      # Linear terms
+
+        for i in range(nsv):
+            g += svc[i][0]
+            for d in range(L_y):
+                list_a[d] += svc[i][0] * 0.5 * sv[i][d+1]
+
+        return list_a + [g]
+    elif order == 2 and L_y == 2:
+        g = -svm_model.rho[0]
+        list_a = [0] * 5
+        for i in range(nsv):
+            g += svc[i][0]
+            list_a[0] += svc[i][0] * 0.25 * sv[i][1] * sv[i][1]
+            list_a[1] += svc[i][0] * 0.5 * sv[i][1] * sv[i][2]
+            list_a[2] += svc[i][0] * 0.25 * sv[i][2] * sv[i][2]
+            list_a[3] += svc[i][0] * sv[i][1]
+            list_a[4] += svc[i][0] * sv[i][2]
+
+        return list_a + [g]
+    else:
+        raise NotImplementedError
+
+def infer_model(y0, t_tuple, stepsize, maxorder, boundary_order, modelist, event, ep, method):
+    """Overall inference function.
+
+    y0: list of initial points
+    t_tuple: list of time intervals
+    stepsize: step size
+    maxorder: maximum degree of polynomial
+    modelist: list of modes for the model
+    event: boundary of the model
+    ep: error parameter
+    method: method to apply
+
+    """
+    # Some basic dimensions
+    L_y = len(y0[0])  # Number of dimensions
+
+    # Obtain simulated trajectory
+    t_list, y_list = simulation_ode_2(modelist, event, y0, t_tuple, stepsize)
+
+    if method == "new":
+        # Apply Linear Multistep Method
+        A, b, Y = diff_method_new(t_list, y_list, maxorder, stepsize)
+
+        # Inference
+        P, G, D = infer_dynamic_modes_new(t_list, y_list, stepsize, maxorder, ep)
+        P, G = reclass(A, b, P, ep)
+        P, D = dropclass(P, G, D, A, b, Y, ep, stepsize)
+
+        # SVM Classification
+        y = []
+        x = []
+        for id0 in P[0]:
+            y.append(1)
+            x.append({i+1: Y[id0, i] for i in range(L_y)})
+        
+        for id1 in P[1]:
+            y.append(-1)
+            x.append({i+1: Y[id1, i] for i in range(L_y)})
+
+        prob  = svm_problem(y, x)
+        param = svm_parameter('-t 1 -d %d -c 10 -r 1 -b 0 -q' % boundary_order)
+        m = svm_train(prob, param)
+        svm_save_model('model_file', m)
+        coeffs = get_coeffs(m, order=boundary_order)
+        
+    # Test obtained model
+    sum = 0
+    num = 0
+    for ypoints in y_list:
+        num = num + ypoints.shape[0]
+        for i in range(ypoints.shape[0]):
+            if event(0.0, ypoints[i]) > 0:
+                exact = modelist[0](0, ypoints[i])
+            else:
+                exact = modelist[1](0, ypoints[i])
+            poly_y = get_poly_pt(ypoints[i], boundary_order)
+            if poly_y.dot(coeffs) > 0:
+                predict = np.matmul(get_poly_pt(ypoints[i], maxorder), G[0].T)
+            else:
+                predict = np.matmul(get_poly_pt(ypoints[i], maxorder), G[1].T)
+
+            exact = np.mat(exact)
+            sum += mat_norm(exact - predict) / (mat_norm(exact) + mat_norm(predict))
+
+    return sum / num
+
+
+
 if __name__ == "__main__":
     y0 = [[-1],[5],[1],[3],[0],[2],[-2]]
     t_tuple = [(0,4),(0,4),(0,4),(0,4),(0,4),(0,4),(0,4),(0,4)]

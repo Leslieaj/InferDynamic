@@ -68,20 +68,22 @@ def simulation_ode_2(modelist, event, y0, t_tuple, stepsize, verbose=False):
         num = round((t_end - t_start)/stepsize + 1)
         t_points = np.linspace(t_start, t_end, num)
         T_points = np.linspace(t_start, t_end, num)
-        # change = 1
+
         status = 1
-        if event(0,y0[k])>0:
+        if event(0, y0[k]) > 0:
             label = 0
         else:
             label = 1
         ite = 0
-        # while change > 0:
+
         while status == 1:
             ite = ite + 1
             if verbose:
                 print('Round', str(ite) + ':', 'y =', yinitial)
-            y_object = solve_ivp(modelist[label], (t_start, t_end + 1.1*stepsize), yinitial, t_eval = t_points, method='RK45', rtol=1e-7, atol=1e-9, max_step = stepsize/10, events=[event], dense_output=True)
-            # change = y_object.t_events[0].shape[0]
+            y_object = solve_ivp(modelist[label], (t_start, t_end + 1.1*stepsize), yinitial,
+                                 t_eval=t_points, method='RK45', rtol=1e-7, atol=1e-9,
+                                 max_step=stepsize/10, events=[event], dense_output=True)
+
             status = y_object.status
             if status == 1:
                 if label == 1:
@@ -112,7 +114,6 @@ def simulation_ode_2(modelist, event, y0, t_tuple, stepsize, verbose=False):
     return t_list, y_list
 
 
-
 def simulation_ode_3(modelist, eventlist, labelfun, y0, t_tuple, stepsize):
     
     t_list = []
@@ -126,21 +127,23 @@ def simulation_ode_3(modelist, eventlist, labelfun, y0, t_tuple, stepsize):
         num = round((t_end - t_start)/stepsize + 1)
         t_points = np.linspace(t_start, t_end, num)
         T_points = np.linspace(t_start, t_end, num)
-        # change = 1
+
         status = 1
         label = labelfun(y0[k])
-        # while change > 0:
+
         ite = 0
         while status == 1:
             ite = ite + 1
             # print(ite)
             # print(yinitial)
-            y_object = solve_ivp(modelist[label], (t_start, t_end + 1.1*stepsize), yinitial, t_eval = t_points, method='RK45', rtol=1e-7, atol=1e-9, max_step = stepsize/10, events=[eventlist[label]], dense_output=True)
-            # change = y_object.t_events[0].shape[0]
+            y_object = solve_ivp(modelist[label], (t_start, t_end + 1.1*stepsize), yinitial,
+                                 t_eval=t_points, method='RK45', rtol=1e-7, atol=1e-9,
+                                 max_step=stepsize/10, events=[eventlist[label]], dense_output=True)
+
             status = y_object.status
             if status == 1:
-                label = label+1
-                if label>2:
+                label = label + 1
+                if label > 2:
                     label = 0
                 t_start = y_object.t_events[0][0]
                 # print(t_start)
@@ -148,7 +151,7 @@ def simulation_ode_3(modelist, eventlist, labelfun, y0, t_tuple, stepsize):
                 for i in range(0,l):
                     if t_points[i] > t_start:
                         break
-                t_points=t_points[i:]
+                t_points = t_points[i:]
                 sol = y_object.sol
                 yinitial = sol.__call__(t_start + stepsize/100)
                 y_points = y_object.y.T
@@ -1383,7 +1386,67 @@ def get_coeffs(svm_model, order=1):
     else:
         raise NotImplementedError
 
-def infer_model(y0, t_tuple, stepsize, maxorder, boundary_order, modelist, event, ep, method):
+def svm_classify(P, Y, L_y, boundary_order, num_mode=2):
+    if num_mode == 2:
+        y = []
+        x = []
+        for id0 in P[0]:
+            y.append(1)
+            x.append({i+1: Y[id0, i] for i in range(L_y)})
+        
+        for id1 in P[1]:
+            y.append(-1)
+            x.append({i+1: Y[id1, i] for i in range(L_y)})
+
+        prob = svm_problem(y, x)
+        param = svm_parameter('-t 1 -d %d -c 10 -r 1 -b 0 -q' % boundary_order)
+        m = svm_train(prob, param)
+        svm_save_model('model_file', m)
+        return get_coeffs(m, order=boundary_order)
+
+    elif num_mode == 3:
+        y = []
+        x = []
+        for j in range(0,len(P[2])):
+            y.append(1)
+            x.append({1:Y[P[2][j],0], 2:Y[P[2][j],1]})
+        
+        for j in range(0,len(P[1])):
+            y.append(-1)
+            x.append({1:Y[P[1][j],0], 2:Y[P[1][j],1]})
+        
+        for j in range(0,len(P[0])):
+            y.append(-1)
+            x.append({1:Y[P[0][j],0], 2:Y[P[0][j],1]})
+
+        prob = svm_problem(y, x)
+        param = svm_parameter('-t 1 -d %d -c 100 -r 1 -b 0 -q' % boundary_order)
+        m = svm_train(prob, param)
+        svm_save_model('model_file1', m)
+        coeff1 = get_coeffs(m, order=boundary_order)
+
+        y = []
+        x = []
+        for j in range(0,len(P[1])):
+            y.append(1)
+            x.append({1:Y[P[1][j],0], 2:Y[P[1][j],1]})
+        
+        for j in range(0,len(P[0])):
+            y.append(-1)
+            x.append({1:Y[P[0][j],0], 2:Y[P[0][j],1]})
+
+        prob = svm_problem(y, x)
+        param = svm_parameter('-t 1 -d %d -c 100 -r 1 -b 0 -q' % boundary_order)
+        n = svm_train(prob, param)
+        svm_save_model('model_file2', n)
+        coeff2 = get_coeffs(n, order=boundary_order)
+        return coeff1, coeff2
+
+    else:
+        raise NotImplementedError
+
+def infer_model(y0, t_tuple, stepsize, maxorder, boundary_order, modelist, event, ep, method, *,
+                labeltest=None, num_mode=2):
     """Overall inference function.
 
     y0: list of initial points
@@ -1400,7 +1463,12 @@ def infer_model(y0, t_tuple, stepsize, maxorder, boundary_order, modelist, event
     L_y = len(y0[0])  # Number of dimensions
 
     # Obtain simulated trajectory
-    t_list, y_list = simulation_ode_2(modelist, event, y0, t_tuple, stepsize)
+    if num_mode == 2:
+        t_list, y_list = simulation_ode_2(modelist, event, y0, t_tuple, stepsize)
+    elif num_mode == 3:
+        t_list, y_list = simulation_ode_3(modelist, event, labeltest, y0, t_tuple, stepsize)
+    else:
+        raise NotImplementedError
 
     if method == "new":
         # Apply Linear Multistep Method
@@ -1411,44 +1479,50 @@ def infer_model(y0, t_tuple, stepsize, maxorder, boundary_order, modelist, event
         P, G = reclass(A, b, P, ep)
         P, D = dropclass(P, G, D, A, b, Y, ep, stepsize)
 
-        # SVM Classification
-        y = []
-        x = []
-        for id0 in P[0]:
-            y.append(1)
-            x.append({i+1: Y[id0, i] for i in range(L_y)})
+    if num_mode == 2:
+        coeffs = svm_classify(P, Y, L_y, boundary_order, num_mode)
         
-        for id1 in P[1]:
-            y.append(-1)
-            x.append({i+1: Y[id1, i] for i in range(L_y)})
+        # Test obtained model
+        sum = 0
+        num = 0
+        for ypoints in y_list:
+            num += ypoints.shape[0]
+            for i in range(ypoints.shape[0]):
+                if event(0.0, ypoints[i]) > 0:
+                    exact = modelist[0](0, ypoints[i])
+                else:
+                    exact = modelist[1](0, ypoints[i])
+                poly_y = get_poly_pt(ypoints[i], boundary_order)
+                if poly_y.dot(coeffs) > 0:
+                    predict = np.matmul(get_poly_pt(ypoints[i], maxorder), G[0].T)
+                else:
+                    predict = np.matmul(get_poly_pt(ypoints[i], maxorder), G[1].T)
 
-        prob  = svm_problem(y, x)
-        param = svm_parameter('-t 1 -d %d -c 10 -r 1 -b 0 -q' % boundary_order)
-        m = svm_train(prob, param)
-        svm_save_model('model_file', m)
-        coeffs = get_coeffs(m, order=boundary_order)
-        
-    # Test obtained model
-    sum = 0
-    num = 0
-    for ypoints in y_list:
-        num = num + ypoints.shape[0]
-        for i in range(ypoints.shape[0]):
-            if event(0.0, ypoints[i]) > 0:
-                exact = modelist[0](0, ypoints[i])
-            else:
-                exact = modelist[1](0, ypoints[i])
-            poly_y = get_poly_pt(ypoints[i], boundary_order)
-            if poly_y.dot(coeffs) > 0:
-                predict = np.matmul(get_poly_pt(ypoints[i], maxorder), G[0].T)
-            else:
-                predict = np.matmul(get_poly_pt(ypoints[i], maxorder), G[1].T)
+                exact = np.mat(exact)
+                sum += mat_norm(exact - predict) / (mat_norm(exact) + mat_norm(predict))
 
-            exact = np.mat(exact)
-            sum += mat_norm(exact - predict) / (mat_norm(exact) + mat_norm(predict))
+        return sum / num
+    else:
+        coeff1, coeff2 = svm_classify(P, Y, L_y, boundary_order, num_mode)
 
-    return sum / num
+        # Test obtained model
+        sum = 0
+        num = 0
+        for ypoints in y_list:
+            num += ypoints.shape[0]
+            for i in range(ypoints.shape[0]):
+                exact = modelist[labeltest(ypoints[i])](0, ypoints[i])
+                poly_y = get_poly_pt(ypoints[i], boundary_order)
+                if poly_y.dot(coeff1) > 0:
+                    predict = np.matmul(get_poly_pt(ypoints[i], maxorder), G[2].T)
+                elif poly_y.dot(coeff2) > 0:
+                    predict = np.matmul(get_poly_pt(ypoints[i], maxorder), G[1].T)
+                else:
+                    predict = np.matmul(get_poly_pt(ypoints[i], maxorder), G[0].T)
 
+                exact = np.mat(exact)
+                sum += mat_norm(exact - predict) / (mat_norm(exact) + mat_norm(predict))
+        return sum / num
 
 
 if __name__ == "__main__":

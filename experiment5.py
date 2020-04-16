@@ -97,12 +97,12 @@ def eventtr_2(t,y):
 
 
 def labeltest(y):
-        if eventtr_1(0,y)<0 and eventtr_2(0,y)>0:
-            return 0
-        elif eventtr_1(0,y)>=0 and eventtr_2(0,y)>0:
-            return 1
-        else:
-            return 2
+    if eventtr_1(0,y)<0 and eventtr_2(0,y)>0:
+        return 0
+    elif eventtr_1(0,y)>=0 and eventtr_2(0,y)>0:
+        return 1
+    else:
+        return 2
 
 def case(y0,t_tuple,stepsize,maxorder,modelist,eventlist,labeltest,ep,method):
     t_list, y_list = simulation_ode_3(modelist, eventlist, labeltest, y0, t_tuple, stepsize)

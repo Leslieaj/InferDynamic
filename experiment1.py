@@ -48,7 +48,7 @@ from libsvm.svmutil import *
 
 
 mode2_params = [
-    [-0.26, -1, -0.26, 1],
+    [-00.26, -1, -00.26, 1],
 ]
 
 def get_mode2(param_id):
@@ -88,7 +88,7 @@ def eventAttr():
 @eventAttr()
 def event1(t,y):
     y0, y1 = y
-    return y0
+    return y0-98.5
 
 
 def case(y0, t_tuple, stepsize, maxorder, modelist, event, ep, method):
@@ -173,7 +173,7 @@ def case(y0, t_tuple, stepsize, maxorder, modelist, event, ep, method):
 
 
 if __name__ == "__main__":
-    y0 = [[1,3],[-1,-2]]
+    y0 = [[99.5,3],[97.5,-2]]
     t_tuple = [(0,20),(0,10)]
     stepsize = 0.01
     maxorder = 2

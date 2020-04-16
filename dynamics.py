@@ -162,10 +162,11 @@ def conti_test_test(result_coef,order):
 
 def ode_test(result_coef,order):
     """Used to simulate ODE during evaluation."""
+    dim = result_coef.shape[0]
+    A = generate_complete_polynomial(dim,order)
     def ode(t,y):
         # print("in")
-        dim = result_coef.shape[0]
-        A = generate_complete_polynomial(dim,order)
+        
         basicf = []
         for i in range(0,A.shape[0]):
             ap = 1

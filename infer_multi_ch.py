@@ -138,14 +138,14 @@ def simulation_ode_3(modelist, eventlist, labelfun, y0, t_tuple, stepsize):
             # print(yinitial)
             y_object = solve_ivp(modelist[label], (t_start, t_end + 1.1*stepsize), yinitial,
                                  t_eval=t_points, method='RK45', rtol=1e-7, atol=1e-9,
-                                 max_step=stepsize/10, events=[eventlist[label]], dense_output=True)
+                                 max_step=stepsize/10, events=eventlist, dense_output=True)
 
             status = y_object.status
             if status == 1:
-                label = label + 1
-                if label > 2:
-                    label = 0
-                t_start = y_object.t_events[0][0]
+                # print(y_object.t_events)
+                for a in y_object.t_events:
+                    if len(a)>0:
+                        t_start = a[0]
                 # print(t_start)
                 l = t_points.shape[0]
                 for i in range(0,l):
@@ -153,7 +153,8 @@ def simulation_ode_3(modelist, eventlist, labelfun, y0, t_tuple, stepsize):
                         break
                 t_points = t_points[i:]
                 sol = y_object.sol
-                yinitial = sol.__call__(t_start + stepsize/100)
+                yinitial = sol.__call__(t_start + stepsize/1000000)
+                label = labelfun(yinitial)
                 y_points = y_object.y.T
                 y_points = y_points[0:i]
             else: 

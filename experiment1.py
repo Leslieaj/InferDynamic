@@ -24,6 +24,7 @@ from scipy.integrate import odeint, solve_ivp
 #     mmode1, mmode2, event3, mmode, \
 #     incubator_mode1, incubator_mode2, event1, \
 #     modetr_1, modetr_2, modetr_3, eventtr_1, eventtr_2
+from dynamics import ode_test
 from infer_multi_ch import simulation_ode, infer_dynamic, parti, infer_dynamic_modes_ex, norm, reclass, dropclass, \
     infer_dynamic_modes_exx, dist, diff_method, diff_method1, infer_dynamic_modes_ex_dbs, infer_dynamic_modes_pie, \
     infer_dynamic_modes_new, diff_method_new1, diff_method_new, simulation_ode_2, simulation_ode_3, diff_method_backandfor
@@ -48,7 +49,7 @@ from libsvm.svmutil import *
 
 
 mode2_params = [
-    [-00.26, -1, -00.26, 1],
+    [-0.026, -1, -0.026, 1],
 ]
 
 def get_mode2(param_id):
@@ -88,18 +89,20 @@ def eventAttr():
 @eventAttr()
 def event1(t,y):
     y0, y1 = y
-    return y0-98.5
+    return y0 - 98.5
 
 
 def case(y0, t_tuple, stepsize, maxorder, modelist, event, ep, method):
     # print('Simulating')
     t_list, y_list = simulation_ode_2(modelist, event, y0, t_tuple, stepsize)
+    draw2D(y_list)
 
     if method == "new":
         # print('Classifying')
         A, b, Y = diff_method_new(t_list, y_list, maxorder, stepsize)
         P, G, D = infer_dynamic_modes_new(t_list, y_list, stepsize, maxorder, ep)
         P, G = reclass(A, b, P, ep)
+        print(G)
         P, D = dropclass(P, G, D, A, b, Y, ep, stepsize)
         # print('Number of modes:', len(P))
 
@@ -131,8 +134,26 @@ def case(y0, t_tuple, stepsize, maxorder, modelist, event, ep, method):
         def f(x):
             return a1*x[0] + a2*x[1] + g > 0
         
+        print(a1/a1,a2/a1,g/a1 )
+        
     sum = 0
     num = 0
+
+    @eventAttr()
+    def eventtest(t,y):
+        y0, y1 = y
+        return a1 * y0 + a2 * y1 + g
+
+    ttest_list, ytest_list = simulation_ode_2([ode_test(G[0],maxorder),ode_test(G[1],maxorder)], eventtest, y0, t_tuple, stepsize)
+    for temp_y in y_list:
+        y0_list = temp_y.T[0]
+        y1_list = temp_y.T[1]
+        plt.plot(y0_list,y1_list,c='b')
+    for temp_y in ytest_list:
+        y0_list = temp_y.T[0]
+        y1_list = temp_y.T[1]
+        plt.plot(y0_list,y1_list,c='r')
+    plt.show()
     
     def get_poly_pt(x):
         gene = generate_complete_polynomial(len(x), maxorder)
@@ -173,10 +194,10 @@ def case(y0, t_tuple, stepsize, maxorder, modelist, event, ep, method):
 
 
 if __name__ == "__main__":
-    y0 = [[99.5,3],[97.5,-2]]
-    t_tuple = [(0,20),(0,10)]
-    stepsize = 0.01
-    maxorder = 2
+    y0 = [[99.5,80],[97.5,100]]
+    t_tuple = [(0,50),(0,50)]
+    stepsize = 0.1
+    maxorder = 1
 
     a = case(y0,t_tuple,stepsize,maxorder,mode2,event1,0.01,"new")
     print(a)

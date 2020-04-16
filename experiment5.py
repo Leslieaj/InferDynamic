@@ -24,6 +24,7 @@ from scipy.integrate import odeint, solve_ivp
 #     mmode1, mmode2, event3, mmode, \
 #     incubator_mode1, incubator_mode2, event1, \
 #     modetr_1, modetr_2, modetr_3, eventtr_1, eventtr_2
+from dynamics import ode_test
 from infer_multi_ch import simulation_ode, infer_dynamic, parti, infer_dynamic_modes_ex, norm, reclass, dropclass, \
     infer_dynamic_modes_exx, dist, diff_method, diff_method1, infer_dynamic_modes_ex_dbs, infer_dynamic_modes_pie, \
     infer_dynamic_modes_new, diff_method_new1, diff_method_new, simulation_ode_2, simulation_ode_3, diff_method_backandfor
@@ -112,7 +113,7 @@ def case(y0,t_tuple,stepsize,maxorder,modelist,eventlist,labeltest,ep,method):
         P,G,D = infer_dynamic_modes_new(t_list, y_list, stepsize, maxorder, ep)
         P,G = reclass(A,b,P,ep)
         P,D = dropclass(P,G,D,A,b,Y,ep,stepsize)
-        # print(G)
+        print(G)
 
         for i in range(0,len(P)):
             y0_list = []
@@ -121,8 +122,8 @@ def case(y0,t_tuple,stepsize,maxorder,modelist,eventlist,labeltest,ep,method):
                 y0_list.append(Y[P[i][j],0])
                 y1_list.append(Y[P[i][j],1])
         
-            # plt.scatter(y0_list,y1_list,s=1)
-        # plt.show()
+            plt.scatter(y0_list,y1_list,s=1)
+        plt.show()
 
         y=[]
         x=[]
@@ -192,6 +193,35 @@ def case(y0,t_tuple,stepsize,maxorder,modelist,eventlist,labeltest,ep,method):
                 g = g + svc1[i][0] * (0.5*(x[0]*sv1[i][1]+x[1]*sv1[i][2])+1)
             return g > 0
 
+        @eventAttr()
+        def eventtest1(t,y):
+            y0, y1 = y
+            return a1 * y0 + a2 * y1 + g
+        @eventAttr()
+        def eventtest2(t,y):
+            y0, y1 = y
+            return b1 * y0 + b2 * y1 + g1
+
+        def labeltesttest(y):
+            if eventtest1(0,y)>0:
+                return 2
+            elif eventtest2(0,y)>0:
+                return 1
+            else:
+                return 0
+        
+        ttest_list, ytest_list = simulation_ode_3([ode_test(G[0],maxorder),ode_test(G[1],maxorder),ode_test(G[2],maxorder)], [eventtest1,eventtest2], labeltesttest, y0, t_tuple, stepsize)
+
+        for temp_y in y_list:
+            y0_list = temp_y.T[0]
+            y1_list = temp_y.T[1]
+            plt.plot(y0_list,y1_list,c='b')
+        for temp_y in ytest_list:
+            y0_list = temp_y.T[0]
+            y1_list = temp_y.T[1]
+            plt.plot(y0_list,y1_list,c='r')
+        plt.show()
+    
     sum = 0
     num = 0
     
@@ -237,6 +267,6 @@ if __name__ == "__main__":
     t_tuple = [(0,5),(0,5),(0,5)]
     stepsize = 0.01
     maxorder = 2
-    eventlist=[eventtr_1,eventtr_2,eventtr_2]
+    eventlist=[eventtr_1,eventtr_2]
     a = case(y0,t_tuple,stepsize,maxorder,modetr,eventlist,labeltest,0.01,"new")
     print(a)

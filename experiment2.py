@@ -24,6 +24,7 @@ from scipy.integrate import odeint, solve_ivp
 #     mmode1, mmode2, event3, mmode, \
 #     incubator_mode1, incubator_mode2, event1, \
 #     modetr_1, modetr_2, modetr_3, eventtr_1, eventtr_2
+from dynamics import ode_test
 from infer_multi_ch import simulation_ode, infer_dynamic, parti, infer_dynamic_modes_ex, norm, reclass, dropclass, \
     infer_dynamic_modes_exx, dist, diff_method, diff_method1, infer_dynamic_modes_ex_dbs, infer_dynamic_modes_pie, \
     infer_dynamic_modes_new, diff_method_new1, diff_method_new, simulation_ode_2, simulation_ode_3, diff_method_backandfor
@@ -101,7 +102,7 @@ def case(y0,t_tuple,stepsize,maxorder,modelist,event,ep,method):
         P,G,D = infer_dynamic_modes_new(t_list, y_list, stepsize, maxorder, 0.01)
         P,D=dropclass(P,G,D,A,b,Y,0.01,stepsize)
         # print(len(P))
-
+        print(G)
         y = []
         x = []
 
@@ -129,9 +130,31 @@ def case(y0,t_tuple,stepsize,maxorder,modelist,event,ep,method):
             a2 = a2 + svc[i][0] * 0.5 * sv[i][2]
             a3 = a3 + svc[i][0] * 0.5 * sv[i][3]
             g = g + svc[i][0]
+        
+        print(a1/a1,a2/a1,a3/a1,g/a1)
         def f(x):
             return a1*x[0] + a2*x[1] + a3*x[2] + g > 0
+
+        @eventAttr()
+        def eventtest(t,y):
+            y0, y1, y2 = y
+            return a1 * y0 + a2 * y1 + a3 * y2 + g
+        ttest_list, ytest_list = simulation_ode_2([ode_test(G[0],maxorder),ode_test(G[1],maxorder)], eventtest, y0, t_tuple, stepsize)
+        ax = plt.axes(projection='3d')
+        for temp_y in y_list[0:1]:
+            y0_list = temp_y.T[0]
+            y1_list = temp_y.T[1]
+            y2_list = temp_y.T[2]
+            ax.plot3D(y0_list, y1_list, y2_list,c='b')
+        for temp_y in ytest_list[0:1]:
+            y0_list = temp_y.T[0]
+            y1_list = temp_y.T[1]
+            y2_list = temp_y.T[2]
+            ax.plot3D(y0_list, y1_list, y2_list,c='r')
+        plt.show()
         
+    
+    
     sum = 0
     num = 0
     
@@ -175,8 +198,8 @@ def case(y0,t_tuple,stepsize,maxorder,modelist,event,ep,method):
 
 if __name__ == "__main__":
     y0 = [[5,5,5], [2,2,2]]
-    t_tuple = [(0,15),(0,15)]
-    stepsize = 0.01
+    t_tuple = [(0,5),(0,5)]
+    stepsize = 0.002
     maxorder = 2
 
     a = case(y0,t_tuple,stepsize,maxorder,fvdp3,event1,0.01,"new")

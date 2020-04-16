@@ -979,7 +979,7 @@ def infer_dynamic_modes_new(t_list, y_list, stepsize, maxorder, ep=0.1):
             clf.fit (matrowex(A,pp), matrowex(b,pp))
             pre = clf.predict(matrowex(A,pp))
         
-        if len(ppp)<10:
+        if len(ppp)<5:
             label_list.remove(p)
             drop.append(p)
             continue

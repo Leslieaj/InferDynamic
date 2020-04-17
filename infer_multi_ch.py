@@ -1635,7 +1635,9 @@ def infer_model(t_list, y_list, stepsize, maxorder, boundary_order, num_mode, mo
         return sum / num
     else:
         coeff1, coeff2 = svm_classify(P, Y, L_y, boundary_order, num_mode)
-
+        if verbose:
+            print(coeff1)
+            print(coeff2)
         # Test obtained model
         sum = 0
         num = 0

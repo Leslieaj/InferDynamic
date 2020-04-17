@@ -944,7 +944,7 @@ def infer_dynamic_modes_new(t_list, y_list, stepsize, maxorder, ep=0.1):
 
     while len(label_list)>0:
         # print("label", len(label_list))
-        p = random.choice(label_list)
+        p = np.random.choice(label_list)
         clf = linear_model.LinearRegression(fit_intercept=False)
         # print("fitstart")
         # print("fitend")
@@ -1354,6 +1354,9 @@ def get_poly_pt(x, maxorder):
 def mat_norm(A):
     return math.sqrt(np.square(A).sum())
 
+def rel_diff(A, B):
+    return mat_norm(A - B) / (mat_norm(A) + mat_norm(B))
+
 def get_coeffs(svm_model, order=1):
     """From model returned by SVM, obtain the coefficients."""
     nsv = svm_model.get_nr_sv()
@@ -1446,8 +1449,123 @@ def svm_classify(P, Y, L_y, boundary_order, num_mode=2):
     else:
         raise NotImplementedError
 
-def infer_model(y0, t_tuple, stepsize, maxorder, boundary_order, modelist, event, ep, method, *,
-                labeltest=None, num_mode=2):
+def segment_and_fit(A, b1, b2):
+    # Segmentation
+    res = []
+    cur_pos = 0
+    max_id = len(b1)
+    ep = 0.01
+
+    while True:
+        low = cur_pos
+        while low < max_id and rel_diff(b1[low], b2[low]) >= ep:
+            low += 1
+        if low == max_id:
+            break
+        high = low
+        while high < max_id and rel_diff(b1[high], b2[high]) < ep:
+            high += 1
+        if high - low >= 5:
+            res.append(list(range(low, high)))
+        cur_pos = high
+        
+    all_pts = set()
+    for lst in res:
+        all_pts = all_pts.union(set(lst))
+    drop = list(set(range(max_id)) - all_pts)
+
+    # Fit each segment
+    clfs = []
+    for lst in res:
+        Ai = matrowex(A, lst)
+        Bi = matrowex(b1, lst)
+        clf = linear_model.LinearRegression(fit_intercept=False)
+        clf.fit(Ai, Bi)
+        clfs.append(clf)
+
+    return res, drop, clfs
+
+def kmeans_cluster(clfs, res, A, b1, num_mode):
+    # Clustering
+    num_coeff = clfs[0].coef_.shape[0] * clfs[0].coef_.shape[1]
+    cluster_coefs = [clfs[i].coef_.reshape((num_coeff,)) for i in range(len(clfs))]
+    kmeans = skc.KMeans(n_clusters=num_mode, random_state=0)
+    kmeans.fit(cluster_coefs)
+
+    mode_pts = []
+    for i in range(num_mode):
+        mode_pts.append([])
+    for i, lab in enumerate(kmeans.labels_):
+        mode_pts[lab].extend(res[i])
+
+    # Fit each cluster again
+    clfs = []
+    for i in range(num_mode):
+        clf = linear_model.LinearRegression(fit_intercept=False)
+
+        clf.fit(matrowex(A, mode_pts[i]), matrowex(b1, mode_pts[i]))
+        clfs.append(clf)
+
+    P = mode_pts
+    G = []
+    for i in range(len(clfs)):
+        G.append(clfs[i].coef_)
+
+    return P, G
+
+def merge_cluster(clfs, res, A, b1, num_mode, ep):
+    # Merge classes
+    classes = []
+    unprocessed = set(range(len(res)))
+    while unprocessed:
+        y = np.random.choice(list(unprocessed))
+        cur_class = [y]
+        for y2 in [x for x in unprocessed if x != y]:
+            A1 = matrowex(A, res[y] + res[y2])
+            B1 = matrowex(b1, res[y] + res[y2])
+            clf = linear_model.LinearRegression(fit_intercept=False)
+            clf.fit(A1, B1)
+            has_error = False
+            for r in range(len(A1)):
+                if rel_diff(clf.predict(A1[r]), B1[r]) >= ep:
+                    has_error = True
+                    break
+            if not has_error:
+                cur_class.append(y2)
+        classes.append(cur_class)
+        unprocessed = unprocessed - set(cur_class)
+
+    # Take the top num_mode classes.
+    mode_pts = []
+    for cls in classes:
+        mode_pts.append(sum([res[c] for c in cls], []))
+
+    sort_mode_pts = []
+    for lst in mode_pts:
+        sort_mode_pts.append((-len(lst), lst))
+    sort_mode_pts = sorted(sort_mode_pts)
+    mode_pts = []
+    for _, lst in sort_mode_pts[:num_mode]:
+        mode_pts.append(lst)
+
+    # Fit each class again
+    clfs = []
+    for mode in mode_pts:
+        A1 = matrowex(A, mode)
+        B1 = matrowex(b1, mode)
+        clf = linear_model.LinearRegression(fit_intercept=False)
+        clf.fit(A1, B1)
+        clfs.append(clf)
+
+    P = mode_pts
+    G = []
+    for i in range(len(clfs)):
+        G.append(clfs[i].coef_)
+
+    return P, G
+
+def infer_model(y0, t_tuple, stepsize, maxorder, boundary_order, num_mode, modelist, event, ep,
+                method, *, labeltest=None, verbose=False):
     """Overall inference function.
 
     y0: list of initial points
@@ -1471,18 +1589,41 @@ def infer_model(y0, t_tuple, stepsize, maxorder, boundary_order, modelist, event
     else:
         raise NotImplementedError
 
-    if method == "new":
+    if method == "piecelinear":
         # Apply Linear Multistep Method
         A, b, Y = diff_method_new(t_list, y_list, maxorder, stepsize)
 
         # Inference
         P, G, D = infer_dynamic_modes_new(t_list, y_list, stepsize, maxorder, ep)
         P, G = reclass(A, b, P, ep)
-        P, D = dropclass(P, G, D, A, b, Y, ep, stepsize)
+        P, _ = dropclass(P, G, D, A, b, Y, ep, stepsize)
+
+    elif method == "kmeans":
+        # Apply Linear Multistep Method
+        A, b1, b2, Y = diff_method_backandfor(t_list, y_list, maxorder, stepsize)
+        num_pt = Y.shape[0]
+
+        # Segment and fit
+        res, drop, clfs = segment_and_fit(A, b1, b2)
+        P, G = kmeans_cluster(clfs, res, A, b1, num_mode)
+        P, _ = dropclass(P, G, drop, A, b1, Y, ep, stepsize)
+
+    elif method == "merge":
+        # Apply Linear Multistep Method
+        A, b1, b2, Y = diff_method_backandfor(t_list, y_list, maxorder, stepsize)
+        num_pt = Y.shape[0]
+
+        # Segment and fit
+        res, drop, clfs = segment_and_fit(A, b1, b2)
+        P, G = merge_cluster(clfs, res, A, b1, num_mode, ep)
+        P, _ = dropclass(P, G, drop, A, b1, Y, ep, stepsize)
+
+    if verbose:
+        print(G)
 
     if num_mode == 2:
         coeffs = svm_classify(P, Y, L_y, boundary_order, num_mode)
-        
+
         # Test obtained model
         sum = 0
         num = 0
@@ -1500,7 +1641,7 @@ def infer_model(y0, t_tuple, stepsize, maxorder, boundary_order, modelist, event
                     predict = np.matmul(get_poly_pt(ypoints[i], maxorder), G[1].T)
 
                 exact = np.mat(exact)
-                sum += mat_norm(exact - predict) / (mat_norm(exact) + mat_norm(predict))
+                sum += rel_diff(exact, predict)
 
         return sum / num
     else:

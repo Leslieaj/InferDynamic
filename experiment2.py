@@ -47,7 +47,7 @@ from infer_by_optimization import lambda_two_modes, get_coef, infer_optimization
 from libsvm.svmutil import *
 
 fvdp3_params = [
-    [10,Fraction(8,3),28,28,4,46.92],
+    [10, Fraction(8,3), 28, 28, 4, 46.92],
 ]
 
 def get_fvdp3(param_id):
@@ -83,11 +83,46 @@ def eventAttr():
     return decorator
 
 
-@eventAttr()
-def event1(t,y):
-    y0, y1, y2 = y
-    return y0 + y1
+def get_event1(param_id):
+    @eventAttr()
+    def event1(t,y):
+        y0, y1, y2 = y
+        return y0 + y1
 
+    return event1
+
+event1 = get_event1(0)
+
+cases = {
+    0: {
+        'params': 0,
+        'y0': [[5,5,5], [2,2,2]],
+        't_tuple': [(0,5), (0,5)],
+        'stepsize': 0.01,
+        'ep': 0.01,
+    },
+    1: {
+        'params': 0,
+        'y0': [[3,3,3]],
+        't_tuple': [(0,5)],
+        'stepsize': 0.002,
+        'ep': 0.01,
+    },
+    2: {
+        'params': 0,
+        'y0': [[3,3,3]],
+        't_tuple': [(0,5)],
+        'stepsize': 0.002,
+        'ep': 0.002,
+    },
+    3: {
+        'params': 0,
+        'y0': [[5,5,5], [2,2,2], [3,3,3], [2,2,-2], [1,0,1]],
+        't_tuple': [(0,3), (0,3), (0,3), (0,3), (0,3)],
+        'stepsize': 0.01,
+        'ep': 0.01,
+    }
+}
 
 
 

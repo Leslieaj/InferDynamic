@@ -49,11 +49,12 @@ from libsvm.svmutil import *
 
 
 mode2_params = [
-    [-0.026, -1, -0.026, 1],
+    [-0.026, -1, -0.026, 1, 98.5],
+    [-0.26, -1, -0.26, 1, 0],
 ]
 
 def get_mode2(param_id):
-    a1, b1, a2, b2 = mode2_params[param_id]
+    a1, b1, a2, b2, _ = mode2_params[param_id]
 
     def mode2_1(t,y):
         """ A hybrid automaton with 2 modes for an incubator.
@@ -74,7 +75,6 @@ def get_mode2(param_id):
 
 mode2 = get_mode2(0)
 
-
 def eventAttr():
     def decorator(func):
         @wraps(func)
@@ -86,10 +86,50 @@ def eventAttr():
     return decorator
 
 
-@eventAttr()
-def event1(t,y):
-    y0, y1 = y
-    return y0 - 98.5
+def get_event1(param_id):
+    _, _, _, _, c0 = mode2_params[param_id]
+
+    @eventAttr()
+    def event1(t,y):
+        y0, y1 = y
+        return y0 - c0
+
+    return event1
+
+event1 = get_event1(0)
+
+cases = {
+    0: {
+        'params': 0,
+        'y0': [[99.5, 80], [97.5, 100]],
+        't_tuple': [(0,50), (0,50)],
+        'stepsize': 0.1,
+    },
+    1: {
+        'params': 0,
+        'y0': [[99.5, 80], [97.5, 100], [100.5, 90]],
+        't_tuple': [(0,50), (0,50), (0,50)],
+        'stepsize': 0.1,
+    },
+    2: {
+        'params': 0,
+        'y0': [[99.5, 80], [97.5,100]],
+        't_tuple': [(0,50), (0,50)],
+        'stepsize': 0.5,
+    },
+    3: {
+        'params': 0,
+        'y0': [[99.5, 80], [97.5, 100], [100.5, 90]],
+        't_tuple': [(0,50), (0,50), (0,50)],
+        'stepsize': 0.5,
+    },
+    4: {
+        'params': 1,
+        'y0': [[1, 3], [-1, -2]],
+        't_tuple': [(0, 10),(0, 10)],
+        'stepsize': 0.1,
+    }
+}
 
 
 def case(y0, t_tuple, stepsize, maxorder, modelist, event, ep, method):

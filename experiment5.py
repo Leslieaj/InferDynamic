@@ -154,7 +154,7 @@ def case(y0,t_tuple,stepsize,maxorder,modelist,eventlist,labeltest,ep,method):
             a1 = a1 + svc[i][0] * 0.5 * sv[i][1]
             a2 = a2 + svc[i][0] * 0.5 * sv[i][2]
             g = g + svc[i][0]*1
-        print(a1/a1,a2/a1,g/a1)
+        print(a1/a2,a2/a2,g/a2)
         def f(x):
             g = -m.rho[0]
             for i in range(0,nsv):
@@ -187,7 +187,7 @@ def case(y0,t_tuple,stepsize,maxorder,modelist,eventlist,labeltest,ep,method):
             b1 = b1 + svc1[i][0] * 0.5 * sv1[i][1]
             b2 = b2 + svc1[i][0] * 0.5 * sv1[i][2]
             g1 = g1 + svc1[i][0]*1
-        print(b1/b2,b2/b2,g1/b1)
+        print(b1/b1,b2/b1,g1/b1)
         def h(x):
             g = -n.rho[0]
             for i in range(0,nsv1):

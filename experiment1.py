@@ -145,14 +145,23 @@ def case(y0, t_tuple, stepsize, maxorder, modelist, event, ep, method):
         return a1 * y0 + a2 * y1 + g
 
     ttest_list, ytest_list = simulation_ode_2([ode_test(G[0],maxorder),ode_test(G[1],maxorder)], eventtest, y0, t_tuple, stepsize)
-    for temp_y in y_list:
+    for i, temp_y in enumerate(y_list):
         y0_list = temp_y.T[0]
         y1_list = temp_y.T[1]
-        plt.plot(y0_list,y1_list,c='b')
-    for temp_y in ytest_list:
+        if i == 0:
+            plt.plot(y0_list,y1_list,c='b',label='Original')
+        else:
+            plt.plot(y0_list,y1_list,c='b')
+    for i, temp_y in enumerate(ytest_list):
         y0_list = temp_y.T[0]
         y1_list = temp_y.T[1]
-        plt.plot(y0_list,y1_list,c='r')
+        if i == 0:
+            plt.plot(y0_list,y1_list,c='r', label='Inferred')
+        else:
+            plt.plot(y0_list,y1_list,c='r')
+    plt.xlabel('x1')
+    plt.ylabel('x2')
+    plt.legend()
     plt.show()
     
     def get_poly_pt(x):

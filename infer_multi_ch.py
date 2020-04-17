@@ -1564,12 +1564,11 @@ def merge_cluster(clfs, res, A, b1, num_mode, ep):
 
     return P, G
 
-def infer_model(y0, t_tuple, stepsize, maxorder, boundary_order, num_mode, modelist, event, ep,
+def infer_model(t_list, y_list, stepsize, maxorder, boundary_order, num_mode, modelist, event, ep,
                 method, *, labeltest=None, verbose=False):
     """Overall inference function.
 
-    y0: list of initial points
-    t_tuple: list of time intervals
+    t_list, y_list: input segments
     stepsize: step size
     maxorder: maximum degree of polynomial
     modelist: list of modes for the model
@@ -1578,17 +1577,6 @@ def infer_model(y0, t_tuple, stepsize, maxorder, boundary_order, num_mode, model
     method: method to apply
 
     """
-    # Some basic dimensions
-    L_y = len(y0[0])  # Number of dimensions
-
-    # Obtain simulated trajectory
-    if num_mode == 2:
-        t_list, y_list = simulation_ode_2(modelist, event, y0, t_tuple, stepsize)
-    elif num_mode == 3:
-        t_list, y_list = simulation_ode_3(modelist, event, labeltest, y0, t_tuple, stepsize)
-    else:
-        raise NotImplementedError
-
     if method == "piecelinear":
         # Apply Linear Multistep Method
         A, b, Y = diff_method_new(t_list, y_list, maxorder, stepsize)
@@ -1621,6 +1609,7 @@ def infer_model(y0, t_tuple, stepsize, maxorder, boundary_order, num_mode, model
     if verbose:
         print(G)
 
+    L_y = len(y_list[0][0])  # Number of dimensions
     if num_mode == 2:
         coeffs = svm_classify(P, Y, L_y, boundary_order, num_mode)
 

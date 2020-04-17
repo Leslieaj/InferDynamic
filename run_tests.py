@@ -2,12 +2,12 @@ import numpy as np
 import time
 
 import experiment1, experiment2, experiment3, experiment4, experiment5
-from infer_multi_ch import infer_model
+from infer_multi_ch import infer_model, simulation_ode_2, simulation_ode_3
 
 run = [1,2,3,4,5]
 
 
-def run_test(eid, case_id, method, verbose=False):
+def run_test(eid, case_id, methods, verbose=False):
     np.random.seed(0)
 
     if eid == 'A':
@@ -36,23 +36,89 @@ def run_test(eid, case_id, method, verbose=False):
         num_mode = 2
         ep = case_info['ep']
 
+    elif eid == 'C':
+        case_info = experiment3.cases[case_id]
+        params = case_info['params']
+        y0 = case_info['y0']
+        t_tuple = case_info['t_tuple']
+        stepsize = case_info['stepsize']
+        modelist = experiment3.get_mode(params)
+        event = experiment3.get_event(params)
+        maxorder = 3
+        boundary_order = 2
+        num_mode = 2
+        ep = case_info['ep']
+
+    elif eid == 'D':
+        case_info = experiment4.cases[case_id]
+        params = case_info['params']
+        y0 = case_info['y0']
+        t_tuple = case_info['t_tuple']
+        stepsize = case_info['stepsize']
+        modelist = experiment4.get_mmode(params)
+        event = experiment4.get_event(params)
+        maxorder = 2
+        boundary_order = 1
+        num_mode = 2
+        ep = case_info['ep']
+
+    elif eid == 'E':
+        case_info = experiment5.cases[case_id]
+        params = case_info['params']
+        y0 = case_info['y0']
+        t_tuple = case_info['t_tuple']
+        stepsize = case_info['stepsize']
+        modelist = experiment5.get_modetr(params)
+        event = experiment5.get_event(params)
+        labeltest = experiment5.get_labeltest(params)
+        maxorder = 2
+        boundary_order = 1
+        num_mode = 3
+        ep = case_info['ep']
+
+    # Obtain simulated trajectory
     start = time.time()
-    a = infer_model(
-        y0=y0, t_tuple=t_tuple, stepsize=stepsize, maxorder=maxorder, boundary_order=boundary_order,
-        num_mode=num_mode, modelist=modelist, event=event, ep=ep, method=method, verbose=verbose)
+    if num_mode == 2:
+        t_list, y_list = simulation_ode_2(modelist, event, y0, t_tuple, stepsize)
+    elif num_mode == 3:
+        t_list, y_list = simulation_ode_3(modelist, event, labeltest, y0, t_tuple, stepsize)
+    else:
+        raise NotImplementedError
     end = time.time()
-    print('eid:', eid, 'N_init:', len(t_tuple), 't_step:', stepsize, 'Method:', method)
-    print('d_avg: %.6f, time: %.3f' % (a, end - start))
-    return a
+
+    print('eid:', eid, 'N_init:', len(t_tuple), 't_step:', stepsize, 'ep:', ep, 'sim_time: %.3f' % (end - start))
+    for method in methods:
+        start = time.time()
+        if num_mode == 2:
+            a = infer_model(
+                t_list, y_list, stepsize=stepsize, maxorder=maxorder, boundary_order=boundary_order,
+                num_mode=num_mode, modelist=modelist, event=event, ep=ep, method=method, verbose=verbose)
+        elif num_mode == 3:
+            a = infer_model(
+                t_list, y_list, stepsize=stepsize, maxorder=maxorder, boundary_order=boundary_order,
+                num_mode=num_mode, modelist=modelist, event=event, ep=ep, method=method, verbose=verbose,
+                labeltest=labeltest)
+        else:
+            raise NotImplementedError
+
+        end = time.time()
+        print('Method: %s, d_avg: %.6f, infer_time: %.3f' % (method, a, end - start))
 
 
 for i in range(4):
-    for method in ['kmeans', 'merge', 'piecelinear']:
-        run_test('A', i, method=method)
+    run_test('A', i, methods=['kmeans', 'merge', 'piecelinear'])
 
 for i in range(4):
-    for method in ['kmeans', 'merge', 'piecelinear']:
-        run_test('B', i, method=method)
+    run_test('B', i, methods=['merge', 'piecelinear'])
+
+for i in range(4):
+    run_test('C', i, methods=['merge', 'piecelinear'])
+
+for i in range(4):
+    run_test('D', i, methods=['merge', 'piecelinear'])
+
+for i in range(4):
+    run_test('E', i, methods=['merge', 'piecelinear'])
 
 
 # if 1 in run:

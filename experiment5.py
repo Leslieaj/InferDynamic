@@ -85,25 +85,64 @@ def eventAttr():
     return decorator
 
 
-@eventAttr()
-def eventtr_1(t,y):
-    y0, y1= y
-    return y0
+def get_event(param_id):
+    @eventAttr()
+    def eventtr_1(t,y):
+        y0, y1 = y
+        return y0
+
+    @eventAttr()
+    def eventtr_2(t,y):
+        y0, y1 = y
+        return y1
+
+    return [eventtr_1, eventtr_2, eventtr_2]
 
 
-@eventAttr()
-def eventtr_2(t,y):
-    y0, y1= y
-    return y1
+eventtr_1, eventtr_2, _ = get_event(0)
 
+def get_labeltest(param_id):
+    def labeltest(y):
+        if eventtr_1(0,y)<0 and eventtr_2(0,y)>0:
+            return 0
+        elif eventtr_1(0,y)>=0 and eventtr_2(0,y)>0:
+            return 1
+        else:
+            return 2
+    return labeltest
 
-def labeltest(y):
-    if eventtr_1(0,y)<0 and eventtr_2(0,y)>0:
-        return 0
-    elif eventtr_1(0,y)>=0 and eventtr_2(0,y)>0:
-        return 1
-    else:
-        return 2
+labeltest = get_labeltest(0)
+
+cases = {
+    0: {
+        'params': 0,
+        'y0': [[-1,1],[1,4],[2,-3]],
+        't_tuple': [(0,5),(0,5),(0,5)],
+        'stepsize': 0.01,
+        'ep': 0.01
+    },
+    1: {
+        'params': 0,
+        'y0': [[-1,1],[1,4]],
+        't_tuple': [(0,5),(0,5)],
+        'stepsize': 0.01,
+        'ep': 0.01
+    },
+    2: {
+        'params': 0,
+        'y0': [[-1,1],[1,4],[2,-3],[1,1],[3,1]],
+        't_tuple': [(0,5),(0,5),(0,5),(0,5),(0,5)],
+        'stepsize': 0.01,
+        'ep': 0.01,
+    },
+    3: {
+        'params': 0,
+        'y0': [[-1,1],[1,4],[2,-3],[1,1],[3,1]],
+        't_tuple': [(0,5),(0,5),(0,5),(0,5),(0,5)],
+        'stepsize': 0.01,
+        'ep': 0.002,
+    },
+}
 
 def case(y0,t_tuple,stepsize,maxorder,modelist,eventlist,labeltest,ep,method):
     t_list, y_list = simulation_ode_3(modelist, eventlist, labeltest, y0, t_tuple, stepsize)

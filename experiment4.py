@@ -81,12 +81,46 @@ def eventAttr():
     return decorator
 
 
-@eventAttr()
-def event1(t,y):
-    y0, y1, y2, y3= y
-    return y2
+def get_event(param_id):
+    @eventAttr()
+    def event1(t,y):
+        y0, y1, y2, y3 = y
+        return y2
+    return event1
+
+event1 = get_event(0)
 
 
+cases = {
+    0: {
+        'params': 0,
+        'y0': [[4,0.1,3.1,0], [5.9,0.2,-3,0], [4.1,0.5,2,0], [6,0.7,2,0]],
+        't_tuple': [(0,5),(0,5),(0,5),(0,5)],
+        'stepsize': 0.01,
+        'ep': 0.01
+    },
+    1: {
+        'params': 0,
+        'y0': [[4.1,0.5,2,0], [6,0.7,2,0]],
+        't_tuple': [(0,5),(0,5)],
+        'stepsize': 0.01,
+        'ep': 0.01
+    },
+    2: {
+        'params': 0,
+        'y0': [[4,0.1,3.1,0], [5.9,0.2,-3,0], [4.1,0.5,2,0], [6,0.7,2,0]],
+        't_tuple': [(0,5),(0,5),(0,5),(0,5)],
+        'stepsize': 0.01,
+        'ep': 0.05
+    },
+    3: {
+        'params': 0,
+        'y0': [[4,0.1,3.1,0], [5.9,0.2,-3,0], [4.1,0.5,2,0], [6,0.7,2,0]],
+        't_tuple': [(0,5),(0,5),(0,5),(0,5)],
+        'stepsize': 0.002,
+        'ep': 0.01
+    },
+}
 
 def case(y0,t_tuple,stepsize,maxorder,modelist,event,ep,method):
     t_list, y_list = simulation_ode_2(modelist, event, y0, t_tuple, stepsize)

@@ -46,11 +46,11 @@ from infer_by_optimization import lambda_two_modes, get_coef, infer_optimization
 from libsvm.svmutil import *
 
 mode_params = [
-    [0.1,0.04,-0.9,-0.1,0.06,-0.7],
+    [0.1,0.04,-0.9,-0.1,0.06,-0.7,-0.2],
 ]
 
 def get_mode(param_id):
-    a1, b1,c1, a2, b2,c2 = mode_params[param_id]
+    a1, b1, c1, a2, b2, c2, _ = mode_params[param_id]
 
     def mode1(t,y):
         y0, y1 = y
@@ -78,11 +78,48 @@ def eventAttr():
     return decorator
 
 
-@eventAttr()
-def event1(t,y):
-    y0, y1 = y
-    return y1 - 0.2*y0**2
+def get_event(param_id):
+    _, _, _, _, _, _, d = mode_params[param_id]
 
+    @eventAttr()
+    def event1(t,y):
+        y0, y1 = y
+        return y1 - 0.2*y0**2
+
+    return event1
+
+event1 = get_event(0)
+
+cases = {
+    0: {
+        'params': 0,
+        'y0': [[0,1],[0,2],[0,3],[0,4],[0,5]],
+        't_tuple': [(0,20),(0,20),(0,20),(0,20),(0,20)],
+        'stepsize': 0.01,
+        'ep': 0.01,
+    },
+    1: {
+        'params': 0,
+        'y0': [[0,2],[0,3],[0,4]],
+        't_tuple': [(0,20),(0,20),(0,20)],
+        'stepsize': 0.01,
+        'ep': 0.01,
+    },
+    2: {
+        'params': 0,
+        'y0': [[0,2],[0,3],[0,4]],
+        't_tuple': [(0,20),(0,20),(0,20)],
+        'stepsize': 0.1,
+        'ep': 0.01,
+    },
+    3: {
+        'params': 0,
+        'y0': [[0,-2],[0,-1],[0,2],[0,3],[0,4]],
+        't_tuple': [(0,5),(0,5),(0,5),(0,5),(0,5)],
+        'stepsize': 0.01,
+        'ep': 0.01,
+    }
+}
 
 
 def case(y0,t_tuple,stepsize,maxorder,modelist,event,ep,method):

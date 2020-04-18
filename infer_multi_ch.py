@@ -1411,42 +1411,53 @@ def svm_classify(P, Y, L_y, boundary_order, num_mode=2):
         return get_coeffs(m, order=boundary_order)
 
     elif num_mode == 3:
+        accl = []
+        for i in range(0,3):    
+            y = []
+            x = []
+            for j in range(0,len(P[i])):
+                y.append(1)
+                x.append({1:Y[P[i][j],0], 2:Y[P[i][j],1]})
+            
+            for j in range(0,len(P[(i+1)%3])):
+                y.append(-1)
+                x.append({1:Y[P[(i+1)%3][j],0], 2:Y[P[(i+1)%3][j],1]})
+            
+            for j in range(0,len(P[(i+2)%3])):
+                y.append(-1)
+                x.append({1:Y[P[(i+2)%3][j],0], 2:Y[P[(i+2)%3][j],1]})
+
+            prob = svm_problem(y, x)
+            param = svm_parameter('-t 1 -d %d -c 100 -r 1 -b 0 -q' % boundary_order)
+            m = svm_train(prob, param)
+            svm_save_model('model_file1', m)
+            coeff1 = get_coeffs(m, order=boundary_order)
+            p_label, p_acc, p_val = svm_predict(y, x, m)
+            accl.append((p_acc[0],i,coeff1))
+        
+        accl.sort(reverse=True)
+        (acc,first,coeff1)=accl[0]
+
+        
+
+
+
         y = []
         x = []
-        for j in range(0,len(P[2])):
+        for j in range(0,len(P[(first+1)%3])):
             y.append(1)
-            x.append({1:Y[P[2][j],0], 2:Y[P[2][j],1]})
+            x.append({1:Y[P[(first+1)%3][j],0], 2:Y[P[(first+1)%3][j],1]})
         
-        for j in range(0,len(P[1])):
+        for j in range(0,len(P[(first+2)%3])):
             y.append(-1)
-            x.append({1:Y[P[1][j],0], 2:Y[P[1][j],1]})
-        
-        for j in range(0,len(P[0])):
-            y.append(-1)
-            x.append({1:Y[P[0][j],0], 2:Y[P[0][j],1]})
-
-        prob = svm_problem(y, x)
-        param = svm_parameter('-t 1 -d %d -c 100 -r 1 -b 0 -q' % boundary_order)
-        m = svm_train(prob, param)
-        svm_save_model('model_file1', m)
-        coeff1 = get_coeffs(m, order=boundary_order)
-
-        y = []
-        x = []
-        for j in range(0,len(P[1])):
-            y.append(1)
-            x.append({1:Y[P[1][j],0], 2:Y[P[1][j],1]})
-        
-        for j in range(0,len(P[0])):
-            y.append(-1)
-            x.append({1:Y[P[0][j],0], 2:Y[P[0][j],1]})
+            x.append({1:Y[P[(first+2)%3][j],0], 2:Y[P[(first+2)%3][j],1]})
 
         prob = svm_problem(y, x)
         param = svm_parameter('-t 1 -d %d -c 100 -r 1 -b 0 -q' % boundary_order)
         n = svm_train(prob, param)
         svm_save_model('model_file2', n)
         coeff2 = get_coeffs(n, order=boundary_order)
-        return coeff1, coeff2
+        return coeff1, coeff2, [first,(first+1)%3,(first+2)%3]
 
     else:
         raise NotImplementedError
@@ -1702,7 +1713,7 @@ def infer_model(t_list, y_list, stepsize, maxorder, boundary_order, num_mode, mo
 
         return sum / num
     else:
-        coeff1, coeff2 = svm_classify(P, Y, L_y, boundary_order, num_mode)
+        coeff1, coeff2, [first,second,third] = svm_classify(P, Y, L_y, boundary_order, num_mode)
         if verbose:
             print(coeff1)
             print(coeff2)
@@ -1715,11 +1726,11 @@ def infer_model(t_list, y_list, stepsize, maxorder, boundary_order, num_mode, mo
                 exact = modelist[labeltest(ypoints[i])](0, ypoints[i])
                 poly_y = get_poly_pt(ypoints[i], boundary_order)
                 if poly_y.dot(coeff1) > 0:
-                    predict = np.matmul(get_poly_pt(ypoints[i], maxorder), G[2].T)
+                    predict = np.matmul(get_poly_pt(ypoints[i], maxorder), G[first].T)
                 elif poly_y.dot(coeff2) > 0:
-                    predict = np.matmul(get_poly_pt(ypoints[i], maxorder), G[1].T)
+                    predict = np.matmul(get_poly_pt(ypoints[i], maxorder), G[second].T)
                 else:
-                    predict = np.matmul(get_poly_pt(ypoints[i], maxorder), G[0].T)
+                    predict = np.matmul(get_poly_pt(ypoints[i], maxorder), G[third].T)
 
                 exact = np.mat(exact)
                 sum += mat_norm(exact - predict) / (mat_norm(exact) + mat_norm(predict))

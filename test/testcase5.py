@@ -452,9 +452,11 @@ def case7():
     param = svm_parameter('-t 1 -d 1 -c 10 -r 1 -b 0')
     m = svm_train(prob, param)
     svm_save_model('model_file', m)
-    print("pred")
+    # print("pred")
     p_label, p_acc, p_val = svm_predict(y, x, m)
     # print(p_label)
+    print('pre',p_acc[0])
+    # print(p_val)
     nsv = m.get_nr_sv()
     svc = m.get_sv_coef()
     sv = m.get_SV()
@@ -485,44 +487,44 @@ def case7():
     # print("a2",a2/a1)
     # print("g",g/a1)
     
-    def classify_mode(x):
-        return a1 * x[0] + a2 * x[1] + a3 * x[2] + a4 * x[3] + g > 0
-        # return a.dot(x.T) + g >0
+    # def classify_mode(x):
+    #     return a1 * x[0] + a2 * x[1] + a3 * x[2] + a4 * x[3] + g > 0
+    #     # return a.dot(x.T) + g >0
     
-    def get_poly_pt(x):
-        gene = generate_complete_polynomial(len(x), maxorder)
-        val = []
-        for i in range(gene.shape[0]):
-            val.append(1.0)
-            for j in range(gene.shape[1]):
-                val[i] = val[i] * (x[j] ** gene[i,j])
-        return val
+    # def get_poly_pt(x):
+    #     gene = generate_complete_polynomial(len(x), maxorder)
+    #     val = []
+    #     for i in range(gene.shape[0]):
+    #         val.append(1.0)
+    #         for j in range(gene.shape[1]):
+    #             val[i] = val[i] * (x[j] ** gene[i,j])
+    #     return val
     
-    def predict_deriv(x):
-        poly_pt = np.mat(get_poly_pt(x))
-        if classify_mode(x):
-            return np.matmul(poly_pt,G[0].T)
-        else:
-            return np.matmul(poly_pt,G[1].T)
+    # def predict_deriv(x):
+    #     poly_pt = np.mat(get_poly_pt(x))
+    #     if classify_mode(x):
+    #         return np.matmul(poly_pt,G[0].T)
+    #     else:
+    #         return np.matmul(poly_pt,G[1].T)
 
-    sum = 0
-    num = 0
-    for ytemp in y_list:
-        num_pt0 = ytemp.shape[0]
-        num = num + num_pt0
-        for i in range(0,num_pt0):
-        # index = random.choice(range(num_pt0))
-            x = ytemp[i]
-            diff1 = np.array(mmode(0.0, x))
-            print('1',diff1)
-            diffm = predict_deriv(x)
-            diff2 = np.zeros(diffm.shape[1])
-            for l in range(diffm.shape[1]):
-                diff2[l] = diffm[0,l]
-            print('2',diff2)
-            err = norm(diff1-diff2)/(norm(diff1)+norm(diff2))
-            sum = sum +err
-    print(sum/num)
+    # sum = 0
+    # num = 0
+    # for ytemp in y_list:
+    #     num_pt0 = ytemp.shape[0]
+    #     num = num + num_pt0
+    #     for i in range(0,num_pt0):
+    #     # index = random.choice(range(num_pt0))
+    #         x = ytemp[i]
+    #         diff1 = np.array(mmode(0.0, x))
+    #         print('1',diff1)
+    #         diffm = predict_deriv(x)
+    #         diff2 = np.zeros(diffm.shape[1])
+    #         for l in range(diffm.shape[1]):
+    #             diff2[l] = diffm[0,l]
+    #         print('2',diff2)
+    #         err = norm(diff1-diff2)/(norm(diff1)+norm(diff2))
+    #         sum = sum +err
+    # print(sum/num)
 
 def case8():
     y0 = [[4,0.1,3.1,0],[5.9,0.2,-3,0],[4.1,0.5,2,0],[6,0.7,2,0]]
@@ -765,7 +767,7 @@ if __name__ == "__main__":
     # case3()
     # case5()
     # case6()
-    # case7()
+    case7()
     # case8()
     # case9()
-    case10()
+    # case10()

@@ -72,7 +72,7 @@ def run_test(eid, case_id, methods, verbose=False):
         event = experiment5.get_event(params)
         labeltest = experiment5.get_labeltest(params)
         maxorder = 2
-        boundary_order = 2
+        boundary_order = 1
         num_mode = 3
         ep = case_info['ep']
 
@@ -105,17 +105,17 @@ def run_test(eid, case_id, methods, verbose=False):
         print('Method: %s, d_avg: %.6f, infer_time: %.3f' % (method, a, end - start))
 
 
-for i in range(4):
-    run_test('A', i, methods=['merge', 'piecelinear'])
+# for i in range(4):
+#     run_test('A', i, methods=['merge', 'piecelinear'])
 
-for i in range(4):
-    run_test('B', i, methods=['merge', 'piecelinear'])
+# for i in range(4):
+#     run_test('B', i, methods=['merge', 'piecelinear'])
 
-for i in range(4):
-    run_test('C', i, methods=['merge', 'piecelinear'])
+# for i in range(4):
+#     run_test('C', i, methods=['merge', 'piecelinear'])
 
-for i in range(4):
-    run_test('D', i, methods=['merge', 'piecelinear'])
+# for i in range(4):
+#     run_test('D', i, methods=['merge', 'piecelinear'])
 
 for i in range(4):
     run_test('E', i, methods=['merge', 'piecelinear'])

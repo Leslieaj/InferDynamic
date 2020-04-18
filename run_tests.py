@@ -13,7 +13,7 @@ for method in methods:
     total_time[method] = 0.0
 
 
-def run_test(eid, case_id, methods, verbose=False):
+def run_test(id, eid, case_id, methods, verbose=False):
     np.random.seed(0)
 
     if eid == 'A':
@@ -99,7 +99,7 @@ def run_test(eid, case_id, methods, verbose=False):
         raise NotImplementedError
     end = time.time()
 
-    print('eid:', eid, 'N_init:', len(y0), 't_step:', stepsize, 'ep:', ep, 'sim_time: %.3f' % (end - start))
+    # print('eid:', eid, 'N_init:', len(y0), 't_step:', stepsize, 'ep:', ep, 'sim_time: %.3f' % (end - start))
 
     d_avg = dict()
     infer_time = dict()
@@ -126,7 +126,7 @@ def run_test(eid, case_id, methods, verbose=False):
         else:
             raise NotImplementedError
 
-        print('Method: %s, d_avg: %.6f, infer_time: %.3f' % (method, d_avg[method], infer_time[method]))
+        # print('Method: %s, d_avg: %.6f, infer_time: %.3f' % (method, d_avg[method], infer_time[method]))
 
     best_method, best_avg = None, 1.0
     for method, avg in d_avg.items():
@@ -136,23 +136,27 @@ def run_test(eid, case_id, methods, verbose=False):
     for method, t in infer_time.items():
         total_time[method] += t
     total_win[best_method] += 1
+
+    print('%d & $%s$ & %d & %.2f & %d & - & %.5f & %.5f & - & %.1f & %.1f \\\\' % (
+        id, eid, len(y0), stepsize, T, d_avg['merge'], d_avg['piecelinear'],
+        infer_time['merge'], infer_time['piecelinear']))
     return d_avg, infer_time
 
 
 for i in range(4):
-    run_test('A', i, methods=['merge', 'piecelinear'])
+    run_test(i+1, 'A', i, methods=['merge', 'piecelinear'])
 
 for i in range(4):
-    run_test('B', i, methods=['merge', 'piecelinear'])
+    run_test(i+5, 'B', i, methods=['merge', 'piecelinear'])
 
 for i in range(4):
-    run_test('C', i, methods=['merge', 'piecelinear'])
+    run_test(i+9, 'C', i, methods=['merge', 'piecelinear'])
 
 for i in range(4):
-    run_test('D', i, methods=['merge', 'piecelinear'])
+    run_test(i+13, 'D', i, methods=['merge', 'piecelinear'])
 
 for i in range(4):
-    run_test('E', i, methods=['merge', 'piecelinear'])
+    run_test(i+17, 'E', i, methods=['merge', 'piecelinear'])
 
 print('total win:', total_win)
 print('total d_avg:', total_d_avg)

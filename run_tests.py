@@ -105,20 +105,20 @@ def run_test(eid, case_id, methods, verbose=False):
         print('Method: %s, d_avg: %.6f, infer_time: %.3f' % (method, a, end - start))
 
 
-# for i in range(4):
-#     run_test('A', i, methods=['kmeans', 'merge', 'piecelinear'])
-
-# for i in range(4):
-#     run_test('B', i, methods=['merge', 'piecelinear'])
-
-# for i in range(4):
-#     run_test('C', i, methods=['merge', 'piecelinear'])
-
-# for i in range(4):
-#     run_test('D', i, methods=['merge', 'piecelinear'])
+for i in range(4):
+    run_test('A', i, methods=['kmeans', 'merge', 'piecelinear'])
 
 for i in range(4):
-    run_test('E', i, methods=['merge', 'piecelinear'],verbose=True)
+    run_test('B', i, methods=['merge', 'piecelinear'])
+
+for i in range(4):
+    run_test('C', i, methods=['merge', 'piecelinear'])
+
+for i in range(4):
+    run_test('D', i, methods=['merge', 'piecelinear'])
+
+for i in range(4):
+    run_test('E', i, methods=['merge', 'piecelinear'])
 
 
 # if 1 in run:

@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 import time
 import math
 import random
+import itertools
+import queue
 
 from dynamics import dydx1, dydx2, fvdp2, fvdp2_1, ode_test
 from generator import generate_complete_polynomial
@@ -1537,8 +1539,8 @@ def merge_cluster(clfs, res, A, b1, num_mode, ep):
 
     # Take the top num_mode classes.
     mode_pts = []
-    for cls in classes:
-        mode_pts.append(sum([res[c] for c in cls], []))
+    for cl in classes:
+        mode_pts.append(sum([res[c] for c in cl], []))
 
     sort_mode_pts = []
     for lst in mode_pts:
@@ -1563,6 +1565,69 @@ def merge_cluster(clfs, res, A, b1, num_mode, ep):
         G.append(clfs[i].coef_)
 
     return P, G
+
+def merge_cluster2(clfs, res, A, b1, num_mode, ep):
+    # Merge classes
+    def get_score(l1, l2):
+        A1 = matrowex(A, l1 + l2)
+        B1 = matrowex(b1, l1 + l2)
+        clf = linear_model.LinearRegression(fit_intercept=False)
+        clf.fit(A1, B1)
+        max_ep = 0.0
+        for r in range(len(A1)):
+            cur_ep = rel_diff(clf.predict(A1[r]), B1[r])
+            if cur_ep >= max_ep:
+                max_ep = cur_ep
+        return max_ep
+
+    qu = queue.PriorityQueue()
+    for i, j in itertools.permutations(range(len(res)), 2):
+        l1, l2 = res[i], res[j]
+        qu.put((get_score(l1, l2), l1, l2))
+
+    while len(res) > num_mode:
+        sc, l1, l2 = qu.get()
+        if l1 not in res or l2 not in res:
+            continue
+
+        if sc > ep:
+            break
+
+        # Merge the two best classes
+        res.remove(l1)
+        res.remove(l2)
+
+        # Compute the merge score with every other item in res
+        for i in range(len(res)):
+            l3 = res[i]
+            qu.put((get_score(l1 + l2, l3), l1 + l2, l3))
+        res.append(l1 + l2)
+
+    # Take the top num_mode classes.
+    sort_mode_pts = []
+    for lst in res:
+        sort_mode_pts.append((-len(lst), lst))
+    sort_mode_pts = sorted(sort_mode_pts)
+    mode_pts = []
+    for _, lst in sort_mode_pts[:num_mode]:
+        mode_pts.append(lst)
+
+    # Fit each class again
+    clfs = []
+    for mode in mode_pts:
+        A1 = matrowex(A, mode)
+        B1 = matrowex(b1, mode)
+        clf = linear_model.LinearRegression(fit_intercept=False)
+        clf.fit(A1, B1)
+        clfs.append(clf)
+
+    P = mode_pts
+    G = []
+    for i in range(len(clfs)):
+        G.append(clfs[i].coef_)
+
+    return P, G
+
 
 def infer_model(t_list, y_list, stepsize, maxorder, boundary_order, num_mode, modelist, event, ep,
                 method, *, labeltest=None, verbose=False):
@@ -1603,7 +1668,7 @@ def infer_model(t_list, y_list, stepsize, maxorder, boundary_order, num_mode, mo
 
         # Segment and fit
         res, drop, clfs = segment_and_fit(A, b1, b2)
-        P, G = merge_cluster(clfs, res, A, b1, num_mode, ep)
+        P, G = merge_cluster2(clfs, res, A, b1, num_mode, ep)
         P, _ = dropclass(P, G, drop, A, b1, Y, ep, stepsize)
 
     if verbose:

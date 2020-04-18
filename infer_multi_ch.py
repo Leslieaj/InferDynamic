@@ -1709,7 +1709,16 @@ def infer_model(t_list, y_list, stepsize, maxorder, boundary_order, num_mode, mo
 
         # Segment and fit
         res, drop, clfs = segment_and_fit(A, b1, b2)
-        # P, G = kmeans_cluster(clfs, res, A, b1, num_mode)
+        P, G = kmeans_cluster(clfs, res, A, b1, num_mode)
+        P, _ = dropclass(P, G, drop, A, b1, Y, ep, stepsize)
+
+    elif method == "dbscan":
+        # Apply Linear Multistep Method
+        A, b1, b2, Y = diff_method_backandfor(t_list, y_list, maxorder, stepsize)
+        num_pt = Y.shape[0]
+
+        # Segment and fit
+        res, drop, clfs = segment_and_fit(A, b1, b2)
         P, G = dbscan_cluster(clfs, res, A, b1, num_mode)
         P, _ = dropclass(P, G, drop, A, b1, Y, ep, stepsize)
 

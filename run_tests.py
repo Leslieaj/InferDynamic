@@ -6,7 +6,7 @@ from infer_multi_ch import infer_model, test_model, simulation_ode_2, simulation
 
 
 total_win, total_d_avg, total_time = dict(), dict(), dict()
-methods = ['kmeans', 'merge', 'piecelinear']
+methods = ['kmeans', 'dbscan', 'merge', 'piecelinear']
 for method in methods:
     total_win[method] = 0
     total_d_avg[method] = 0.0
@@ -137,26 +137,26 @@ def run_test(id, eid, case_id, methods, verbose=False):
         total_time[method] += t
     total_win[best_method] += 1
 
-    print('%d & $%s$ & %d & %.3f & %d & %.3f & - & %.5f & %.5f & - & %.1f & %.1f \\\\' % (
-        id, eid, len(y0), stepsize, T, ep, d_avg['merge'], d_avg['piecelinear'],
-        infer_time['merge'], infer_time['piecelinear']))
+    print('%d & $%s$ & %d & %.3f & %d & %.3f & %.5f & %.5f & %.5f & %.1f & %.1f & %.1f \\\\' % (
+        id, eid, len(y0), stepsize, T, ep, d_avg['dbscan'], d_avg['merge'], d_avg['piecelinear'],
+        infer_time['dbscan'], infer_time['merge'], infer_time['piecelinear']))
     return d_avg, infer_time
 
 
 for i in range(4):
-    run_test(i+1, 'A', i, methods=['kmeans','merge', 'piecelinear'])
+    run_test(i+1, 'A', i, methods=['dbscan','merge', 'piecelinear'])
 
-# for i in range(4):
-#     run_test(i+5, 'B', i, methods=['merge', 'piecelinear'])
+for i in range(4):
+    run_test(i+5, 'B', i, methods=['dbscan', 'merge', 'piecelinear'])
 
-# for i in range(4):
-#     run_test(i+9, 'C', i, methods=['merge', 'piecelinear'])
+for i in range(4):
+    run_test(i+9, 'C', i, methods=['dbscan', 'merge', 'piecelinear'])
 
-# for i in range(4):
-#     run_test(i+13, 'D', i, methods=['merge', 'piecelinear'])
+for i in range(4):
+    run_test(i+13, 'D', i, methods=['dbscan', 'merge', 'piecelinear'])
 
-# for i in range(4):
-#     run_test(i+17, 'E', i, methods=['merge', 'piecelinear'])
+for i in range(4):
+    run_test(i+17, 'E', i, methods=['dbscan', 'merge', 'piecelinear'])
 
 print('total win:', total_win)
 print('total d_avg:', total_d_avg)

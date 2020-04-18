@@ -106,7 +106,7 @@ def run_test(eid, case_id, methods, verbose=False):
 
 
 for i in range(4):
-    run_test('A', i, methods=['kmeans', 'merge', 'piecelinear'])
+    run_test('A', i, methods=['merge', 'piecelinear'])
 
 for i in range(4):
     run_test('B', i, methods=['merge', 'piecelinear'])

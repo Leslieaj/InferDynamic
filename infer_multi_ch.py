@@ -1573,12 +1573,15 @@ def merge_cluster2(clfs, res, A, b1, num_mode, ep):
         B1 = matrowex(b1, l1 + l2)
         clf = linear_model.LinearRegression(fit_intercept=False)
         clf.fit(A1, B1)
-        max_ep = 0.0
+        # total_ep = 0.0
+        # for r in range(len(A1)):
+        #     total_ep += rel_diff(clf.predict(A1[r]), B1[r])
+        # return total_ep / len(A1)
+        eps = []
         for r in range(len(A1)):
-            cur_ep = rel_diff(clf.predict(A1[r]), B1[r])
-            if cur_ep >= max_ep:
-                max_ep = cur_ep
-        return max_ep
+            eps.append(rel_diff(clf.predict(A1[r]), B1[r]))
+        eps = sorted(eps)
+        return eps[int(0.95*len(eps))]
 
     qu = queue.PriorityQueue()
     for i, j in itertools.permutations(range(len(res)), 2):

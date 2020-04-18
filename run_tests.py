@@ -137,8 +137,8 @@ def run_test(id, eid, case_id, methods, verbose=False):
         total_time[method] += t
     total_win[best_method] += 1
 
-    print('%d & $%s$ & %d & %.2f & %d & - & %.5f & %.5f & - & %.1f & %.1f \\\\' % (
-        id, eid, len(y0), stepsize, T, d_avg['merge'], d_avg['piecelinear'],
+    print('%d & $%s$ & %d & %.3f & %d & %.3f & - & %.5f & %.5f & - & %.1f & %.1f \\\\' % (
+        id, eid, len(y0), stepsize, T, ep, d_avg['merge'], d_avg['piecelinear'],
         infer_time['merge'], infer_time['piecelinear']))
     return d_avg, infer_time
 
@@ -146,17 +146,17 @@ def run_test(id, eid, case_id, methods, verbose=False):
 for i in range(4):
     run_test(i+1, 'A', i, methods=['merge', 'piecelinear'])
 
-for i in range(4):
-    run_test(i+5, 'B', i, methods=['merge', 'piecelinear'])
+# for i in range(4):
+#     run_test(i+5, 'B', i, methods=['merge', 'piecelinear'])
 
-for i in range(4):
-    run_test(i+9, 'C', i, methods=['merge', 'piecelinear'])
+# for i in range(4):
+#     run_test(i+9, 'C', i, methods=['merge', 'piecelinear'])
 
-for i in range(4):
-    run_test(i+13, 'D', i, methods=['merge', 'piecelinear'])
+# for i in range(4):
+#     run_test(i+13, 'D', i, methods=['merge', 'piecelinear'])
 
-for i in range(4):
-    run_test(i+17, 'E', i, methods=['merge', 'piecelinear'])
+# for i in range(4):
+#     run_test(i+17, 'E', i, methods=['merge', 'piecelinear'])
 
 print('total win:', total_win)
 print('total d_avg:', total_d_avg)

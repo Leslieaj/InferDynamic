@@ -2,9 +2,15 @@ import numpy as np
 import time
 
 import experiment1, experiment2, experiment3, experiment4, experiment5
-from infer_multi_ch import infer_model, simulation_ode_2, simulation_ode_3
+from infer_multi_ch import infer_model, test_model, simulation_ode_2, simulation_ode_3
 
-run = [1,2,3,4,5]
+
+total_win, total_d_avg, total_time = dict(), dict(), dict()
+methods = ['kmeans', 'merge', 'piecelinear']
+for method in methods:
+    total_win[method] = 0
+    total_d_avg[method] = 0.0
+    total_time[method] = 0.0
 
 
 def run_test(eid, case_id, methods, verbose=False):
@@ -14,7 +20,8 @@ def run_test(eid, case_id, methods, verbose=False):
         case_info = experiment1.cases[case_id]
         params = case_info['params']
         y0 = case_info['y0']
-        t_tuple = case_info['t_tuple']
+        y0_test = case_info['y0_test']
+        T = case_info['t_tuple']
         stepsize = case_info['stepsize']
         modelist = experiment1.get_mode2(params)
         event = experiment1.get_event1(params)
@@ -27,7 +34,7 @@ def run_test(eid, case_id, methods, verbose=False):
         case_info = experiment2.cases[case_id]
         params = case_info['params']
         y0 = case_info['y0']
-        t_tuple = case_info['t_tuple']
+        T = case_info['t_tuple']
         stepsize = case_info['stepsize']
         modelist = experiment2.get_fvdp3(params)
         event = experiment2.get_event1(params)
@@ -40,7 +47,7 @@ def run_test(eid, case_id, methods, verbose=False):
         case_info = experiment3.cases[case_id]
         params = case_info['params']
         y0 = case_info['y0']
-        t_tuple = case_info['t_tuple']
+        T = case_info['t_tuple']
         stepsize = case_info['stepsize']
         modelist = experiment3.get_mode(params)
         event = experiment3.get_event(params)
@@ -53,7 +60,7 @@ def run_test(eid, case_id, methods, verbose=False):
         case_info = experiment4.cases[case_id]
         params = case_info['params']
         y0 = case_info['y0']
-        t_tuple = case_info['t_tuple']
+        T = case_info['t_tuple']
         stepsize = case_info['stepsize']
         modelist = experiment4.get_mmode(params)
         event = experiment4.get_event(params)
@@ -66,7 +73,7 @@ def run_test(eid, case_id, methods, verbose=False):
         case_info = experiment5.cases[case_id]
         params = case_info['params']
         y0 = case_info['y0']
-        t_tuple = case_info['t_tuple']
+        T = case_info['t_tuple']
         stepsize = case_info['stepsize']
         modelist = experiment5.get_modetr(params)
         event = experiment5.get_event(params)
@@ -79,47 +86,73 @@ def run_test(eid, case_id, methods, verbose=False):
     # Obtain simulated trajectory
     start = time.time()
     if num_mode == 2:
-        t_list, y_list = simulation_ode_2(modelist, event, y0, t_tuple, stepsize)
+        t_list, y_list = simulation_ode_2(modelist, event, y0, T, stepsize)
+        # test_t_list, test_y_list = simulation_ode_2(modelist, event, y0_test, T, stepsize)
     elif num_mode == 3:
-        t_list, y_list = simulation_ode_3(modelist, event, labeltest, y0, t_tuple, stepsize)
+        t_list, y_list = simulation_ode_3(modelist, event, labeltest, y0, T, stepsize)
+        # test_t_list, test_y_list = simulation_ode_3(modelist, event, y0_test, T, stepsize)
     else:
         raise NotImplementedError
     end = time.time()
 
-    print('eid:', eid, 'N_init:', len(t_tuple), 't_step:', stepsize, 'ep:', ep, 'sim_time: %.3f' % (end - start))
+    print('eid:', eid, 'N_init:', len(y0), 't_step:', stepsize, 'ep:', ep, 'sim_time: %.3f' % (end - start))
+
+    d_avg = dict()
+    infer_time = dict()
     for method in methods:
         start = time.time()
         if num_mode == 2:
-            a = infer_model(
+            P, G, boundary = infer_model(
                 t_list, y_list, stepsize=stepsize, maxorder=maxorder, boundary_order=boundary_order,
                 num_mode=num_mode, modelist=modelist, event=event, ep=ep, method=method, verbose=verbose)
+            end = time.time()
+            d_avg[method] = test_model(
+                P, G, boundary, num_mode, y_list, modelist, event, maxorder, boundary_order)
+            infer_time[method] = end - start
         elif num_mode == 3:
-            a = infer_model(
+            P, G, boundary = infer_model(
                 t_list, y_list, stepsize=stepsize, maxorder=maxorder, boundary_order=boundary_order,
                 num_mode=num_mode, modelist=modelist, event=event, ep=ep, method=method, verbose=verbose,
                 labeltest=labeltest)
+            end = time.time()
+            d_avg[method] = test_model(
+                P, G, boundary, num_mode, y_list, modelist, event, maxorder, boundary_order,
+                labeltest=labeltest)
+            infer_time[method] = end - start
         else:
             raise NotImplementedError
 
-        end = time.time()
-        print('Method: %s, d_avg: %.6f, infer_time: %.3f' % (method, a, end - start))
+        print('Method: %s, d_avg: %.6f, infer_time: %.3f' % (method, d_avg[method], infer_time[method]))
+
+    best_method, best_avg = None, 1.0
+    for method, avg in d_avg.items():
+        total_d_avg[method] += avg
+        if avg < best_avg:
+            best_method, best_avg = method, avg
+    for method, t in infer_time.items():
+        total_time[method] += t
+    total_win[best_method] += 1
+    return d_avg, infer_time
 
 
-# for i in range(4):
-#     run_test('A', i, methods=['merge', 'piecelinear'])
+for i in range(4):
+    run_test('A', i, methods=['merge', 'piecelinear'])
 
-# for i in range(4):
-#     run_test('B', i, methods=['merge', 'piecelinear'])
+for i in range(4):
+    run_test('B', i, methods=['merge', 'piecelinear'])
 
-# for i in range(4):
-#     run_test('C', i, methods=['merge', 'piecelinear'])
+for i in range(4):
+    run_test('C', i, methods=['merge', 'piecelinear'])
 
-# for i in range(4):
-#     run_test('D', i, methods=['merge', 'piecelinear'])
+for i in range(4):
+    run_test('D', i, methods=['merge', 'piecelinear'])
 
-for i in range(1):
+for i in range(4):
     run_test('E', i, methods=['merge', 'piecelinear'])
 
+print('total win:', total_win)
+print('total d_avg:', total_d_avg)
+print('total time:', total_time)
 
 # if 1 in run:
 #     # Isolette example

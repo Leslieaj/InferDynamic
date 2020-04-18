@@ -57,14 +57,13 @@ def simulation_ode(ode_func, y0, t_tuple, stepsize, noise_type=1, eps=0, solve_m
     return t_list, y_list
 
 
-def simulation_ode_2(modelist, event, y0, t_tuple, stepsize, verbose=False):
-    
+def simulation_ode_2(modelist, event, y0, T, stepsize, verbose=False):
     t_list = []
     y_list = []
 
     for k in range(0,len(y0)):
-        t_start = t_tuple[k][0]
-        t_end = t_tuple[k][1]
+        t_start = 0
+        t_end = T
         yinitial = y0[k]
 
         num = round((t_end - t_start)/stepsize + 1)
@@ -116,14 +115,14 @@ def simulation_ode_2(modelist, event, y0, t_tuple, stepsize, verbose=False):
     return t_list, y_list
 
 
-def simulation_ode_3(modelist, eventlist, labelfun, y0, t_tuple, stepsize):
+def simulation_ode_3(modelist, eventlist, labelfun, y0, T, stepsize):
     
     t_list = []
     y_list = []
 
     for k in range(0,len(y0)):
-        t_start = t_tuple[k][0]
-        t_end = t_tuple[k][1]
+        t_start = 0
+        t_end = T
         yinitial = y0[k]
 
         num = round((t_end - t_start)/stepsize + 1)
@@ -1691,7 +1690,19 @@ def infer_model(t_list, y_list, stepsize, maxorder, boundary_order, num_mode, mo
     L_y = len(y_list[0][0])  # Number of dimensions
     if num_mode == 2:
         coeffs = svm_classify(P, Y, L_y, boundary_order, num_mode)
+        return P, G, coeffs
 
+    elif num_mode == 3:
+        coeff1, coeff2, [first,second,third] = svm_classify(P, Y, L_y, boundary_order, num_mode)
+        return P, G, (coeff1, coeff2, [first,second,third])
+
+    else:
+        raise NotImplementedError
+
+
+def test_model(P, G, boundary, num_mode, y_list, modelist, event, maxorder, boundary_order, *, labeltest=None):
+    if num_mode == 2:
+        coeffs = boundary
         # Test obtained model
         sum = 0
         num = 0
@@ -1712,11 +1723,8 @@ def infer_model(t_list, y_list, stepsize, maxorder, boundary_order, num_mode, mo
                 sum += rel_diff(exact, predict)
 
         return sum / num
-    else:
-        coeff1, coeff2, [first,second,third] = svm_classify(P, Y, L_y, boundary_order, num_mode)
-        if verbose:
-            print(coeff1)
-            print(coeff2)
+    elif num_mode == 3:
+        coeff1, coeff2, [first,second,third] = boundary
         # Test obtained model
         sum = 0
         num = 0
@@ -1735,6 +1743,9 @@ def infer_model(t_list, y_list, stepsize, maxorder, boundary_order, num_mode, mo
                 exact = np.mat(exact)
                 sum += mat_norm(exact - predict) / (mat_norm(exact) + mat_norm(predict))
         return sum / num
+
+    else:
+        raise NotImplementedError
 
 
 if __name__ == "__main__":

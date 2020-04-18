@@ -34,6 +34,7 @@ def run_test(eid, case_id, methods, verbose=False):
         case_info = experiment2.cases[case_id]
         params = case_info['params']
         y0 = case_info['y0']
+        y0_test = case_info['y0_test']
         T = case_info['t_tuple']
         stepsize = case_info['stepsize']
         modelist = experiment2.get_fvdp3(params)
@@ -47,6 +48,7 @@ def run_test(eid, case_id, methods, verbose=False):
         case_info = experiment3.cases[case_id]
         params = case_info['params']
         y0 = case_info['y0']
+        y0_test = case_info['y0_test']
         T = case_info['t_tuple']
         stepsize = case_info['stepsize']
         modelist = experiment3.get_mode(params)
@@ -60,6 +62,7 @@ def run_test(eid, case_id, methods, verbose=False):
         case_info = experiment4.cases[case_id]
         params = case_info['params']
         y0 = case_info['y0']
+        y0_test = case_info['y0_test']
         T = case_info['t_tuple']
         stepsize = case_info['stepsize']
         modelist = experiment4.get_mmode(params)
@@ -73,6 +76,7 @@ def run_test(eid, case_id, methods, verbose=False):
         case_info = experiment5.cases[case_id]
         params = case_info['params']
         y0 = case_info['y0']
+        y0_test = case_info['y0_test']
         T = case_info['t_tuple']
         stepsize = case_info['stepsize']
         modelist = experiment5.get_modetr(params)
@@ -87,10 +91,10 @@ def run_test(eid, case_id, methods, verbose=False):
     start = time.time()
     if num_mode == 2:
         t_list, y_list = simulation_ode_2(modelist, event, y0, T, stepsize)
-        # test_t_list, test_y_list = simulation_ode_2(modelist, event, y0_test, T, stepsize)
+        test_t_list, test_y_list = simulation_ode_2(modelist, event, y0_test, T, stepsize)
     elif num_mode == 3:
         t_list, y_list = simulation_ode_3(modelist, event, labeltest, y0, T, stepsize)
-        # test_t_list, test_y_list = simulation_ode_3(modelist, event, y0_test, T, stepsize)
+        test_t_list, test_y_list = simulation_ode_3(modelist, event, labeltest, y0_test, T, stepsize)
     else:
         raise NotImplementedError
     end = time.time()
@@ -107,7 +111,7 @@ def run_test(eid, case_id, methods, verbose=False):
                 num_mode=num_mode, modelist=modelist, event=event, ep=ep, method=method, verbose=verbose)
             end = time.time()
             d_avg[method] = test_model(
-                P, G, boundary, num_mode, y_list, modelist, event, maxorder, boundary_order)
+                P, G, boundary, num_mode, y_list + test_y_list, modelist, event, maxorder, boundary_order)
             infer_time[method] = end - start
         elif num_mode == 3:
             P, G, boundary = infer_model(
@@ -116,7 +120,7 @@ def run_test(eid, case_id, methods, verbose=False):
                 labeltest=labeltest)
             end = time.time()
             d_avg[method] = test_model(
-                P, G, boundary, num_mode, y_list, modelist, event, maxorder, boundary_order,
+                P, G, boundary, num_mode, y_list + test_y_list, modelist, event, maxorder, boundary_order,
                 labeltest=labeltest)
             infer_time[method] = end - start
         else:

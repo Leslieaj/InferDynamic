@@ -81,6 +81,8 @@ def simulation_ode_2(modelist, event, y0, T, stepsize, verbose=False):
             ite = ite + 1
             if verbose:
                 print('Round', str(ite) + ':', 'y =', yinitial)
+            if t_points[0] < t_start:
+                break
             y_object = solve_ivp(modelist[label], (t_start, t_end + 1.1*stepsize), yinitial,
                                  t_eval=t_points, method='RK45', rtol=1e-7, atol=1e-9,
                                  max_step=stepsize/10, events=[event], dense_output=True)

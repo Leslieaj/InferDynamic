@@ -449,11 +449,11 @@ def case7():
         x.append({1:Y[P[1][j],0], 2:Y[P[1][j],1], 3:Y[P[1][j],2], 4:Y[P[1][j],3]})
 
     prob  = svm_problem(y, x)
-    param = svm_parameter('-t 1 -d 1 -c 10 -r 1 -b 0')
+    param = svm_parameter('-t 1 -d 1 -c 10 -r 1 -b 1')
     m = svm_train(prob, param)
     svm_save_model('model_file', m)
     # print("pred")
-    p_label, p_acc, p_val = svm_predict(y, x, m)
+    p_label, p_acc, p_val = svm_predict(y, x, m,'-q')
     # print(p_label)
     print('pre',p_acc[0])
     # print(p_val)

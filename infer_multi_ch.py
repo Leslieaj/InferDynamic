@@ -1432,7 +1432,7 @@ def svm_classify(P, Y, L_y, boundary_order, num_mode=2):
             m = svm_train(prob, param)
             svm_save_model('model_file1', m)
             coeff1 = get_coeffs(m, order=boundary_order)
-            p_label, p_acc, p_val = svm_predict(y, x, m)
+            p_label, p_acc, p_val = svm_predict(y, x, m,'-q')
             accl.append((p_acc[0],i,coeff1))
         
         accl.sort(reverse=True)

@@ -117,7 +117,7 @@ def run_test(eid, case_id, methods, verbose=False):
 # for i in range(4):
 #     run_test('D', i, methods=['merge', 'piecelinear'])
 
-for i in range(4):
+for i in range(1):
     run_test('E', i, methods=['merge', 'piecelinear'])
 
 

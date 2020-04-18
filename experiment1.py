@@ -26,9 +26,11 @@ from scipy.integrate import odeint, solve_ivp
 #     modetr_1, modetr_2, modetr_3, eventtr_1, eventtr_2
 from dynamics import ode_test
 from infer_multi_ch import simulation_ode, infer_dynamic, parti, infer_dynamic_modes_ex, norm, reclass, dropclass, \
-    infer_dynamic_modes_exx, dist, diff_method, diff_method1, infer_dynamic_modes_ex_dbs, infer_dynamic_modes_pie, \
-    infer_dynamic_modes_new, diff_method_new1, diff_method_new, simulation_ode_2, simulation_ode_3, diff_method_backandfor
+        infer_dynamic_modes_exx, dist, diff_method, diff_method1, infer_dynamic_modes_ex_dbs, infer_dynamic_modes_pie, \
+        infer_dynamic_modes_new, diff_method_new1, diff_method_new, simulation_ode_2, simulation_ode_3, diff_method_backandfor, \
+        infer_model, test_model, segment_and_fit, kmeans_cluster, dbscan_cluster
 
+# from infer_multi_ch import infer_model, test_model, simulation_ode_2, simulation_ode_3
 import infer_multi_ch
 from generator import generate_complete_polynomial
 import dynamics
@@ -247,11 +249,44 @@ def case(y0, t_tuple, stepsize, maxorder, modelist, event, ep, method):
     return sum/num
 
 
-if __name__ == "__main__":
+def case1():
+    mode2 = get_mode2(0)
+    event1 = get_event1(0)
     y0 = [[99.5,80],[97.5,100]]
-    t_tuple = [(0,50),(0,50)]
     stepsize = 0.1
     maxorder = 1
+    boundary_order = 1
+    num_mode = 2
+    T = 50
+    ep = 0.01
+    method='kmeans'
+    t_list, y_list = simulation_ode_2(mode2, event1, y0, T, stepsize)
+    P,G,C = infer_model(
+                 t_list, y_list, stepsize=stepsize, maxorder=maxorder, boundary_order=boundary_order,
+                 num_mode=num_mode, modelist=mode2, event=event1, ep=ep, method=method, verbose=False)
+    A, b1, b2, Y = diff_method_backandfor(t_list, y_list, maxorder, stepsize)
+    num_pt = Y.shape[0]
 
-    a = case(y0,t_tuple,stepsize,maxorder,mode2,event1,0.01,"new")
-    print(a)
+    # Segment and fit
+    P, drop, clfs = segment_and_fit(A, b1, b2)
+    P, G = dbscan_cluster(clfs, P, A, b1, num_mode)
+    P, _ = dropclass(P, G, drop, A, b1, Y, ep, stepsize)
+    for i in range(0,len(P)):
+        y0_list = []
+        y1_list = []
+        for j in range(0,len(P[i])):
+            y0_list.append(Y[P[i][j],0])
+            y1_list.append(Y[P[i][j],1])
+    
+        plt.scatter(y0_list,y1_list,s=1)
+    plt.show()
+
+if __name__ == "__main__":
+    # y0 = [[99.5,80],[97.5,100]]
+    # t_tuple = [(0,50),(0,50)]
+    # stepsize = 0.1
+    # maxorder = 1
+
+    # a = case(y0,t_tuple,stepsize,maxorder,mode2,event1,0.01,"new")
+    # print(a)
+    case1()

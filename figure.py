@@ -28,10 +28,11 @@ def case1():
     num_mode = 2
     T = 50
     ep = 0.01
+    method='merge'
     t_list, y_list = simulation_ode_2(mode2, event1, y0, T, stepsize)
     P,G,C = infer_model(
                 t_list, y_list, stepsize=stepsize, maxorder=maxorder, boundary_order=boundary_order,
-                num_mode=num_mode, modelist=mode2, event=event1, ep=ep, method='merge', verbose=False)
+                num_mode=num_mode, modelist=mode2, event=event1, ep=ep, method=method, verbose=False)
     
 
     @eventAttr()
@@ -71,10 +72,11 @@ def case2():
     num_mode = 2
     T = 5
     ep = 0.01
+    method='merge'
     t_list, y_list = simulation_ode_2(fvdp3, event1, y0, T, stepsize)
     P,G,C = infer_model(
                 t_list, y_list, stepsize=stepsize, maxorder=maxorder, boundary_order=boundary_order,
-                num_mode=num_mode, modelist=fvdp3, event=event1, ep=ep, method='merge', verbose=False)
+                num_mode=num_mode, modelist=fvdp3, event=event1, ep=ep, method=method, verbose=False)
     
     @eventAttr()
     def eventtest(t,y):
@@ -111,10 +113,11 @@ def case5():
     boundary_order = 1
     num_mode = 3
     ep = 0.01
+    method = 'merge'
     t_list, y_list = simulation_ode_3(modetr, event, labeltest, y0, T, stepsize)
     P, G, (coeff1, coeff2, [first,second,third]) = infer_model(
                 t_list, y_list, stepsize=stepsize, maxorder=maxorder, boundary_order=boundary_order,
-                num_mode=num_mode, modelist=modetr, event=event, ep=ep, method='piecelinear', verbose=False,
+                num_mode=num_mode, modelist=modetr, event=event, ep=ep, method=method, verbose=False,
                 labeltest=labeltest)
 
     @eventAttr()

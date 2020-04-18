@@ -1503,7 +1503,8 @@ def kmeans_cluster(clfs, res, A, b1, num_mode):
     # Clustering
     num_coeff = clfs[0].coef_.shape[0] * clfs[0].coef_.shape[1]
     cluster_coefs = [clfs[i].coef_.reshape((num_coeff,)) for i in range(len(clfs))]
-    kmeans = skc.KMeans(n_clusters=num_mode, random_state=0)
+    # print(cluster_coefs)
+    kmeans = skc.KMeans(n_clusters=num_mode, random_state=0, n_init = 20, max_iter=1000)
     kmeans.fit(cluster_coefs)
 
     mode_pts = []
@@ -1512,6 +1513,41 @@ def kmeans_cluster(clfs, res, A, b1, num_mode):
     for i, lab in enumerate(kmeans.labels_):
         mode_pts[lab].extend(res[i])
 
+    # Fit each cluster again
+    clfs = []
+    for i in range(num_mode):
+        clf = linear_model.LinearRegression(fit_intercept=False)
+
+        clf.fit(matrowex(A, mode_pts[i]), matrowex(b1, mode_pts[i]))
+        clfs.append(clf)
+
+    P = mode_pts
+    G = []
+    for i in range(len(clfs)):
+        G.append(clfs[i].coef_)
+
+    return P, G
+
+def dbscan_cluster(clfs, res, A, b1, num_mode):
+    # Clustering
+    num_coeff = clfs[0].coef_.shape[0] * clfs[0].coef_.shape[1]
+    cluster_coefs = [clfs[i].coef_.reshape((num_coeff,)) for i in range(len(clfs))]
+    # print(cluster_coefs)
+    db = skc.DBSCAN(eps=0.2, min_samples=1).fit(cluster_coefs)
+    labels = db.labels_
+    n_clusters = len(set(labels)) - (1 if -1 in labels else 0)
+    mode_pts = []
+    for i in range(n_clusters):
+        mode_pts.append([])
+    for i, lab in enumerate(labels):
+        if lab > -1:
+            mode_pts[lab].extend(res[i])
+    length_and_modepts = [(len(mode_pts[i]),mode_pts[i]) for i in range(0,len(mode_pts))]
+    length_and_modepts.sort(reverse=True)
+    mode_pts = []
+    for i in range(0,num_mode):
+        _,mode_ptsi = length_and_modepts[i]
+        mode_pts.append(mode_ptsi)
     # Fit each cluster again
     clfs = []
     for i in range(num_mode):
@@ -1673,7 +1709,8 @@ def infer_model(t_list, y_list, stepsize, maxorder, boundary_order, num_mode, mo
 
         # Segment and fit
         res, drop, clfs = segment_and_fit(A, b1, b2)
-        P, G = kmeans_cluster(clfs, res, A, b1, num_mode)
+        # P, G = kmeans_cluster(clfs, res, A, b1, num_mode)
+        P, G = dbscan_cluster(clfs, res, A, b1, num_mode)
         P, _ = dropclass(P, G, drop, A, b1, Y, ep, stepsize)
 
     elif method == "merge":

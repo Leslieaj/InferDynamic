@@ -144,19 +144,19 @@ def run_test(id, eid, case_id, methods, verbose=False):
 
 
 for i in range(4):
-    run_test(i+1, 'A', i, methods=['merge', 'piecelinear'])
+    run_test(i+1, 'A', i, methods=['kmeans','merge', 'piecelinear'])
 
-for i in range(4):
-    run_test(i+5, 'B', i, methods=['merge', 'piecelinear'])
+# for i in range(4):
+#     run_test(i+5, 'B', i, methods=['merge', 'piecelinear'])
 
-for i in range(4):
-    run_test(i+9, 'C', i, methods=['merge', 'piecelinear'])
+# for i in range(4):
+#     run_test(i+9, 'C', i, methods=['merge', 'piecelinear'])
 
-for i in range(4):
-    run_test(i+13, 'D', i, methods=['merge', 'piecelinear'])
+# for i in range(4):
+#     run_test(i+13, 'D', i, methods=['merge', 'piecelinear'])
 
-for i in range(4):
-    run_test(i+17, 'E', i, methods=['merge', 'piecelinear'])
+# for i in range(4):
+#     run_test(i+17, 'E', i, methods=['merge', 'piecelinear'])
 
 print('total win:', total_win)
 print('total d_avg:', total_d_avg)

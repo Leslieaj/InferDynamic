@@ -28,7 +28,7 @@ def case1():
     num_mode = 2
     T = 50
     ep = 0.01
-    method='merge'
+    method='kmeans'
     t_list, y_list = simulation_ode_2(mode2, event1, y0, T, stepsize)
     P,G,C = infer_model(
                 t_list, y_list, stepsize=stepsize, maxorder=maxorder, boundary_order=boundary_order,
@@ -113,7 +113,7 @@ def case5():
     boundary_order = 1
     num_mode = 3
     ep = 0.01
-    method = 'merge'
+    method = 'piecelinaer'
     t_list, y_list = simulation_ode_3(modetr, event, labeltest, y0, T, stepsize)
     P, G, (coeff1, coeff2, [first,second,third]) = infer_model(
                 t_list, y_list, stepsize=stepsize, maxorder=maxorder, boundary_order=boundary_order,
@@ -160,6 +160,6 @@ def case5():
 
 
 if __name__ == "__main__":
-    # case1()
+    case1()
     # case2()
-    case5()
+    # case5()

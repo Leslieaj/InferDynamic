@@ -96,10 +96,10 @@ def get_event(param_id):
         y0, y1 = y
         return y1
 
-    return [eventtr_1, eventtr_2, eventtr_2]
+    return [eventtr_1, eventtr_2]
 
 
-eventtr_1, eventtr_2, _ = get_event(0)
+eventtr_1, eventtr_2= get_event(0)
 
 def get_labeltest(param_id):
     def labeltest(y):

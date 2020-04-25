@@ -252,34 +252,75 @@ def case(y0, t_tuple, stepsize, maxorder, modelist, event, ep, method):
 def case1():
     mode2 = get_mode2(0)
     event1 = get_event1(0)
-    y0 = [[99.5,80],[97.5,100]]
-    stepsize = 0.1
+    y0 = [[70,70]]
+    stepsize = 1
     maxorder = 1
     boundary_order = 1
     num_mode = 2
-    T = 50
+    T = 200
     ep = 0.01
     method='kmeans'
     t_list, y_list = simulation_ode_2(mode2, event1, y0, T, stepsize)
-    P,G,C = infer_model(
-                 t_list, y_list, stepsize=stepsize, maxorder=maxorder, boundary_order=boundary_order,
-                 num_mode=num_mode, modelist=mode2, event=event1, ep=ep, method=method, verbose=False)
-    A, b1, b2, Y = diff_method_backandfor(t_list, y_list, maxorder, stepsize)
-    num_pt = Y.shape[0]
+    # P,G,C = infer_model(
+    #              t_list, y_list, stepsize=stepsize, maxorder=maxorder, boundary_order=boundary_order,
+    #              num_mode=num_mode, modelist=mode2, event=event1, ep=ep, method=method, verbose=False)
+    # A, b1, b2, Y = diff_method_backandfor(t_list, y_list, maxorder, stepsize)
+    # num_pt = Y.shape[0]
 
     # Segment and fit
-    P, drop, clfs = segment_and_fit(A, b1, b2)
-    P, G = dbscan_cluster(clfs, P, A, b1, num_mode)
-    P, _ = dropclass(P, G, drop, A, b1, Y, ep, stepsize)
-    for i in range(0,len(P)):
-        y0_list = []
-        y1_list = []
-        for j in range(0,len(P[i])):
-            y0_list.append(Y[P[i][j],0])
-            y1_list.append(Y[P[i][j],1])
+    # P, drop, clfs = segment_and_fit(A, b1, b2)
+    # P, G = dbscan_cluster(clfs, P, A, b1, num_mode)
+    # P, _ = dropclass(P, G, drop, A, b1, Y, ep, stepsize)
+    # for i in range(0,len(P)):
+    #     y0_list = []
+    #     y1_list = []
+    #     for j in range(0,len(P[i])):
+    #         y0_list.append(Y[P[i][j],0])
+    #         y1_list.append(Y[P[i][j],1])
     
-        plt.scatter(y0_list,y1_list,s=1)
+    #     plt.scatter(y0_list,y1_list,s=1)
+    # plt.show()
+    # for i, temp_y in enumerate(y_list):
+    #     y0_list = temp_y.T[0]
+    #     # y0_list = t_list[i]
+    #     y1_list = temp_y.T[1]
+    #     plt.scatter(y0_list,y1_list,c='b',s=5)
+    #     plt.scatter(y0_list[59],y1_list[59],c='r',s=5)
+
+    #     # plt.scatter(y0_list,y1_list,c='b',s=5, label='x2')
+    #     # y1_list = temp_y.T[0]
+    #     # plt.scatter(y0_list,y1_list,c='r',s=5, label='x1')
+    # plt.xlabel('x1')
+    # plt.ylabel('x2')
+    # plt.legend()
+    # plt.show()
+
+    ax = plt.axes(projection='3d')
+
+    # x=np.arange(65,110,1)
+    # y=np.arange(70,140,1)
+    # X, Y = np.meshgrid(x, y)
+    # Z=-0.026*(X-Y)
+    # ax.plot_surface(X, Y, Z, rstride=1, cstride=1, color='r')
+    for temp_y in y_list:
+        y0_list = temp_y.T[0]
+        y1_list = temp_y.T[1]
+        y2_list = []
+        for i in range(5,len(y1_list)):
+            y2_list.append((y1_list[i]*137 - y1_list[i-1]*300 + y1_list[i-2]*300 - y1_list[i-3]*200 + y1_list[i-4]*75 - y1_list[i-5]*12)/(60*stepsize))
+        ax.scatter(y0_list[5:], y1_list[5:], y2_list,c='b',s=5)
+    
+    
+
+    ax.set_xlabel('x1')
+    ax.set_ylabel('x2')
+    ax.set_zlabel('f')
+    plt.legend()
     plt.show()
+
+
+
+
 
 if __name__ == "__main__":
     # y0 = [[99.5,80],[97.5,100]]

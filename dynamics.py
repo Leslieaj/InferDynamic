@@ -291,3 +291,21 @@ def eventtr_1(t,y):
 def eventtr_2(t,y):
     y0, y1= y
     return y1
+
+def mode2t(t,y):
+    y0,y1=y
+    if y0>98.5:
+        dydt = [-0.026 * (y0-y1), -1]
+    else:
+        dydt = [-0.026 * (y0-y1), 1]
+    return dydt
+
+def modetrt(t,y):
+    y0, y1=y
+    if y0 < 0 and y1 > 0:
+        dydt = [0.5*y0**2 + 0.5*y1, -9*y0+3]
+    elif y0 >= 0 and y1 > 0:
+        dydt = [5, -0.1*y0-10]
+    else:
+        dydt = [-7 , -1*y0]
+    return dydt

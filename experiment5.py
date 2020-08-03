@@ -27,7 +27,8 @@ from scipy.integrate import odeint, solve_ivp
 from dynamics import ode_test
 from infer_multi_ch import simulation_ode, infer_dynamic, parti, infer_dynamic_modes_ex, norm, reclass, dropclass, \
     infer_dynamic_modes_exx, dist, diff_method, diff_method1, infer_dynamic_modes_ex_dbs, infer_dynamic_modes_pie, \
-    infer_dynamic_modes_new, diff_method_new1, diff_method_new, simulation_ode_2, simulation_ode_3, diff_method_backandfor, infer_model
+    infer_dynamic_modes_new, diff_method_new1, diff_method_new, simulation_ode_2, simulation_ode_3, diff_method_backandfor, infer_model,\
+        diff, test_model
 
 import infer_multi_ch
 from generator import generate_complete_polynomial
@@ -310,13 +311,14 @@ def case1():
     event = get_event(0)
     labeltest = get_labeltest(0)
     y0 = [[-1,1],[1,4],[2,-3]]
+    # y1 = [[3,-1], [-1,3]]
     T = 5
     stepsize = 0.01
     maxorder = 2
     boundary_order = 1
     num_mode = 3
     ep = 0.01
-    method = 'kmeans'
+    method = 'piecelinear'
     t_list, y_list = simulation_ode_3(modetr, event, labeltest, y0, T, stepsize)
     A, b1, b2, Y = diff_method_backandfor(t_list, y_list, maxorder, stepsize)
     P, G, (coeff1, coeff2, [first,second,third]) = infer_model(
@@ -333,6 +335,36 @@ def case1():
         plt.scatter(y0_list,y1_list,s=1)
     plt.show()
 
+def case2():
+    modetr = get_modetr(0)
+    event = get_event(0)
+    labeltest = get_labeltest(0)
+    y0 = [[-1,1],[1,4]]
+    y1 = [[3,-1], [-1,3]]
+    T = 5
+    stepsize = 0.01
+    maxorder = 2
+    boundary_order = 1
+    num_mode = 3
+    ep = 0.01
+    method = 'tolmerge'
+    t_list, y_list = simulation_ode_3(modetr, event, labeltest, y0, T, stepsize)
+    A, b, Y = diff_method_new(t_list, y_list, maxorder, stepsize)
+    np.savetxt("A4.txt",A,fmt='%8f')
+    np.savetxt("b4.txt",b,fmt='%8f')
+    P, G, (coeff1, coeff2, [first,second,third]) = infer_model(
+                t_list, y_list, stepsize=stepsize, maxorder=maxorder, boundary_order=boundary_order,
+                num_mode=num_mode, modelist=modetr, event=event, ep=ep, method=method, verbose=False,
+                labeltest=labeltest)
+    boundary = (coeff1, coeff2, [first,second,third])
+    # t_list, y_list = simulation_ode_3(modetr, event, labeltest, y1, T, stepsize)
+    # YT, FT = diff(t_list, y_list, dynamics.modetrt)
+    # np.savetxt("YT4.txt",YT,fmt='%8f')
+    # np.savetxt("FT4.txt",FT,fmt='%8f')
+    d_avg = test_model(
+                P, G, boundary, num_mode, y_list, modetr, event, maxorder, boundary_order,
+                labeltest=labeltest)
+    print(d_avg)
 
 
 if __name__ == "__main__":
@@ -343,4 +375,4 @@ if __name__ == "__main__":
     # eventlist=[eventtr_1,eventtr_2]
     # a = case(y0,t_tuple,stepsize,maxorder,modetr,eventlist,labeltest,0.01,"new")
     # print(a)
-    case1()
+    case2()

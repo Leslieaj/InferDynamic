@@ -26,7 +26,8 @@ from scipy.integrate import odeint, solve_ivp
 #     modetr_1, modetr_2, modetr_3, eventtr_1, eventtr_2
 from infer_multi_ch import simulation_ode, infer_dynamic, parti, infer_dynamic_modes_ex, norm, reclass, dropclass, \
     infer_dynamic_modes_exx, dist, diff_method, diff_method1, infer_dynamic_modes_ex_dbs, infer_dynamic_modes_pie, \
-    infer_dynamic_modes_new, diff_method_new1, diff_method_new, simulation_ode_2, simulation_ode_3, diff_method_backandfor
+    infer_dynamic_modes_new, diff_method_new1, diff_method_new, simulation_ode_2, simulation_ode_3, diff_method_backandfor, \
+        infer_model, test_model
 
 import infer_multi_ch
 from generator import generate_complete_polynomial
@@ -212,9 +213,21 @@ def case(y0,t_tuple,stepsize,maxorder,modelist,event,ep,method):
 
 
 if __name__ == "__main__":
-    y0 = [[4,0.1,3.1,0],[5.9,0.2,-3,0],[4.1,0.5,2,0],[6,0.7,2,0]]
-    t_tuple = [(0,5),(0,5),(0,5),(0,5)]
+    y0 = [[4,0.1,3.1,0], [5.9,0.2,-3,-1], [4.1,0.5,2,1], [6,0.7,2,0]]
+    y0_test = [[4.6,0.13,2,0], [5.3,0.17,-2,0]]
+    T = 5
     stepsize = 0.01
+    ep = 0.01
     maxorder = 2
-    a = case(y0,t_tuple,stepsize,maxorder,mmode,event1,0.01,"new")
-    print(a)
+    boundary_order = 1
+    num_mode = 2
+    method = 'merge'
+    t_list, y_list = simulation_ode_2(mmode, event1, y0, T, stepsize)
+    test_t_list, test_y_list = simulation_ode_2(mmode, event1, y0_test, T, stepsize)
+    P, G, boundary = infer_model(
+                t_list, y_list, stepsize=stepsize, maxorder=maxorder, boundary_order=boundary_order,
+                num_mode=num_mode, modelist=mmode, event=event1, ep=ep, method=method, verbose=False)
+    
+    d_avg = test_model(
+                P, G, boundary, num_mode, y_list, mmode, event1, maxorder, boundary_order)
+    print(d_avg)

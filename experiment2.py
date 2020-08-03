@@ -27,7 +27,8 @@ from scipy.integrate import odeint, solve_ivp
 from dynamics import ode_test
 from infer_multi_ch import simulation_ode, infer_dynamic, parti, infer_dynamic_modes_ex, norm, reclass, dropclass, \
     infer_dynamic_modes_exx, dist, diff_method, diff_method1, infer_dynamic_modes_ex_dbs, infer_dynamic_modes_pie, \
-    infer_dynamic_modes_new, diff_method_new1, diff_method_new, simulation_ode_2, simulation_ode_3, diff_method_backandfor
+    infer_dynamic_modes_new, diff_method_new1, diff_method_new, simulation_ode_2, simulation_ode_3, diff_method_backandfor, \
+        diff, infer_model, test_model
 
 import infer_multi_ch
 from generator import generate_complete_polynomial
@@ -235,11 +236,34 @@ def case(y0,t_tuple,stepsize,maxorder,modelist,event,ep,method):
     return sum/num
 
 
+
 if __name__ == "__main__":
     y0 = [[5,5,5], [2,2,2]]
-    t_tuple = [(0,5),(0,5)]
-    stepsize = 0.002
+    T = 3
+    stepsize = 0.01
     maxorder = 2
+    boundary_order = 1
+    num_mode = 2
+    ep = 0.4
+    method='piecelinear1'
+    
 
-    a = case(y0,t_tuple,stepsize,maxorder,fvdp3,event1,0.01,"new")
-    print(a)
+    t_list, y_list = simulation_ode_2(fvdp3, event1, y0, T, stepsize)
+    A, b, Y = diff_method_new(t_list, y_list, maxorder, stepsize)
+    np.savetxt("A1.txt",A,fmt='%8f')
+    np.savetxt("b1.txt",b,fmt='%8f')
+    # print(y_list)
+
+    P,G,C = infer_model(
+                t_list, y_list, stepsize=stepsize, maxorder=maxorder, boundary_order=boundary_order,
+                num_mode=num_mode, modelist=fvdp3, event=event1, ep=ep, method=method, verbose=False)
+    
+                
+    y1 = [[3,3,3], [1,1,1]]
+    # t_list, y_list = simulation_ode_2(fvdp3, event1, y0, T, stepsize)
+    YT, FT = diff(t_list, y_list, dynamics.fvdp3_3)
+    np.savetxt("YT1.txt",YT,fmt='%8f')
+    np.savetxt("FT1.txt",FT,fmt='%8f')
+    d_avg = test_model(
+                P, G, C, num_mode, y_list , fvdp3, event1, maxorder, boundary_order)
+    print(d_avg)

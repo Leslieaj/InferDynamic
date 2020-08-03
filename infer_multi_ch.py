@@ -85,7 +85,7 @@ def simulation_ode_2(modelist, event, y0, T, stepsize, verbose=False):
                 break
             y_object = solve_ivp(modelist[label], (t_start, t_end + 1.1*stepsize), yinitial,
                                  t_eval=t_points, method='RK45', rtol=1e-7, atol=1e-9,
-                                 max_step=stepsize/10, events=[event], dense_output=True)
+                                 max_step=stepsize/100, events=[event], dense_output=True)
 
             status = y_object.status
             if status == 1:
@@ -797,6 +797,28 @@ def diff_method_new(t_list, y_list, order, stepsize):
     return final_A_mat, final_b_mat, final_y_mat
 
 
+def diff(t_list, y_list, f):
+    final_y_mat = None
+    final_f_mat = None
+    
+    #L_y = y_list[0].shape[1]
+
+    for k in range(0,len(y_list)):
+        y_matrix = y_list[k]
+        f_matrix = np.zeros((y_matrix.shape[0],y_matrix.shape[1]))
+        for i in range(0,y_matrix.shape[0]):
+            f_matrix[i] = f(0,y_matrix[i])
+        
+        if k == 0:
+            final_y_mat = y_matrix
+            final_f_mat = f_matrix
+
+        else :
+            final_f_mat = np.r_[final_f_mat,f_matrix]
+            final_y_mat = np.r_[final_y_mat,y_matrix]
+
+    return final_y_mat, final_f_mat
+
 def diff_method_backandfor(t_list, y_list, order, stepsize):
     """Using multi-step difference method (BDF) to calculate the
     coefficient matrix.
@@ -921,6 +943,17 @@ def compare(A,B,ep):
             r = 0
     return r
 
+def compare1(A,B,ep):
+    C = A - B
+    r = 1
+    for j in range(0,C.shape[1]):
+        c = 0
+        for i in range(0,C.shape[0]):
+            c += C[i,j]**2
+        if c/C.shape[0]>ep:
+            r = 0
+    return r
+
 def matrowex(matr, l):
     """Pick some rows of a matrix to form a new matrix."""
     finalmat = None
@@ -1017,6 +1050,91 @@ def infer_dynamic_modes_new(t_list, y_list, stepsize, maxorder, ep=0.1):
 
     return P,G,drop
 
+def infer_dynamic_modes_new1(t_list, y_list, stepsize, maxorder, ep=0.1):
+    """Implementation of Alur's method (extended to nonlinear case).
+
+    """
+    A, b, Y = diff_method_new(t_list, y_list, maxorder, stepsize)
+    leng = Y.shape[0]
+    label_list = []
+    drop = []
+    for i in range(0,leng):
+        label_list.append(i)
+
+    P = []
+    G = []
+
+    while len(label_list)>0:
+        # print("label", len(label_list))
+        p = np.random.choice(label_list)
+        clf = linear_model.LinearRegression(fit_intercept=False)
+        # print("fitstart")
+        # print("fitend")
+        if p > 0 and p < leng - 1:
+            pp = [p-1,p,p+1]
+        elif p == 0:
+            pp = [p,p+1,p+2]
+        else:
+            pp = [p-2,p-1,p]
+        clf.fit (matrowex(A,pp), matrowex(b,pp))
+        pre = clf.predict(matrowex(A,pp))
+        ppp = pp[:]
+        # print("first")
+        retation = 0
+        while compare1(matrowex(b,pp),pre,ep) ==1:
+            retation += 1
+            # print("compare",retation,len(pp))
+            ppp = pp[:]
+            reta = 0
+            # if pp[0]>0 and pp[0]-1 in label_list:
+            if pp[0]>0 :  
+                pre1 = clf.predict(np.mat(A[pp[0]-1]))
+                if compare1(np.mat(b[pp[0]-1]),pre1,ep) ==1 :
+                    pp.insert(0,pp[0]-1)
+                    reta = 1
+            # if pp[-1]<leng-1 and pp[-1]+1 in label_list:
+            if pp[-1]<leng-1:   
+                pre2 = clf.predict(np.mat(A[pp[-1]+1]))
+                if compare1(np.mat(b[pp[-1]+1]),pre2,ep) ==1 :
+                    pp.append(pp[-1]+1)
+                    reta = 1
+            
+            if reta == 0 or retation >= 20:
+                break
+
+            clf.fit (matrowex(A,pp), matrowex(b,pp))
+            pre = clf.predict(matrowex(A,pp))
+        
+        if len(ppp)<5:
+            label_list.remove(p)
+            drop.append(p)
+            continue
+        
+        pp = ppp[1:]
+        # print("second")
+        while len(ppp) > len(pp):
+            # print("ppp",len(ppp))
+            pp = ppp[:]
+            ppp = []
+            clf.fit (matrowex(A,pp), matrowex(b,pp))
+            for i in range(0,len(label_list)):
+                prew = clf.predict(np.mat(A[label_list[i]]))
+                if compare1(np.mat(b[label_list[i]]),prew,ep) ==1 :
+                    ppp.append(label_list[i])
+        
+        gp = ppp[:]
+        if len(gp) < 10:
+            label_list.remove(p)
+        else:
+            g = clf.coef_
+            P.append(gp)
+            G.append(g)
+            for ele in gp:
+                label_list.remove(ele)
+
+    drop.sort() 
+
+    return P,G,drop
 
 def reclass(A,b,P,ep):
     lenofp = [(len(P[i]), i) for i in range(len(P))]
@@ -1359,7 +1477,11 @@ def mat_norm(A):
 
 def rel_diff(A, B):
     return mat_norm(A - B) / (mat_norm(A) + mat_norm(B))
-
+def rel_diff_mat(A, B):
+    sum = 0
+    for i in range(0,A.shape[0]):
+        sum = sum + rel_diff(A[i],B[i])
+    return sum 
 def get_coeffs(svm_model, order=1):
     """From model returned by SVM, obtain the coefficients."""
     nsv = svm_model.get_nr_sv()
@@ -1462,6 +1584,33 @@ def svm_classify(P, Y, L_y, boundary_order, num_mode=2):
 
     else:
         raise NotImplementedError
+
+def segment(A, b1, b2):
+    # Segmentation
+    res = []
+    cur_pos = 0
+    max_id = len(b1)
+    ep = 0.01
+
+    while True:
+        low = cur_pos
+        while low < max_id and rel_diff(b1[low], b2[low]) >= ep:
+            low += 1
+        if low == max_id:
+            break
+        high = low
+        while high < max_id and rel_diff(b1[high], b2[high]) < ep:
+            high += 1
+        if high - low >= 5:
+            res.append(list(range(low, high)))
+        cur_pos = high
+        
+    all_pts = set()
+    for lst in res:
+        all_pts = all_pts.union(set(lst))
+    drop = list(set(range(max_id)) - all_pts)
+
+    return res, drop
 
 def segment_and_fit(A, b1, b2):
     # Segmentation
@@ -1680,6 +1829,79 @@ def merge_cluster2(clfs, res, A, b1, num_mode, ep):
     return P, G
 
 
+def balls_in_boxes(n, m):
+    """
+    Get n different balls, and m same boxes then compute all the cases. 
+    Return a list whose entry is a set representing every case.
+    Every set contains m tuples representing m boxes.
+    Every tuple contains some numbers from 1 to n representing different balls.
+    """
+    # base case
+    if n == m:
+        return [{(i + 1,) for i in range(n)}]
+    if m == 1:
+        return [{tuple([i + 1 for i in range(n)])}]
+    # recursive case
+    result_list = []
+    # when n th ball goes to a non-empty box
+    for case in balls_in_boxes(n - 1, m):
+        for box in case:
+            # make the n th ball goes to every non-empty box and add the case into result list
+            copy_case = case.copy()
+            temp_box_list = list(box)
+            temp_box_list.append(n)
+            copy_case.remove(box)
+            copy_case.add(tuple(temp_box_list))
+            result_list.append(copy_case)
+    # when n th ball goes to an empty box        
+    for case in balls_in_boxes(n - 1, m - 1):
+        # make a box containing n th ball and add it into every case set
+        case.add((n,))
+        result_list.append(case)
+    return result_list
+
+def merge_cluster_tol(res, A, b1, num_mode):
+    result_list = balls_in_boxes(len(res),num_mode)
+    n = len(result_list)
+    print(len(res),'segs')
+    print(n,'class')
+    ListT = []
+    for i in range(0,n):
+        listT = []
+        for j in range(0,num_mode):
+            listt = []
+            for k in list(list(result_list[i])[j]):
+                listt = listt + res[k-1]
+            listT.append(listt)
+        ListT.append(listT)
+    sq_sum_list = []
+    for i in range(0,n):
+        sq_sum = 0
+        for j in range(0,num_mode):
+            A1 = matrowex(A, ListT[i][j])
+            B1 = matrowex(b1, ListT[i][j])
+            clf = linear_model.LinearRegression(fit_intercept=False)
+            clf.fit(A1, B1)
+            sq_sum = sq_sum + rel_diff_mat(clf.predict(A1),B1)
+        sq_sum_list.append(sq_sum)
+    l = sq_sum_list.index(min(sq_sum_list))
+    P = ListT[l]
+    clfs = []
+    G = []
+    for mode in P:
+        A1 = matrowex(A, mode)
+        B1 = matrowex(b1, mode)
+        clf = linear_model.LinearRegression(fit_intercept=False)
+        clf.fit(A1, B1)
+        clfs.append(clf)
+        G.append(clf.coef_)
+
+    return P, G
+
+
+
+
+
 def infer_model(t_list, y_list, stepsize, maxorder, boundary_order, num_mode, modelist, event, ep,
                 method, *, labeltest=None, verbose=False):
     """Overall inference function.
@@ -1700,6 +1922,17 @@ def infer_model(t_list, y_list, stepsize, maxorder, boundary_order, num_mode, mo
         # Inference
         P, G, D = infer_dynamic_modes_new(t_list, y_list, stepsize, maxorder, ep)
         P, G = reclass(A, b, P, ep)
+        P, _ = dropclass(P, G, D, A, b, Y, ep, stepsize)
+
+    elif method == "piecelinear1":
+        # Apply Linear Multistep Method
+        A, b, Y = diff_method_new(t_list, y_list, maxorder, stepsize)
+
+        # Inference
+        P, G, D = infer_dynamic_modes_new1(t_list, y_list, stepsize, maxorder, ep)
+        if len(P)>num_mode:
+            P, G = merge_cluster_tol(P, A, b, num_mode)
+        # P, G = reclass(A, b, P, ep)
         P, _ = dropclass(P, G, D, A, b, Y, ep, stepsize)
 
     elif method == "kmeans":
@@ -1730,6 +1963,15 @@ def infer_model(t_list, y_list, stepsize, maxorder, boundary_order, num_mode, mo
         # Segment and fit
         res, drop, clfs = segment_and_fit(A, b1, b2)
         P, G = merge_cluster2(clfs, res, A, b1, num_mode, ep)
+        P, _ = dropclass(P, G, drop, A, b1, Y, ep, stepsize)
+
+    elif method == "tolmerge":
+        A, b1, b2, Y = diff_method_backandfor(t_list, y_list, maxorder, stepsize)
+        num_pt = Y.shape[0]
+
+        # Segment 
+        res, drop = segment(A, b1, b2)
+        P, G = merge_cluster_tol(res, A, b1, num_mode)
         P, _ = dropclass(P, G, drop, A, b1, Y, ep, stepsize)
 
     if verbose:

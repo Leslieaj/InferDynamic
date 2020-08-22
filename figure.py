@@ -3,7 +3,7 @@ import time
 from functools import wraps
 from dynamics import ode_test
 import experiment1, experiment2, experiment3, experiment4, experiment5
-from infer_multi_ch import infer_model, test_model, simulation_ode_2, simulation_ode_3, test_model
+from infer_multi_ch import infer_model, test_model, simulation_ode_2, simulation_ode_3, test_model, test_model2, diff_method_backandfor
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits import mplot3d
@@ -28,14 +28,20 @@ def case1():
     num_mode = 2
     T = 50
     ep = 0.01
+    mergeep = 0.01
     method='piecelinear'
     t_list, y_list = simulation_ode_2(mode2, event1, y0, T, stepsize)
+    with open('f1tr.txt','ab') as f:
+        for ypoints in y_list:
+            np.savetxt(f, ypoints, delimiter=" ") 
     P,G,C = infer_model(
                 t_list, y_list, stepsize=stepsize, maxorder=maxorder, boundary_order=boundary_order,
-                num_mode=num_mode, modelist=mode2, event=event1, ep=ep, method=method, verbose=False)
-    
+                num_mode=num_mode, modelist=mode2, event=event1, ep=ep, mergeep = mergeep, method=method, verbose=False)
+    # A, b1, b2, Y, ytuple = diff_method_backandfor(t_list, y_list, maxorder, stepsize)
     d_avg = test_model(
                 P, G, C, num_mode, y_list , mode2, event1, maxorder, boundary_order)
+    # d_avg = test_model2(
+    #             P, G, C, num_mode, A, Y , mode2, event1, maxorder, boundary_order)
     print(G)
     print(C[0]/C[0],C[1]/C[0],C[2]/C[0])
     print(d_avg)
@@ -70,23 +76,31 @@ def case2():
     fvdp3 = experiment2.get_fvdp3(0)
     event1 = experiment2.get_event1(0)
     y0 = [[5,5,5], [2,2,2]]
-    stepsize = 0.002
+    stepsize = 0.004
     maxorder = 2
     boundary_order = 1
     num_mode = 2
     T = 5
     ep = 0.01
-    method='merge'
+    mergeep = 0.2
+    method='tolmerge'
     t_list, y_list = simulation_ode_2(fvdp3, event1, y0, T, stepsize)
+    # A, b1, b2, Y, ytuple = diff_method_backandfor(t_list, y_list, maxorder, stepsize)
     P,G,C = infer_model(
                 t_list, y_list, stepsize=stepsize, maxorder=maxorder, boundary_order=boundary_order,
-                num_mode=num_mode, modelist=fvdp3, event=event1, ep=ep, method=method, verbose=False)
+                num_mode=num_mode, modelist=fvdp3, event=event1, ep=ep, mergeep= mergeep,method=method, verbose=False)
     d_avg = test_model(
                 P, G, C, num_mode, y_list , fvdp3, event1, maxorder, boundary_order)
+    # d_avg = test_model2(
+    #             P, G, C, num_mode, A, Y , fvdp3, event1, maxorder, boundary_order)
     
     print(G)
     print(C[0]/C[0],C[1]/C[0],C[2]/C[0],C[3]/C[0])
     print(d_avg)
+    with open('f2tr.txt','ab') as f:
+        for ypoints in y_list:
+            np.savetxt(f, ypoints, delimiter=" ") 
+    
     @eventAttr()
     def eventtest(t,y):
         y0, y1, y2 = y
@@ -123,11 +137,12 @@ def case5():
     boundary_order = 1
     num_mode = 3
     ep = 0.01
+    mergeep=0.01
     method = 'piecelinear'
     t_list, y_list = simulation_ode_3(modetr, event, labeltest, y0, T, stepsize)
     P, G, (coeff1, coeff2, [first,second,third]) = infer_model(
                 t_list, y_list, stepsize=stepsize, maxorder=maxorder, boundary_order=boundary_order,
-                num_mode=num_mode, modelist=modetr, event=event, ep=ep, method=method, verbose=False,
+                num_mode=num_mode, modelist=modetr, event=event, ep=ep, mergeep= mergeep,method=method, verbose=False,
                 labeltest=labeltest)
     boundary = (coeff1, coeff2, [first,second,third])
     d_avg = test_model(

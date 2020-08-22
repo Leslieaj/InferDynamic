@@ -28,7 +28,7 @@ from dynamics import ode_test
 from infer_multi_ch import simulation_ode, infer_dynamic, parti, infer_dynamic_modes_ex, norm, reclass, dropclass, \
     infer_dynamic_modes_exx, dist, diff_method, diff_method1, infer_dynamic_modes_ex_dbs, infer_dynamic_modes_pie, \
     infer_dynamic_modes_new, diff_method_new1, diff_method_new, simulation_ode_2, simulation_ode_3, diff_method_backandfor, \
-        diff, infer_model, test_model
+        diff, infer_model, test_model, segment_and_fit, merge_cluster_tol2, matrowex
 
 import infer_multi_ch
 from generator import generate_complete_polynomial
@@ -102,22 +102,25 @@ cases = {
         't_tuple': 5,
         'stepsize': 0.01,
         'ep': 0.01,
+        'mergeep':0.2
     },
     1: {
         'params': 0,
-        'y0': [[3,3,3]],
-        'y0_test': [[5,5,5], [2,2,2]],
-        't_tuple': 5,
+        'y0': [[-3,0,-3]],
+        'y0_test': [[5,0,5], [2,0,2]],
+        't_tuple': 15,
         'stepsize': 0.002,
         'ep': 0.01,
+        'mergeep':0.2
     },
     2: {
         'params': 0,
-        'y0': [[3,3,3]],
-        'y0_test': [[5,5,5], [2,2,2]],
-        't_tuple': 5,
+        'y0': [[-3,0,-3], [2,0,2]],
+        'y0_test': [[5,0,5]],
+        't_tuple': 10,
         'stepsize': 0.002,
-        'ep': 0.002,
+        'ep': 0.01,
+        'mergeep':0.4
     },
     3: {
         'params': 0,
@@ -126,6 +129,7 @@ cases = {
         't_tuple': 3,
         'stepsize': 0.01,
         'ep': 0.01,
+        'mergeep':0.4
     }
 }
 
@@ -235,35 +239,52 @@ def case(y0,t_tuple,stepsize,maxorder,modelist,event,ep,method):
 
     return sum/num
 
-
-
-if __name__ == "__main__":
+def case2():
     y0 = [[5,5,5], [2,2,2]]
-    T = 3
     stepsize = 0.01
     maxorder = 2
     boundary_order = 1
     num_mode = 2
-    ep = 0.4
-    method='piecelinear1'
+    T = 5
+    ep = 0.01
+    mergeep = 0.01
+    method='merge'
     
 
-    t_list, y_list = simulation_ode_2(fvdp3, event1, y0, T, stepsize)
+    t_list, y_list = simulation_ode_2(get_fvdp3(0), get_event1(0), y0, T, stepsize)
     A, b, Y = diff_method_new(t_list, y_list, maxorder, stepsize)
-    np.savetxt("A1.txt",A,fmt='%8f')
-    np.savetxt("b1.txt",b,fmt='%8f')
+    np.savetxt("A2.txt",A,fmt='%8f')
+    np.savetxt("b2.txt",b,fmt='%8f')
     # print(y_list)
 
-    P,G,C = infer_model(
-                t_list, y_list, stepsize=stepsize, maxorder=maxorder, boundary_order=boundary_order,
-                num_mode=num_mode, modelist=fvdp3, event=event1, ep=ep, method=method, verbose=False)
+    # P,G,C = infer_model(
+    #             t_list, y_list, stepsize=stepsize, maxorder=maxorder, boundary_order=boundary_order,
+    #             num_mode=num_mode, modelist=fvdp3, event=event1, ep=ep, mergeep= mergeep, method=method, verbose=False)
     
-                
-    y1 = [[3,3,3], [1,1,1]]
-    # t_list, y_list = simulation_ode_2(fvdp3, event1, y0, T, stepsize)
-    YT, FT = diff(t_list, y_list, dynamics.fvdp3_3)
-    np.savetxt("YT1.txt",YT,fmt='%8f')
-    np.savetxt("FT1.txt",FT,fmt='%8f')
-    d_avg = test_model(
-                P, G, C, num_mode, y_list , fvdp3, event1, maxorder, boundary_order)
-    print(d_avg)
+    y1 = [[3,3,3], [4,4,4]]
+    t_test_list, y_test_list = simulation_ode_2(get_fvdp3(0), get_event1(0), y0, T, stepsize)
+    YT, FT = diff(t_list+t_test_list, y_list+y_test_list, dynamics.fvdp3_3)
+    # np.savetxt("YT"+str(n)+".txt",YT,fmt='%8f')
+    # np.savetxt("FT"+str(n)+".txt",FT,fmt='%8f')
+    np.savetxt("YT2.txt",YT,fmt='%8f')
+    np.savetxt("FT2.txt",FT,fmt='%8f')
+    # d_avg = test_model(
+    #             P, G, C, num_mode, y_list + y_test_list, fvdp3, event1, maxorder, boundary_order)
+    # print(d_avg)
+    # A, b1, b2, Y, ytuple = diff_method_backandfor(t_list, y_list, maxorder, stepsize)
+    # res, drop, clfs = segment_and_fit(A, b1, b2, ytuple)
+    # P, G = merge_cluster_tol2(res, A, b1, num_mode, ep)
+    # sq_sum = 0
+    # posum = 0
+    # for j in range(0,num_mode):
+    #     A1 = matrowex(A, P[j])
+    #     B1 = matrowex(b1, P[j])
+    #     clf = linear_model.LinearRegression(fit_intercept=False)
+    #     clf.fit(A1, B1)
+    #     sq_sum += np.square(clf.predict(A1)-B1).sum()
+    #     posum += len(P[j])
+    # print(sq_sum/posum)
+
+
+if __name__ == "__main__":
+    case2()

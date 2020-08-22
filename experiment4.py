@@ -14,6 +14,7 @@ import random
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))) # ADD the path of the parent dir
 from sklearn import linear_model
 from sklearn.linear_model import Ridge
+from sklearn.svm import SVR
 
 from scipy.linalg import pinv, pinv2
 from scipy.integrate import odeint, solve_ivp
@@ -27,7 +28,8 @@ from scipy.integrate import odeint, solve_ivp
 from infer_multi_ch import simulation_ode, infer_dynamic, parti, infer_dynamic_modes_ex, norm, reclass, dropclass, \
     infer_dynamic_modes_exx, dist, diff_method, diff_method1, infer_dynamic_modes_ex_dbs, infer_dynamic_modes_pie, \
     infer_dynamic_modes_new, diff_method_new1, diff_method_new, simulation_ode_2, simulation_ode_3, diff_method_backandfor, \
-        infer_model, test_model
+        infer_model, test_model, segment_and_fit, merge_cluster2, matrowex, merge_cluster_tol, rel_diff, merge_cluster_tol2,\
+            diff
 
 import infer_multi_ch
 from generator import generate_complete_polynomial
@@ -99,7 +101,8 @@ cases = {
         'y0_test': [[4.6,0.13,2,0], [5.3,0.17,-2,0]],
         't_tuple': 5,
         'stepsize': 0.01,
-        'ep': 0.01
+        'ep': 0.01,
+        'mergeep': 0.01
     },
     1: {
         'params': 0,
@@ -107,23 +110,27 @@ cases = {
         'y0_test': [[4.6,0.13,2,0], [5.3,0.17,-2,0]],
         't_tuple': 5,
         'stepsize': 0.01,
-        'ep': 0.01
+        'ep': 0.01,
+        'mergeep': 0.01
     },
     2: {
         'params': 0,
         'y0': [[4,0.1,3.1,0], [5.9,0.2,-3,0], [4.1,0.5,2,0], [6,0.7,2,0]],
         'y0_test': [[4.6,0.13,2,0], [5.3,0.17,-2,0]],
         't_tuple': 5,
-        'stepsize': 0.01,
-        'ep': 0.05
+        'stepsize': 0.002,
+        'ep': 0.01,
+        'mergeep': 0.01
+        
     },
     3: {
         'params': 0,
-        'y0': [[4,0.1,3.1,0], [5.9,0.2,-3,0], [4.1,0.5,2,0], [6,0.7,2,0]],
+        'y0': [[4,0.1,3.1,0], [5.9,0.2,-3,0], [6,0.7,2,0]],
         'y0_test': [[4.6,0.13,2,0], [5.3,0.17,-2,0]],
-        't_tuple': 5,
-        'stepsize': 0.002,
-        'ep': 0.01
+        't_tuple': 10,
+        'stepsize': 0.01,
+        'ep': 0.01,
+        'mergeep': 0.005
     },
 }
 
@@ -211,9 +218,8 @@ def case(y0,t_tuple,stepsize,maxorder,modelist,event,ep,method):
 
     return sum/num
 
-
-if __name__ == "__main__":
-    y0 = [[4,0.1,3.1,0], [5.9,0.2,-3,-1], [4.1,0.5,2,1], [6,0.7,2,0]]
+def case1():
+    y0 = [[4,0.1,3.1,0], [5.9,0.2,-3,0], [4.1,0.5,2,0], [6,0.7,2,0]]
     y0_test = [[4.6,0.13,2,0], [5.3,0.17,-2,0]]
     T = 5
     stepsize = 0.01
@@ -221,13 +227,39 @@ if __name__ == "__main__":
     maxorder = 2
     boundary_order = 1
     num_mode = 2
-    method = 'merge'
+    method = 'tolmerge'
     t_list, y_list = simulation_ode_2(mmode, event1, y0, T, stepsize)
-    test_t_list, test_y_list = simulation_ode_2(mmode, event1, y0_test, T, stepsize)
-    P, G, boundary = infer_model(
-                t_list, y_list, stepsize=stepsize, maxorder=maxorder, boundary_order=boundary_order,
-                num_mode=num_mode, modelist=mmode, event=event1, ep=ep, method=method, verbose=False)
+    t_test_list, y_test_list = simulation_ode_2(mmode, event1, y0_test, T, stepsize)
+    A, b, Y = diff_method_new(t_list, y_list, maxorder, stepsize)
+    np.savetxt("A4.txt",A,fmt='%8f')
+    np.savetxt("b4.txt",b,fmt='%8f')
+    YT, FT = diff(t_list+t_test_list, y_list+y_test_list, dynamics.modeex4)
+    np.savetxt("YT4.txt",YT,fmt='%8f')
+    np.savetxt("FT4.txt",FT,fmt='%8f')
+    # P, G, boundary = infer_model(
+    #             t_list, y_list, stepsize=stepsize, maxorder=maxorder, boundary_order=boundary_order,
+    #             num_mode=num_mode, modelist=mmode, event=event1, ep=ep, method=method, verbose=False)
     
-    d_avg = test_model(
-                P, G, boundary, num_mode, y_list, mmode, event1, maxorder, boundary_order)
-    print(d_avg)
+    # d_avg = test_model(
+    #             P, G, boundary, num_mode, y_list, mmode, event1, maxorder, boundary_order)
+    # print(d_avg)
+    # print(G)
+    # A, b1, b2, Y, ytuple = diff_method_backandfor(t_list, y_list, maxorder, stepsize)
+    # f = open("out.txt", "w")
+    # for i in range(0,Y.shape[0]):
+    #     if event1(0,Y[i])>0:
+    #         print(1,':',rel_diff(b1[i],b2[i]),b1[i],b2[i],mmode[0](0,Y[i]),file = f)
+    #     else:
+    #         print(-1,':',rel_diff(b1[i],b2[i]),b1[i],b2[i],mmode[1](0,Y[i]),file = f)
+    # f.close()
+
+    # res, drop, clfs = segment_and_fit(A, b1, b2, ytuple)
+    # bt = np.zeros((b1.shape[0],b1.shape[1]))
+    # for i in range(0,A.shape[0]):
+    #     if event1(0,Y[i]) > 0:
+    #         bt[i] = mmode[0](0,Y[i])
+    #     else:
+    #         bt[i] = mmode[1](0,Y[i])
+
+if __name__ == "__main__":
+    case1()

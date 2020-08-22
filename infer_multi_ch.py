@@ -57,7 +57,7 @@ def simulation_ode(ode_func, y0, t_tuple, stepsize, noise_type=1, eps=0, solve_m
     return t_list, y_list
 
 
-def simulation_ode_2(modelist, event, y0, T, stepsize, verbose=False):
+def simulation_ode_2(modelist, event, y0, T, stepsize, verbose=False, noise = 0):
     t_list = []
     y_list = []
 
@@ -85,7 +85,7 @@ def simulation_ode_2(modelist, event, y0, T, stepsize, verbose=False):
                 break
             y_object = solve_ivp(modelist[label], (t_start, t_end + 1.1*stepsize), yinitial,
                                  t_eval=t_points, method='RK45', rtol=1e-7, atol=1e-9,
-                                 max_step=stepsize/100, events=[event], dense_output=True)
+                                 max_step=stepsize/10, events=[event], dense_output=True)
 
             status = y_object.status
             if status == 1:
@@ -102,7 +102,7 @@ def simulation_ode_2(modelist, event, y0, T, stepsize, verbose=False):
                         break
                 t_points=t_points[i:]
                 sol = y_object.sol
-                yinitial = sol.__call__(t_start + stepsize/100)
+                yinitial = sol.__call__(t_start + stepsize/1000)
                 y_points = y_object.y.T
                 y_points = y_points[0:i]
             else: 
@@ -112,6 +112,11 @@ def simulation_ode_2(modelist, event, y0, T, stepsize, verbose=False):
                 Y_points = y_points
             else:
                 Y_points = np.r_[Y_points,y_points]
+        
+        if noise > 0:
+            for i in range(0,Y_points.shape[0]):
+                for j in range(0,Y_points.shape[1]):
+                    Y_points[i][j] = Y_points[i][j] + np.random.normal(0,noise)
         t_list.append(T_points)
         y_list.append(Y_points)
     return t_list, y_list
@@ -156,7 +161,7 @@ def simulation_ode_3(modelist, eventlist, labelfun, y0, T, stepsize):
                         break
                 t_points = t_points[i:]
                 sol = y_object.sol
-                yinitial = sol.__call__(t_start + stepsize/1000000)
+                yinitial = sol.__call__(t_start + stepsize/1000)
                 label = labelfun(yinitial)
                 y_points = y_object.y.T
                 y_points = y_points[0:i]
@@ -766,9 +771,10 @@ def diff_method_new(t_list, y_list, order, stepsize):
 
     for k in range(0,len(y_list)):
         t_points = t_list[k]
-        L_t = len(t_points)
-        D = L_t - 5    #order5
         y_points = y_list[k]
+        L_t = len(y_points)
+        D = L_t - 5    #order5
+        
         A_matrix = np.zeros((D, L_p), dtype=np.double)
         b_matrix = np.zeros((D, L_y),  dtype=np.double)
         y_matrix = np.zeros((D, L_y),  dtype=np.double)
@@ -819,6 +825,25 @@ def diff(t_list, y_list, f):
 
     return final_y_mat, final_f_mat
 
+def disc(t_list,y_list):
+    final_y1_mat = None
+    final_y2_mat = None
+    for k in range(0,len(y_list)):
+        y_matrix = y_list[k]
+        l = y_matrix.shape[0]
+        y1_matrix = y_matrix[0:l-1]
+        y2_matrix = y_matrix[1:l]
+
+        if k == 0:
+            final_y1_mat = y1_matrix
+            final_y2_mat = y2_matrix
+
+        else :
+            final_y1_mat = np.r_[final_y1_mat,y1_matrix]
+            final_y2_mat = np.r_[final_y2_mat,y2_matrix]
+    
+    return final_y1_mat,final_y2_mat
+
 def diff_method_backandfor(t_list, y_list, order, stepsize):
     """Using multi-step difference method (BDF) to calculate the
     coefficient matrix.
@@ -828,16 +853,17 @@ def diff_method_backandfor(t_list, y_list, order, stepsize):
     final_b1_mat = None
     final_b2_mat = None
     final_y_mat = None
-    
+    ytuple = []
+
     L_y = y_list[0].shape[1]
     gene = generate_complete_polynomial(L_y,order)
     L_p = gene.shape[0]
 
     for k in range(0,len(y_list)):
         t_points = t_list[k]
-        L_t = len(t_points)
-        D = L_t - 5    #order5
         y_points = y_list[k]
+        L_t = len(y_points)
+        D = L_t - 5    #order5
         A_matrix = np.zeros((D-5, L_p), dtype=np.double)
         b1_matrix = np.zeros((D-5, L_y),  dtype=np.double)
         b2_matrix = np.zeros((D-5, L_y),  dtype=np.double)
@@ -857,18 +883,22 @@ def diff_method_backandfor(t_list, y_list, order, stepsize):
                             200 * y_points[i+3] - 75 * y_points[i+4] + 12 * y_points[i+5])/ (60 * stepsize)
             y_matrix[i-5] = y_points[i]
         if k == 0:
+            ytuple.append((0,A_matrix.shape[0]))
             final_A_mat = A_matrix
             final_b1_mat = b1_matrix
             final_b2_mat = b2_matrix
             final_y_mat = y_matrix
 
         else :
+            l1 = final_A_mat.shape[0]
             final_A_mat = np.r_[final_A_mat,A_matrix]
+            l2 = final_A_mat.shape[0]
             final_b1_mat = np.r_[final_b1_mat,b1_matrix]
             final_b2_mat = np.r_[final_b2_mat,b2_matrix]
             final_y_mat = np.r_[final_y_mat,y_matrix]
+            ytuple.append((l1,l2))
 
-    return final_A_mat, final_b1_mat, final_b2_mat, final_y_mat
+    return final_A_mat, final_b1_mat, final_b2_mat, final_y_mat, ytuple
 
 
 def diff_method_new1(t_list, y_list, order, stepsize):
@@ -941,6 +971,35 @@ def compare(A,B,ep):
         f2 = np.sqrt(a) + np.sqrt(b)
         if f1 > ep*f2:
             r = 0
+    return r
+
+def comparecom(A,B):
+    """Check the relative difference |A - B| / A is larger/smaller
+    than ep.
+    
+    """
+    C = A - B
+    r = 1
+    # for i in range(0,C.shape[0]):
+    #     for j in range(0,C.shape[1]):
+    #         c = abs(C[i,j])
+    #         a = abs(A[i,j])*ep
+    #         # a = ep
+    #         if c >= a:
+    #             r = 0
+    r = 0
+    for i in range(0,C.shape[0]):
+        a = 0
+        b = 0
+        c = 0
+        for j in range(0,C.shape[1]):
+            c += C[i,j]**2
+            a += A[i,j]**2
+            b += B[i,j]**2
+        f1 = np.sqrt(c)
+        f2 = np.sqrt(a) + np.sqrt(b)
+        r = r + f1/f2
+        r = r/C.shape[0]
     return r
 
 def compare1(A,B,ep):
@@ -1200,6 +1259,79 @@ def dropclass(P,G,D,A,b,Y,ep,stepsize):
                     D.remove(i)
                     break
 
+    return P,D
+
+def dropclass0(P,G,D,A,b,Y,ep,stepsize):
+    DD = D[:]
+    for i in DD:
+        if i<(Y.shape[0] - 5):
+            co = np.mat(A[i])
+            forw = np.mat(b[i])
+            # print(forw.shape)
+            back = (-137 * Y[i] + 300 * Y[i+1] - 300 * Y[i+2] + 
+                            200 * Y[i+3] - 75 * Y[i+4] + 12 * Y[i+5])/ (60 * stepsize)
+            back = np.mat(back)
+            # print(back.shape)
+            Ep = []
+            for j in range(0,len(G)):
+                g = G[j]
+                der = np.matmul(co,g.T)
+                # print(der.shape)
+                Ep.append(min(comparecom(forw,der),comparecom(back,der)))
+
+            label = Ep.index(min(Ep)) 
+            if Ep[label]<ep:
+                P[label].append(i)
+                D.remove(i)
+
+    return P,D
+
+def dropclass1(P,G,D,A,b,Y,ep,stepsize):
+    DD = D[:]
+    for i in DD:
+        if i<(Y.shape[0] - 5):
+            co = np.mat(A[i])
+            forw = np.mat(b[i])
+            # print(forw.shape)
+            back = (-137 * Y[i] + 300 * Y[i+1] - 300 * Y[i+2] + 
+                            200 * Y[i+3] - 75 * Y[i+4] + 12 * Y[i+5])/ (60 * stepsize)
+            back = np.mat(back)
+            # print(back.shape)
+            for j in range(0,len(G)):
+                g = G[j]
+                der = np.matmul(co,g.T)
+                # print(der.shape)
+                if np.square(der-forw).sum() <ep or np.square(der-back).sum():
+                    P[j].append(i)
+                    D.remove(i)
+                    break
+
+    return P,D
+
+def dropclass2(P,G,D,A,b1,b2,stepsize):
+    DD = D[:]
+    for i in DD:
+        co = np.mat(A[i])
+        forw = np.mat(b1[i])
+        back = np.mat(b2[i])
+        ep = []
+        for j in range(0,len(G)):
+            g = G[j]
+            der = np.matmul(co,g.T)
+            # print(der.shape)
+            d1 = np.square(der-forw).sum()
+            d2 = np.square(der-back).sum()
+            ep.append(min(d1,d2))
+        
+        label = ep.index(min(ep))
+        P[label].append(i)
+        D.remove(i)
+    # for i in range(0,len(P)):
+    #     A1 = matrowex(A, P[j])
+    #     B1 = matrowex(b1, P[j])
+    #     clf = linear_model.LinearRegression(fit_intercept=False)
+    #     clf.fit(A1, B1)
+    #     GG.append(clf.coef_)
     return P,D
 
 
@@ -1492,6 +1624,7 @@ def get_coeffs(svm_model, order=1):
 
     if order == 1:
         g = -svm_model.rho[0]   # Constant term
+        # print("xishu",g)
         list_a = [0] * L_y      # Linear terms
 
         for i in range(nsv):
@@ -1528,9 +1661,11 @@ def svm_classify(P, Y, L_y, boundary_order, num_mode=2):
             x.append({i+1: Y[id1, i] for i in range(L_y)})
 
         prob = svm_problem(y, x)
-        param = svm_parameter('-t 1 -d %d -c 10 -r 1 -b 0 -q' % boundary_order)
+        param = svm_parameter('-t 1 -d %d -c 100 -r 1 -b 0 -q' % boundary_order)
         m = svm_train(prob, param)
         svm_save_model('model_file', m)
+        p_label, p_acc, p_val = svm_predict(y, x, m,'-q')
+        # print(p_acc)
         return get_coeffs(m, order=boundary_order)
 
     elif num_mode == 3:
@@ -1556,6 +1691,7 @@ def svm_classify(P, Y, L_y, boundary_order, num_mode=2):
             svm_save_model('model_file1', m)
             coeff1 = get_coeffs(m, order=boundary_order)
             p_label, p_acc, p_val = svm_predict(y, x, m,'-q')
+            # print(p_acc)
             accl.append((p_acc[0],i,coeff1))
         
         accl.sort(reverse=True)
@@ -1579,31 +1715,34 @@ def svm_classify(P, Y, L_y, boundary_order, num_mode=2):
         param = svm_parameter('-t 1 -d %d -c 100 -r 1 -b 0 -q' % boundary_order)
         n = svm_train(prob, param)
         svm_save_model('model_file2', n)
+        p_label, p_acc, p_val = svm_predict(y, x, n,'-q')
+        # print(p_acc)
         coeff2 = get_coeffs(n, order=boundary_order)
         return coeff1, coeff2, [first,(first+1)%3,(first+2)%3]
 
     else:
         raise NotImplementedError
 
-def segment(A, b1, b2):
+def segment(A, b1, b2, ytuple):
     # Segmentation
     res = []
-    cur_pos = 0
-    max_id = len(b1)
     ep = 0.01
-
-    while True:
-        low = cur_pos
-        while low < max_id and rel_diff(b1[low], b2[low]) >= ep:
-            low += 1
-        if low == max_id:
-            break
-        high = low
-        while high < max_id and rel_diff(b1[high], b2[high]) < ep:
-            high += 1
-        if high - low >= 5:
-            res.append(list(range(low, high)))
-        cur_pos = high
+    for i in range(0,len(ytuple)):
+        (l1,l2) = ytuple[i]
+        cur_pos = l1
+        max_id = l2
+        while True:
+            low = cur_pos
+            while low < max_id and rel_diff(b1[low], b2[low]) >= ep:
+                low += 1
+            if low == max_id:
+                break
+            high = low
+            while high < max_id and rel_diff(b1[high], b2[high]) < ep:
+                high += 1
+            if high - low >= 5:
+                res.append(list(range(low, high)))
+            cur_pos = high
         
     all_pts = set()
     for lst in res:
@@ -1612,25 +1751,26 @@ def segment(A, b1, b2):
 
     return res, drop
 
-def segment_and_fit(A, b1, b2):
+def segment_and_fit(A, b1, b2, ytuple):
     # Segmentation
     res = []
-    cur_pos = 0
-    max_id = len(b1)
     ep = 0.01
-
-    while True:
-        low = cur_pos
-        while low < max_id and rel_diff(b1[low], b2[low]) >= ep:
-            low += 1
-        if low == max_id:
-            break
-        high = low
-        while high < max_id and rel_diff(b1[high], b2[high]) < ep:
-            high += 1
-        if high - low >= 5:
-            res.append(list(range(low, high)))
-        cur_pos = high
+    for i in range(0,len(ytuple)):
+        (l1,l2) = ytuple[i]
+        cur_pos = l1
+        max_id = l2
+        while True:
+            low = cur_pos
+            while low < max_id and rel_diff(b1[low], b2[low]) >= ep:
+                low += 1
+            if low == max_id:
+                break
+            high = low
+            while high < max_id and rel_diff(b1[high], b2[high]) < ep:
+                high += 1
+            if high - low >= 5:
+                res.append(list(range(low, high)))
+            cur_pos = high
         
     all_pts = set()
     for lst in res:
@@ -1779,39 +1919,44 @@ def merge_cluster2(clfs, res, A, b1, num_mode, ep):
             eps.append(rel_diff(clf.predict(A1[r]), B1[r]))
         eps = sorted(eps)
         return eps[int(0.95*len(eps))]
+    res2 = []
+    for i, l in enumerate(res):
+        res2.append((l, [i]))
 
     qu = queue.PriorityQueue()
-    for i, j in itertools.permutations(range(len(res)), 2):
-        l1, l2 = res[i], res[j]
-        qu.put((get_score(l1, l2), l1, l2))
+    for i, j in itertools.permutations(range(len(res2)), 2):
+        (l1, list1), (l2, list2) = res2[i], res2[j]
+        qu.put((get_score(l1, l2), l1, l2, list1,list2))
 
-    while len(res) > num_mode:
-        sc, l1, l2 = qu.get()
-        if l1 not in res or l2 not in res:
+    while len(res2) > num_mode:
+        sc, l1, l2, list1, list2 = qu.get()
+        if (l1,list1) not in res2 or (l2,list2) not in res2:
             continue
 
         if sc > ep:
             break
 
         # Merge the two best classes
-        res.remove(l1)
-        res.remove(l2)
+        res2.remove((l1, list1))
+        res2.remove((l2, list2))
 
         # Compute the merge score with every other item in res
-        for i in range(len(res)):
-            l3 = res[i]
-            qu.put((get_score(l1 + l2, l3), l1 + l2, l3))
-        res.append(l1 + l2)
+        for i in range(len(res2)):
+            (l3,list3) = res2[i]
+            qu.put((get_score(l1 + l2, l3), l1 + l2, l3, list1 + list2, list3))
+        res2.append((l1 + l2,list1 + list2))
 
     # Take the top num_mode classes.
     sort_mode_pts = []
-    for lst in res:
-        sort_mode_pts.append((-len(lst), lst))
+    for (lst,listid) in res2:
+        sort_mode_pts.append((-len(lst), lst, listid))
+        # print(listid,'\n')
     sort_mode_pts = sorted(sort_mode_pts)
     mode_pts = []
-    for _, lst in sort_mode_pts[:num_mode]:
+    for _, lst, listid in sort_mode_pts[:num_mode]:
         mode_pts.append(lst)
-
+        print(listid,'\n')
+        
     # Fit each class again
     clfs = []
     for mode in mode_pts:
@@ -1838,9 +1983,9 @@ def balls_in_boxes(n, m):
     """
     # base case
     if n == m:
-        return [{(i + 1,) for i in range(n)}]
+        return [{(i,) for i in range(n)}]
     if m == 1:
-        return [{tuple([i + 1 for i in range(n)])}]
+        return [{tuple([i for i in range(n)])}]
     # recursive case
     result_list = []
     # when n th ball goes to a non-empty box
@@ -1849,29 +1994,152 @@ def balls_in_boxes(n, m):
             # make the n th ball goes to every non-empty box and add the case into result list
             copy_case = case.copy()
             temp_box_list = list(box)
-            temp_box_list.append(n)
+            temp_box_list.append(n-1)
             copy_case.remove(box)
             copy_case.add(tuple(temp_box_list))
             result_list.append(copy_case)
     # when n th ball goes to an empty box        
     for case in balls_in_boxes(n - 1, m - 1):
         # make a box containing n th ball and add it into every case set
-        case.add((n,))
+        case.add((n-1,))
         result_list.append(case)
     return result_list
 
-def merge_cluster_tol(res, A, b1, num_mode):
-    result_list = balls_in_boxes(len(res),num_mode)
+
+def balls_in_boxes2(n, m, badcom):
+    """
+    Get n different balls, and m same boxes then compute all the cases. 
+    Return a list whose entry is a set representing every case.
+    Every set contains m tuples representing m boxes.
+    Every tuple contains some numbers from 1 to n representing different balls.
+    """
+    # base case
+    if n == m:
+        return [{(i,) for i in range(n)}]
+    if m == 1:
+        bad = 0
+        for badlist in badcom:
+            if set([i for i in range(n)]) >= set(badlist):
+                bad = 1
+        if bad == 1:
+            return []
+        else:
+            return [{tuple([i for i in range(n)])}]
+    # recursive case
+    result_list = []
+    # when n th ball goes to a non-empty box
+    for case in balls_in_boxes2(n - 1, m, badcom):
+        for box in case:
+            # make the n th ball goes to every non-empty box and add the case into result list
+            copy_case = case.copy()
+            temp_box_list = list(box)
+            temp_box_list.append(n-1)
+            bad = 0
+            for badlist in badcom:
+                if set(temp_box_list) >= set(badlist):
+                    bad = 1
+            if bad == 0:
+                copy_case.remove(box)
+                copy_case.add(tuple(temp_box_list))
+                result_list.append(copy_case)
+    # when n th ball goes to an empty box        
+    for case in balls_in_boxes2(n - 1, m - 1, badcom):
+        # make a box containing n th ball and add it into every case set
+        case.add((n-1,))
+        result_list.append(case)
+    return result_list
+
+def balls_in_boxes3(n, m, badcom , res, A, b1, ep):
+    """
+    Get n different balls, and m same boxes then compute all the cases. 
+    Return a list whose entry is a set representing every case.
+    Every set contains m tuples representing m boxes.
+    Every tuple contains some numbers from 1 to n representing different balls.
+    """
+    # base case
+    if n == m:
+        return [{(i,) for i in range(n)}]
+    if m == 1:
+        bad = 0
+        for badlist in badcom:
+            if set([i for i in range(n)]) >= set(badlist):
+                bad = 1
+        if bad == 1:
+            return []
+        
+        List = []
+        for i in range(0,n):
+            List = List + res[i]
+        A1 = matrowex(A, List)
+        B1 = matrowex(b1, List)
+        clf = linear_model.LinearRegression(fit_intercept=False)
+        clf.fit(A1, B1)
+        eps = np.square(clf.predict(A1)-B1).sum()
+        if eps > ep:
+            return []
+        else:
+            return [{tuple([i for i in range(n)])}]
+    # recursive case
+    result_list = []
+    # when n th ball goes to a non-empty box
+    for case in balls_in_boxes3(n - 1, m, badcom, res, A, b1, ep):
+        for box in case:
+            # make the n th ball goes to every non-empty box and add the case into result list
+            copy_case = case.copy()
+            temp_box_list = list(box)
+            temp_box_list.append(n-1)
+            bad = 0
+            for badlist in badcom:
+                if set(temp_box_list) >= set(badlist):
+                    bad = 1
+            if bad == 0:
+                List = []
+                for i in temp_box_list:
+                    List = List + res[i]
+                A1 = matrowex(A, List)
+                B1 = matrowex(b1, List)
+                clf = linear_model.LinearRegression(fit_intercept=False)
+                clf.fit(A1, B1)
+                eps = np.square(clf.predict(A1)-B1).sum()
+                if eps <= ep:
+                    copy_case.remove(box)
+                    copy_case.add(tuple(temp_box_list))
+                    result_list.append(copy_case)
+    # when n th ball goes to an empty box     
+    for case in balls_in_boxes3(n - 1, m - 1, badcom, res, A, b1, ep):
+        # make a box containing n th ball and add it into every case set
+        case.add((n-1,))
+        result_list.append(case)
+    return result_list
+
+def merge_cluster_tol(res, A, b1, num_mode, ep):
+    leng = 0
+    for i in range(0,len(res)):
+        leng = leng + len(res[i])
+    
+    badcom = []
+    for i, j in itertools.combinations(range(len(res)), 2):
+        A1 = matrowex(A, res[i] + res[j])
+        B1 = matrowex(b1, res[i] + res[j])
+        clf = linear_model.LinearRegression(fit_intercept=False)
+        clf.fit(A1, B1)
+        # eps = np.square(clf.predict(A1)-B1).sum()
+        eps = rel_diff_mat(clf.predict(A1),B1)
+        # print('(',i,',',j,'):',eps)
+        # if eps/(len(res[i])+len(res[j])) > ep:
+        if eps > ep*leng:
+            badcom.append([i,j])
+    # print(badcom)
+    
+    result_list = balls_in_boxes2(len(res),num_mode,badcom)
     n = len(result_list)
-    print(len(res),'segs')
-    print(n,'class')
     ListT = []
     for i in range(0,n):
         listT = []
         for j in range(0,num_mode):
             listt = []
             for k in list(list(result_list[i])[j]):
-                listt = listt + res[k-1]
+                listt = listt + res[k]
             listT.append(listt)
         ListT.append(listT)
     sq_sum_list = []
@@ -1883,9 +2151,10 @@ def merge_cluster_tol(res, A, b1, num_mode):
             clf = linear_model.LinearRegression(fit_intercept=False)
             clf.fit(A1, B1)
             sq_sum = sq_sum + rel_diff_mat(clf.predict(A1),B1)
+            # sq_sum += np.square(clf.predict(A1)-B1).sum()
         sq_sum_list.append(sq_sum)
-    l = sq_sum_list.index(min(sq_sum_list))
-    P = ListT[l]
+    label = sq_sum_list.index(min(sq_sum_list))
+    P = ListT[label]
     clfs = []
     G = []
     for mode in P:
@@ -1899,10 +2168,69 @@ def merge_cluster_tol(res, A, b1, num_mode):
     return P, G
 
 
+def merge_cluster_tol2(res, A, b1, num_mode, ep):
+    leng = 0
+    for i in range(0,len(res)):
+        leng = leng + len(res[i])
+    
+    badcom = []
+    for i, j in itertools.combinations(range(len(res)), 2):
+        A1 = matrowex(A, res[i] + res[j])
+        B1 = matrowex(b1, res[i] + res[j])
+        clf = linear_model.LinearRegression(fit_intercept=False)
+        clf.fit(A1, B1)
+        eps = np.square(clf.predict(A1)-B1).sum()
+        # print('(',i,',',j,'):',eps)
+        # if eps/(len(res[i])+len(res[j])) > ep:
+        if eps > ep*leng:
+            badcom.append([i,j])
+    # print(badcom)
+    
+    result_list = balls_in_boxes3(len(res),num_mode,badcom,res,A,b1,ep*leng)
+    n = len(result_list)
+    # print(len(res),'segs')
+    # print(n,'class')
+    
+    
+    ListT = []
+    for i in range(0,n):
+        listT = []
+        for j in range(0,num_mode):
+            listt = []
+            for k in list(list(result_list[i])[j]):
+                listt = listt + res[k]
+            listT.append(listt)
+        ListT.append(listT)
+    sq_sum_list = []
+    for i in range(0,n):
+        sq_sum = 0
+        for j in range(0,num_mode):
+            A1 = matrowex(A, ListT[i][j])
+            B1 = matrowex(b1, ListT[i][j])
+            clf = linear_model.LinearRegression(fit_intercept=False)
+            clf.fit(A1, B1)
+            # sq_sum = sq_sum + rel_diff_mat(clf.predict(A1),B1)
+            sq_sum += np.square(clf.predict(A1)-B1).sum()
+        sq_sum_list.append(sq_sum)
+    label = sq_sum_list.index(min(sq_sum_list))
+    # for i in range(0,len(sq_sum_list)):
+    #     print(i,':',sq_sum_list[i],'\n')
+    # print(result_list[label])
+    P = ListT[label]
+    clfs = []
+    G = []
+    for mode in P:
+        A1 = matrowex(A, mode)
+        B1 = matrowex(b1, mode)
+        clf = linear_model.LinearRegression(fit_intercept=False)
+        clf.fit(A1, B1)
+        clfs.append(clf)
+        G.append(clf.coef_)
+
+    return P, G
 
 
-
-def infer_model(t_list, y_list, stepsize, maxorder, boundary_order, num_mode, modelist, event, ep,
+def infer_model(t_list, y_list, stepsize, maxorder, boundary_order, num_mode, modelist, event, ep, mergeep,
                 method, *, labeltest=None, verbose=False):
     """Overall inference function.
 
@@ -1921,8 +2249,10 @@ def infer_model(t_list, y_list, stepsize, maxorder, boundary_order, num_mode, mo
 
         # Inference
         P, G, D = infer_dynamic_modes_new(t_list, y_list, stepsize, maxorder, ep)
-        P, G = reclass(A, b, P, ep)
-        P, _ = dropclass(P, G, D, A, b, Y, ep, stepsize)
+        # P, G = reclass(A, b, P, ep)
+        if len(P)>num_mode:
+            P, G = merge_cluster_tol2(P, A, b, num_mode,ep)
+        P, _ = dropclass0(P, G, D, A, b, Y, ep, stepsize)
 
     elif method == "piecelinear1":
         # Apply Linear Multistep Method
@@ -1930,49 +2260,60 @@ def infer_model(t_list, y_list, stepsize, maxorder, boundary_order, num_mode, mo
 
         # Inference
         P, G, D = infer_dynamic_modes_new1(t_list, y_list, stepsize, maxorder, ep)
-        if len(P)>num_mode:
-            P, G = merge_cluster_tol(P, A, b, num_mode)
-        # P, G = reclass(A, b, P, ep)
+        # if len(P)>num_mode:
+        #     P, G = merge_cluster_tol2(P, A, b, num_mode,ep)
+        P, G = reclass(A, b, P, ep)
+        # print(len(P))
         P, _ = dropclass(P, G, D, A, b, Y, ep, stepsize)
 
     elif method == "kmeans":
         # Apply Linear Multistep Method
-        A, b1, b2, Y = diff_method_backandfor(t_list, y_list, maxorder, stepsize)
+        A, b1, b2, Y, ytuple= diff_method_backandfor(t_list, y_list, maxorder, stepsize)
         num_pt = Y.shape[0]
 
         # Segment and fit
-        res, drop, clfs = segment_and_fit(A, b1, b2)
+        res, drop, clfs = segment_and_fit(A, b1, b2, ytuple)
         P, G = kmeans_cluster(clfs, res, A, b1, num_mode)
         P, _ = dropclass(P, G, drop, A, b1, Y, ep, stepsize)
 
     elif method == "dbscan":
         # Apply Linear Multistep Method
-        A, b1, b2, Y = diff_method_backandfor(t_list, y_list, maxorder, stepsize)
+        A, b1, b2, Y, ytuple = diff_method_backandfor(t_list, y_list, maxorder, stepsize)
         num_pt = Y.shape[0]
 
         # Segment and fit
-        res, drop, clfs = segment_and_fit(A, b1, b2)
+        res, drop, clfs = segment_and_fit(A, b1, b2, ytuple)
         P, G = dbscan_cluster(clfs, res, A, b1, num_mode)
+        # P, _ = dropclass2(P, G, drop, A, b1, b2, stepsize)
         P, _ = dropclass(P, G, drop, A, b1, Y, ep, stepsize)
 
     elif method == "merge":
         # Apply Linear Multistep Method
-        A, b1, b2, Y = diff_method_backandfor(t_list, y_list, maxorder, stepsize)
+        A, b1, b2, Y ,ytuple = diff_method_backandfor(t_list, y_list, maxorder, stepsize)
         num_pt = Y.shape[0]
 
         # Segment and fit
-        res, drop, clfs = segment_and_fit(A, b1, b2)
+        res, drop, clfs = segment_and_fit(A, b1, b2, ytuple)
         P, G = merge_cluster2(clfs, res, A, b1, num_mode, ep)
-        P, _ = dropclass(P, G, drop, A, b1, Y, ep, stepsize)
+        P, _ = dropclass2(P, G, drop, A, b1, b2, stepsize)
 
     elif method == "tolmerge":
-        A, b1, b2, Y = diff_method_backandfor(t_list, y_list, maxorder, stepsize)
+        A, b1, b2, Y, ytuple = diff_method_backandfor(t_list, y_list, maxorder, stepsize)
         num_pt = Y.shape[0]
 
         # Segment 
-        res, drop = segment(A, b1, b2)
-        P, G = merge_cluster_tol(res, A, b1, num_mode)
-        P, _ = dropclass(P, G, drop, A, b1, Y, ep, stepsize)
+        res, drop = segment(A, b1, b2, ytuple)
+        # print(len(res))
+        P, G = merge_cluster_tol2(res, A, b1, num_mode, mergeep)
+        P, _ = dropclass2(P, G, drop, A, b1, b2, stepsize)
+        # sq_sum = 0
+        # posum = 0
+        # for j in range(0,len(P)):
+        #     A1 = matrowex(A, P[j])
+        #     B1 = matrowex(b1, P[j])
+        #     sq_sum += np.square(np.matmul(A1,G[j].T)-B1).sum()
+        #     posum += len(P[j])
+        # print(sq_sum/posum)
 
     if verbose:
         print(G)
@@ -1996,6 +2337,7 @@ def test_model(P, G, boundary, num_mode, y_list, modelist, event, maxorder, boun
         # Test obtained model
         sum = 0
         num = 0
+        # f = open("diff.txt", "w")
         for ypoints in y_list:
             num += ypoints.shape[0]
             for i in range(ypoints.shape[0]):
@@ -2011,13 +2353,17 @@ def test_model(P, G, boundary, num_mode, y_list, modelist, event, maxorder, boun
 
                 exact = np.mat(exact)
                 sum += rel_diff(exact, predict)
-
+                # sum += np.square(exact-predict).sum()
+                # if  np.square(exact-predict).sum()>0.01:
+                #     print(ypoints[i],np.square(exact-predict).sum(),file = f)
+        # f.close()
         return sum / num
     elif num_mode == 3:
         coeff1, coeff2, [first,second,third] = boundary
         # Test obtained model
         sum = 0
         num = 0
+        # f = open("diff.txt", "w")
         for ypoints in y_list:
             num += ypoints.shape[0]
             for i in range(ypoints.shape[0]):
@@ -2032,11 +2378,58 @@ def test_model(P, G, boundary, num_mode, y_list, modelist, event, maxorder, boun
 
                 exact = np.mat(exact)
                 sum += mat_norm(exact - predict) / (mat_norm(exact) + mat_norm(predict))
+                # sum += np.square(exact-predict).sum()
+                # print(exact,predict,np.square(exact-predict).sum(),file = f)
+        # f.close()
         return sum / num
 
     else:
         raise NotImplementedError
 
+def test_model2(P, G, boundary, num_mode, A, Y, modelist, event, maxorder, boundary_order, *, labeltest=None):
+    if num_mode == 2:
+        coeffs = boundary
+        # Test obtained model
+        sum = 0
+        num = 0
+        f = open("diff.txt", "w")
+        for j in range(len(P)):
+            num += len(P[j])
+            for i in P[j]:
+                if event(0.0, Y[i]) > 0:
+                    exact = modelist[0](0, Y[i])
+                else:
+                    exact = modelist[1](0, Y[i])
+                predict = np.matmul(np.mat(A[i]), G[j].T)
+
+                exact = np.mat(exact)
+                # sum += rel_diff(exact, predict)
+                sum += np.square(exact-predict).sum()
+                if  np.square(exact-predict).sum()>0.01:
+                    print(Y[i],np.square(exact-predict).sum(),file = f)
+        f.close()
+        return sum 
+    elif num_mode == 3:
+        coeff1, coeff2, [first,second,third] = boundary
+        # Test obtained model
+        sum = 0
+        num = 0
+        # f = open("diff.txt", "w")
+        for j in range(len(P)):
+            num += len(P[j])
+            for i in P[j]:
+                exact = modelist[labeltest(Y[i])](0, Y[i])
+                predict = np.matmul(np.mat(A[i]), G[j].T)
+
+                exact = np.mat(exact)
+                # sum += mat_norm(exact - predict) / (mat_norm(exact) + mat_norm(predict))
+                sum += np.square(exact-predict).sum()
+                # print(exact,predict,np.square(exact-predict).sum(),file = f)
+        # f.close()
+        return sum 
+
+    else:
+        raise NotImplementedError
 
 if __name__ == "__main__":
     y0 = [[-1],[5],[1],[3],[0],[2],[-2]]

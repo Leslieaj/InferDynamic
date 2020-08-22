@@ -28,7 +28,7 @@ from dynamics import ode_test
 from infer_multi_ch import simulation_ode, infer_dynamic, parti, infer_dynamic_modes_ex, norm, reclass, dropclass, \
     infer_dynamic_modes_exx, dist, diff_method, diff_method1, infer_dynamic_modes_ex_dbs, infer_dynamic_modes_pie, \
     infer_dynamic_modes_new, diff_method_new1, diff_method_new, simulation_ode_2, simulation_ode_3, diff_method_backandfor, infer_model,\
-        diff, test_model
+        diff, test_model, merge_cluster_tol2, diff_method_backandfor, matrowex, segment_and_fit
 
 import infer_multi_ch
 from generator import generate_complete_polynomial
@@ -118,34 +118,38 @@ cases = {
     0: {
         'params': 0,
         'y0': [[-1,1],[1,4],[2,-3]],
-        'y0_test': [[1,1], [3,1]],
+        'y0_test': [[1,1], [1,3]],
         't_tuple': 5,
         'stepsize': 0.01,
-        'ep': 0.01
+        'ep': 0.01,
+        'mergeep': 0.01
     },
     1: {
         'params': 0,
         'y0': [[-1,1],[1,4]],
         'y0_test': [[1,1], [3,1]],
-        't_tuple': 5,
+        't_tuple': 10,
         'stepsize': 0.01,
-        'ep': 0.01
+        'ep': 0.01,
+        'mergeep': 0.01
     },
     2: {
         'params': 0,
-        'y0': [[-1,1],[1,4],[2,-3],[1,1],[3,1]],
+        'y0': [[-1,1],[1,4],[2,-3],[-5,1],[5,-3]],
         'y0_test': [[3,-1], [-1,3]],
         't_tuple': 5,
-        'stepsize': 0.01,
+        'stepsize': 0.02,
         'ep': 0.01,
+        'mergeep': 0.01
     },
     3: {
         'params': 0,
-        'y0': [[-1,1],[1,4],[2,-3],[1,1],[3,1]],
+        'y0': [[-1,1],[1,4],[2,-3],[-5,1],[5,-3]],
         'y0_test': [[3,-1], [-1,3]],
         't_tuple': 5,
-        'stepsize': 0.01,
-        'ep': 0.002,
+        'stepsize': 0.005,
+        'ep': 0.01,
+        'mergeep': 0.01
     },
 }
 
@@ -310,20 +314,21 @@ def case1():
     modetr = get_modetr(0)
     event = get_event(0)
     labeltest = get_labeltest(0)
-    y0 = [[-1,1],[1,4],[2,-3]]
-    # y1 = [[3,-1], [-1,3]]
+    y0 = [[-1,1],[1,4],[2,-3],[1,1],[3,1]]
+    y1 = [[3,-1], [-1,3]]
     T = 5
     stepsize = 0.01
     maxorder = 2
     boundary_order = 1
     num_mode = 3
-    ep = 0.01
+    ep = 0.001
+    mergeep = 0.01
     method = 'piecelinear'
     t_list, y_list = simulation_ode_3(modetr, event, labeltest, y0, T, stepsize)
     A, b1, b2, Y = diff_method_backandfor(t_list, y_list, maxorder, stepsize)
     P, G, (coeff1, coeff2, [first,second,third]) = infer_model(
                 t_list, y_list, stepsize=stepsize, maxorder=maxorder, boundary_order=boundary_order,
-                num_mode=num_mode, modelist=modetr, event=event, ep=ep, method=method, verbose=False,
+                num_mode=num_mode, modelist=modetr, event=event, ep=ep, mergeep=mergeep,method=method, verbose=False,
                 labeltest=labeltest)
     for i in range(0,len(P)):
         y0_list = []
@@ -339,33 +344,62 @@ def case2():
     modetr = get_modetr(0)
     event = get_event(0)
     labeltest = get_labeltest(0)
-    y0 = [[-1,1],[1,4]]
-    y1 = [[3,-1], [-1,3]]
+    y0 = [[-1,1],[1,4],[2,-3],[-5,1],[5,-3]]
+    y1 = [[3,-1],[-1,3]]
     T = 5
-    stepsize = 0.01
+    stepsize = 0.002
     maxorder = 2
     boundary_order = 1
     num_mode = 3
     ep = 0.01
-    method = 'tolmerge'
+    mergeep = 0.01
+    method = 'piecelinear'
     t_list, y_list = simulation_ode_3(modetr, event, labeltest, y0, T, stepsize)
-    A, b, Y = diff_method_new(t_list, y_list, maxorder, stepsize)
-    np.savetxt("A4.txt",A,fmt='%8f')
-    np.savetxt("b4.txt",b,fmt='%8f')
+    # A, b, Y = diff_method_new(t_list, y_list, maxorder, stepsize)
+    # np.savetxt("A5.txt",A,fmt='%8f')
+    # np.savetxt("b5.txt",b,fmt='%8f')
     P, G, (coeff1, coeff2, [first,second,third]) = infer_model(
                 t_list, y_list, stepsize=stepsize, maxorder=maxorder, boundary_order=boundary_order,
-                num_mode=num_mode, modelist=modetr, event=event, ep=ep, method=method, verbose=False,
+                num_mode=num_mode, modelist=modetr, event=event, ep=ep, mergeep = mergeep,method=method, verbose=False,
                 labeltest=labeltest)
     boundary = (coeff1, coeff2, [first,second,third])
-    # t_list, y_list = simulation_ode_3(modetr, event, labeltest, y1, T, stepsize)
-    # YT, FT = diff(t_list, y_list, dynamics.modetrt)
-    # np.savetxt("YT4.txt",YT,fmt='%8f')
-    # np.savetxt("FT4.txt",FT,fmt='%8f')
+    t_test_list, y_test_list = simulation_ode_3(modetr, event, labeltest, y1, T, stepsize)
+    # YT, FT = diff(t_list+t_test_list, y_list+y_test_list, dynamics.modetrt)
+    # np.savetxt("YT5.txt",YT,fmt='%8f')
+    # np.savetxt("FT5.txt",FT,fmt='%8f')
     d_avg = test_model(
-                P, G, boundary, num_mode, y_list, modetr, event, maxorder, boundary_order,
+                P, G, boundary, num_mode, y_list + y_test_list, modetr, event, maxorder, boundary_order,
                 labeltest=labeltest)
+    # print(G)
     print(d_avg)
-
+    # A, b1, b2, Y, ytuple = diff_method_backandfor(t_list, y_list, maxorder, stepsize)
+    # res, drop, clfs = segment_and_fit(A, b1, b2, ytuple)
+    # P, G = merge_cluster_tol2(res, A, b1, num_mode, ep)
+    # sq_sum = 0
+    # posum = 0
+    # for j in range(0,num_mode):
+    #     A1 = matrowex(A, P[j])
+    #     B1 = matrowex(b1, P[j])
+    #     clf = linear_model.LinearRegression(fit_intercept=False)
+    #     clf.fit(A1, B1)
+    #     sq_sum += np.square(clf.predict(A1)-B1).sum()
+    #     posum += len(P[j])
+    # print(sq_sum/posum)
+    # print(coeff1[0]/coeff1[0],coeff1[1]/coeff1[0],coeff1[2]/coeff1[0])
+    # print(coeff1[0]/coeff1[1],coeff1[1]/coeff1[1],coeff1[2]/coeff1[1])
+    # print(coeff2[0]/coeff2[0],coeff2[1]/coeff2[0],coeff2[2]/coeff2[0])
+    # print(coeff2[0]/coeff2[1],coeff2[1]/coeff2[1],coeff2[2]/coeff2[1])
+    # for i, temp_y in enumerate(y_list):
+    #     y0_list = temp_y.T[0]
+    #     y1_list = temp_y.T[1]
+    #     if i == 0:
+    #         plt.plot(y0_list,y1_list,c='b',label='Original')
+    #     else:
+    #         plt.plot(y0_list,y1_list,c='b')
+    # plt.xlabel('x1')
+    # plt.ylabel('x2')
+    # plt.legend()
+    # plt.show()
 
 if __name__ == "__main__":
     # y0 = [[-1,1],[1,4],[2,-3]]

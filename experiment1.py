@@ -14,7 +14,7 @@ import random
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))) # ADD the path of the parent dir
 from sklearn import linear_model
 from sklearn.linear_model import Ridge
-
+from sklearn.svm import SVR
 from scipy.linalg import pinv, pinv2
 from scipy.integrate import odeint, solve_ivp
 # from dynamics import dydx3, fvdp2_1, fvdp3_1, fvdp3_2, fvdp3_3, \
@@ -28,7 +28,7 @@ from dynamics import ode_test
 from infer_multi_ch import simulation_ode, infer_dynamic, parti, infer_dynamic_modes_ex, norm, reclass, dropclass, \
         infer_dynamic_modes_exx, dist, diff_method, diff_method1, infer_dynamic_modes_ex_dbs, infer_dynamic_modes_pie, \
         infer_dynamic_modes_new, diff_method_new1, diff_method_new, simulation_ode_2, simulation_ode_3, diff_method_backandfor, \
-        infer_model, test_model, segment_and_fit, kmeans_cluster, dbscan_cluster, diff
+        infer_model, test_model, segment_and_fit, kmeans_cluster, dbscan_cluster, diff, merge_cluster_tol2, matrowex, disc
 
 # from infer_multi_ch import infer_model, test_model, simulation_ode_2, simulation_ode_3
 import infer_multi_ch
@@ -322,31 +322,55 @@ def case1():
 def case2():
     mode2 = get_mode2(0)
     event1 = get_event1(0)
-    y0 = [[99.5,80],[97.5,100]]
-    stepsize = 0.01
+    y0 = [[99.5, 80], [97.5, 100]]
+    y1 = [[100.5, 90], [96, 80]]
+    stepsize = 0.1
     maxorder = 1
     boundary_order = 1
     num_mode = 2
-    T = 5
+    T = 50
     ep = 0.01
-    method='tolmerge'
-    t_list, y_list = simulation_ode_2(mode2, event1, y0, T, stepsize)
+    mergeep = 0.01
+    method='piecelinear'
+    t_list, y_list = simulation_ode_2(mode2, event1, y0, T, stepsize,noise=0)
     A, b, Y = diff_method_new(t_list, y_list, maxorder, stepsize)
-    np.savetxt("A.txt",A,fmt='%8f')
-    np.savetxt("b.txt",b,fmt='%8f')
-    P,G,C = infer_model(
-                t_list, y_list, stepsize=stepsize, maxorder=maxorder, boundary_order=boundary_order,
-                num_mode=num_mode, modelist=mode2, event=event1, ep=ep, method=method, verbose=False)
-    y1 = [[96, 80], [100.5, 80]]
-    t_list, y_list = simulation_ode_2(mode2, event1, y1, T, stepsize)
-    YT, FT = diff(t_list, y_list, dynamics.mode2t)
-    np.savetxt("YT.txt",YT,fmt='%8f')
-    np.savetxt("FT.txt",FT,fmt='%8f')
-    d_avg = test_model(
-                P, G, C, num_mode, y_list , mode2, event1, maxorder, boundary_order)
+    np.savetxt("A1.txt",A,fmt='%8f')
+    np.savetxt("b1.txt",b,fmt='%8f')
+    # P,G,C = infer_model(
+    #             t_list, y_list, stepsize=stepsize, maxorder=maxorder, boundary_order=boundary_order,
+    #             num_mode=num_mode, modelist=mode2, event=event1, ep=ep, mergeep = mergeep ,method=method, verbose=False)
+    # y1 = [[96, 80], [100.5, 80]]
+    t_test_list, y_test_list = simulation_ode_2(mode2, event1, y1, T, stepsize)
+    # Y1, Y2 = disc(t_list+t_test_list,y_list+y_test_list)
+    # np.savetxt("Y1_1.txt",Y1,fmt='%8f')
+    # np.savetxt("Y2_1.txt",Y2,fmt='%8f')
+    YT, FT = diff(t_list+t_test_list, y_list+y_test_list, dynamics.mode2t)
+    np.savetxt("YT1.txt",YT,fmt='%8f')
+    np.savetxt("FT1.txt",FT,fmt='%8f')
+    # d_avg = test_model(
+                # P, G, C, num_mode, y_list , mode2, event1, maxorder, boundary_order)
     #np.set_printoptions(threshold=np.inf)
-    print(d_avg)
-
+    # print(d_avg)
+    # print(G)
+    # print(C)
+    # A, b1, b2, Y, ytuple = diff_method_backandfor(t_list, y_list, maxorder, stepsize)
+    # res, drop, clfs = segment_and_fit(A, b1, b2, ytuple)
+    # P, G = merge_cluster_tol2(res, A, b1, num_mode, ep)
+    # sq_sum = 0
+    # posum = 0
+    # for j in range(0,1):
+    #     A1 = matrowex(A, P[j])
+    #     B1 = matrowex(b1, P[j])
+    #     clf = linear_model.LinearRegression(fit_intercept=False)
+    #     clf.fit(A1, B1)
+    #     sq_sum += np.square(clf.predict(A1)-B1).sum()
+    #     posum += len(P[j])
+    # print(sq_sum)
+    # A1 = matrowex(A,P[1])
+    # B1 = matrowex(b1,P[1]).getA()[:,0]
+    # clf = SVR(kernel='linear',epsilon = 0.00001)
+    # clf.fit(A1, B1)
+    # print(np.square(clf.predict(A1)-B1).sum())
 
 if __name__ == "__main__":
     # y0 = [[99.5,80],[97.5,100]]

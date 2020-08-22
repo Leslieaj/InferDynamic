@@ -26,7 +26,8 @@ from scipy.integrate import odeint, solve_ivp
 #     modetr_1, modetr_2, modetr_3, eventtr_1, eventtr_2
 from infer_multi_ch import simulation_ode, infer_dynamic, parti, infer_dynamic_modes_ex, norm, reclass, dropclass, \
     infer_dynamic_modes_exx, dist, diff_method, diff_method1, infer_dynamic_modes_ex_dbs, infer_dynamic_modes_pie, \
-    infer_dynamic_modes_new, diff_method_new1, diff_method_new, simulation_ode_2, simulation_ode_3, diff_method_backandfor
+    infer_dynamic_modes_new, diff_method_new1, diff_method_new, simulation_ode_2, simulation_ode_3, diff_method_backandfor, \
+        diff
 
 import infer_multi_ch
 from generator import generate_complete_polynomial
@@ -95,33 +96,37 @@ cases = {
         'params': 0,
         'y0': [[0,1],[0,2],[0,3],[0,4],[0,5]],
         'y0_test': [[0,1.5], [0,4.5]],
-        't_tuple': 20,
+        't_tuple': 10,
         'stepsize': 0.01,
         'ep': 0.01,
+        'mergeep': 0.0005
     },
     1: {
         'params': 0,
         'y0': [[0,2],[0,3],[0,4]],
         'y0_test': [[0,1], [0,5]],
-        't_tuple': 20,
+        't_tuple': 10,
         'stepsize': 0.01,
         'ep': 0.01,
+        'mergeep': 0.001
     },
     2: {
         'params': 0,
         'y0': [[0,2],[0,3],[0,4]],
         'y0_test': [[0,1], [0,5]],
-        't_tuple': 20,
-        'stepsize': 0.1,
+        't_tuple': 10,
+        'stepsize': 0.05,
         'ep': 0.01,
+        'mergeep': 0.01
     },
     3: {
         'params': 0,
-        'y0': [[0,-2],[0,-1],[0,2],[0,3],[0,4]],
-        'y0_test': [[0,1], [0,5]],
-        't_tuple': 5,
+        'y0': [[0,-2],[0,2]],
+        'y0_test': [[0,1], [0,5],[0,-1]],
+        't_tuple': 15,
         'stepsize': 0.01,
         'ep': 0.01,
+        'mergeep': 0.01
     }
 }
 
@@ -205,11 +210,24 @@ def case(y0,t_tuple,stepsize,maxorder,modelist,event,ep,method):
 
     return sum/num
 
+def case1():
+    y0=[[0,2],[0,3],[0,4]]
+    y1=[[0,1], [0,5]]
+    T=10
+    stepsize=0.01
+    ep=0.01,
+    mergeep=0.01
+    maxorder = 3
+    boundary_order = 2
+    num_mode = 2
+    t_list, y_list = simulation_ode_2(get_mode(0), get_event(0), y0, T, stepsize)
+    t_test_list, y_test_list = simulation_ode_2(get_mode(0), get_event(0), y1, T, stepsize)
+    A, b, Y = diff_method_new(t_list, y_list, maxorder, stepsize)
+    np.savetxt("A3.txt",A,fmt='%8f')
+    np.savetxt("b3.txt",b,fmt='%8f')
+    YT, FT = diff(t_list+t_test_list, y_list+y_test_list, dynamics.modeex3)
+    np.savetxt("YT3.txt",YT,fmt='%8f')
+    np.savetxt("FT3.txt",FT,fmt='%8f')
 
 if __name__ == "__main__":
-    y0 = [[0,1],[0,2],[0,3],[0,4],[0,5]]
-    t_tuple = [(0,20),(0,20),(0,20),(0,20),(0,20)]
-    stepsize = 0.01
-    maxorder = 3
-    a = case(y0,t_tuple,stepsize,maxorder,mode,event1,0.01,"new")
-    print(a)
+    case1()

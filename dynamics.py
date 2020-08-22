@@ -309,3 +309,19 @@ def modetrt(t,y):
     else:
         dydt = [-7 , -1*y0]
     return dydt
+
+def modeex3(t,y):
+    y0, y1 = y
+    if y1 - 0.2*y0**2>0:
+        dydt = [0.1*y0**2 + 0.04*y1**3, -0.9*y0]
+    else:
+        dydt = [-0.1*y0**2 + 0.06*y1**3, -0.7*y0]
+    return dydt
+
+def modeex4(t,y):
+    y0, y1, y2, y3 = y
+    if y2 >0:
+        dydt = [-y1*1,y0-5,y3,-0.1*(y2 + 5)**2]
+    else:
+        dydt = [-y1*1,y0-5,y3,0.1*(y0 - y2)**2]
+    return dydt

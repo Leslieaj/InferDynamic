@@ -10,3 +10,7 @@ Infer a dynamic system
 #### Installation
 
 - Just download.
+
+#### Usage
+
+- Run run_tests.py

@@ -19,7 +19,7 @@ from libsvm.svmutil import *
 
 def case1():
     y0 = [[0,3]]
-    t_tuple = (0,20)
+    t_tuple = 20
     stepsize = 0.01
     order = 2
 
@@ -134,7 +134,7 @@ def case1():
 
 def case2():
     y0 = [[0.1,0],[0.4,0],[0.33,0],[2.3,0]]
-    t_tuple = (0,4)
+    t_tuple = 4
     stepsize = 0.01
     order = 2
 
@@ -205,7 +205,7 @@ def case2():
 
 def case3():
     y0 = [[1,0],[0.4,0],[0.5,0],[2.3,0]]
-    t_tuple = (0,3)
+    t_tuple = 3
     stepsize = 0.005
     order = 2
 

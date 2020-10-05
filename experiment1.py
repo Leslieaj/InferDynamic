@@ -120,14 +120,14 @@ cases = {
         'y0': [[99.5, 80], [97.5,100]],
         'y0_test': [[100.5, 90], [96, 80]],
         't_tuple': 50,
-        'stepsize': 0.5,
+        'stepsize': 0.2,
     },
     3: {
         'params': 0,
-        'y0': [[99.5, 80], [97.5, 100], [100.5, 90]],
-        'y0_test': [[96, 80], [99.5, 100]],
+        'y0': [[99.5, 80], [97.5, 100], [99.5, 100]],
+        'y0_test': [[96, 80], [100.5, 90]],
         't_tuple': 50,
-        'stepsize': 0.5,
+        'stepsize': 0.2,
     },
     4: {
         'params': 1,
@@ -334,8 +334,8 @@ def case2():
     method='piecelinear'
     t_list, y_list = simulation_ode_2(mode2, event1, y0, T, stepsize,noise=0)
     A, b, Y = diff_method_new(t_list, y_list, maxorder, stepsize)
-    np.savetxt("A1.txt",A,fmt='%8f')
-    np.savetxt("b1.txt",b,fmt='%8f')
+    np.savetxt("data/A1.txt",A,fmt='%8f')
+    np.savetxt("data/b1.txt",b,fmt='%8f')
     # P,G,C = infer_model(
     #             t_list, y_list, stepsize=stepsize, maxorder=maxorder, boundary_order=boundary_order,
     #             num_mode=num_mode, modelist=mode2, event=event1, ep=ep, mergeep = mergeep ,method=method, verbose=False)
@@ -345,8 +345,8 @@ def case2():
     # np.savetxt("Y1_1.txt",Y1,fmt='%8f')
     # np.savetxt("Y2_1.txt",Y2,fmt='%8f')
     YT, FT = diff(t_list+t_test_list, y_list+y_test_list, dynamics.mode2t)
-    np.savetxt("YT1.txt",YT,fmt='%8f')
-    np.savetxt("FT1.txt",FT,fmt='%8f')
+    np.savetxt("data/YT1.txt",YT,fmt='%8f')
+    np.savetxt("data/FT1.txt",FT,fmt='%8f')
     # d_avg = test_model(
                 # P, G, C, num_mode, y_list , mode2, event1, maxorder, boundary_order)
     #np.set_printoptions(threshold=np.inf)

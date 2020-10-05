@@ -12,7 +12,7 @@ from draw import draw, draw2D, draw3D
 
 def case1():
     y0 = [[a,b] for a in np.arange(-0.5,0.5+0.25,0.25) for b in np.arange(-2.5,-1.5+0.25,0.25)]
-    t_tuple = (0,1)
+    t_tuple = 1
     stepsize = 0.001
     order = 2
 
@@ -32,7 +32,7 @@ def case1():
 
 def case2():
     y0 = [[a,b] for a in np.arange(-0.5,0.5+0.25,0.25) for b in np.arange(-2.5,-1.5+0.25,0.25)]
-    t_tuple = (0,1)
+    t_tuple = 1
     stepsize = 0.001
     order = 2
 
@@ -65,7 +65,7 @@ def case2():
 
 def case3():
     y0 = [[-8,7,27]]
-    t_tuple = (0,100)
+    t_tuple = 100
     stepsize = 0.001
     order = 2
 
@@ -86,7 +86,7 @@ def case3():
 
 def case4():
     y0 = [[0,3],[0,5]]
-    t_tuple = (0,20)
+    t_tuple = 20
     stepsize = 0.01
     order = 2
 
@@ -123,7 +123,7 @@ def case4():
 
 def case5():
     y0 = [[1,0],[0.4,0],[0.5,0],[1.4,0],[2.6,0],[6.0,0]]
-    t_tuple = (0,3)
+    t_tuple = 3
     stepsize = 0.001
     order = 4
 
@@ -155,7 +155,7 @@ def case5():
 
 def case6():
     y0 = [[0.1,0],[0.4,0],[1.3,0],[1.7,0],[2.3,0],[3.6,0]]
-    t_tuple = (0,4)
+    t_tuple = 4
     stepsize = 0.001
     order = 4
     

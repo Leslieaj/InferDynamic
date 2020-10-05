@@ -147,7 +147,7 @@ cases = {
         'y0': [[-1,1],[1,4],[2,-3],[-5,1],[5,-3]],
         'y0_test': [[3,-1], [-1,3]],
         't_tuple': 5,
-        'stepsize': 0.005,
+        'stepsize': 0.01,
         'ep': 0.01,
         'mergeep': 0.01
     },
@@ -321,7 +321,7 @@ def case1():
     maxorder = 2
     boundary_order = 1
     num_mode = 3
-    ep = 0.001
+    ep = 0.005
     mergeep = 0.01
     method = 'piecelinear'
     t_list, y_list = simulation_ode_3(modetr, event, labeltest, y0, T, stepsize)
@@ -344,20 +344,20 @@ def case2():
     modetr = get_modetr(0)
     event = get_event(0)
     labeltest = get_labeltest(0)
-    y0 = [[-1,1],[1,4],[2,-3],[-5,1],[5,-3]]
+    y0 = [[-1,1],[1,4],[2,-3]]
     y1 = [[3,-1],[-1,3]]
     T = 5
     stepsize = 0.002
     maxorder = 2
     boundary_order = 1
     num_mode = 3
-    ep = 0.01
+    ep = 0.0005
     mergeep = 0.01
     method = 'piecelinear'
     t_list, y_list = simulation_ode_3(modetr, event, labeltest, y0, T, stepsize)
     # A, b, Y = diff_method_new(t_list, y_list, maxorder, stepsize)
-    # np.savetxt("A5.txt",A,fmt='%8f')
-    # np.savetxt("b5.txt",b,fmt='%8f')
+    # np.savetxt("data/A5.txt",A,fmt='%8f')
+    # np.savetxt("data/b5.txt",b,fmt='%8f')
     P, G, (coeff1, coeff2, [first,second,third]) = infer_model(
                 t_list, y_list, stepsize=stepsize, maxorder=maxorder, boundary_order=boundary_order,
                 num_mode=num_mode, modelist=modetr, event=event, ep=ep, mergeep = mergeep,method=method, verbose=False,
@@ -365,10 +365,10 @@ def case2():
     boundary = (coeff1, coeff2, [first,second,third])
     t_test_list, y_test_list = simulation_ode_3(modetr, event, labeltest, y1, T, stepsize)
     # YT, FT = diff(t_list+t_test_list, y_list+y_test_list, dynamics.modetrt)
-    # np.savetxt("YT5.txt",YT,fmt='%8f')
-    # np.savetxt("FT5.txt",FT,fmt='%8f')
+    # np.savetxt("data/YT5.txt",YT,fmt='%8f')
+    # np.savetxt("data/FT5.txt",FT,fmt='%8f')
     d_avg = test_model(
-                P, G, boundary, num_mode, y_list + y_test_list, modetr, event, maxorder, boundary_order,
+                P, G, boundary, num_mode, y_list, modetr, event, maxorder, boundary_order,
                 labeltest=labeltest)
     # print(G)
     print(d_avg)

@@ -56,7 +56,7 @@ def case1():
     # y0 = [[1,3],[-1,-2],[-3,-5],[2,4]]
     # t_tuple = [(0,20),(0,10),(0,15),(0,15)]
     y0 = [[1,3],[-1,-2]]
-    t_tuple = [(0,20),(0,10)]
+    t_tuple = 20
     stepsize = 0.01
     order = 2
     maxorder = 2
@@ -170,7 +170,7 @@ def case1():
 
 def case2():
     y0 = [[0,0],[1,0],[0.3,0],[2.7,0]]
-    t_tuple = [(0,2.5),(0,2),(0,2),(0,1)]
+    t_tuple = 2
     stepsize = 0.001
     order = 2
     maxorder = 2
@@ -202,7 +202,7 @@ def case2():
 
 def case3():
     y0 = [[5,5,5],[2,2,2]]
-    t_tuple = [(0,5),(0,5)]
+    t_tuple = 5
     stepsize = 0.01
     maxorder = 2
     t_list, y_list = simulation_ode(fvdp3_3, y0, t_tuple, stepsize, eps=0)
@@ -253,7 +253,7 @@ def case3():
 
 def case4():
     y0 = [[5,5,5],[2,2,2]]
-    t_tuple = [(0,5),(0,5)]
+    t_tuple = 5
     stepsize = 0.01
     maxorder = 2
     t_list, y_list = simulation_ode(fvdp3_3, y0, t_tuple, stepsize, eps=0)
@@ -305,7 +305,7 @@ def case4():
 
 def case5():
     y0 = [[5,5,5], [2,2,2]]
-    t_tuple = [(0,5),(0,5)]
+    t_tuple = 5
     stepsize = 0.01
     maxorder = 2
     t_list, y_list = simulation_ode(fvdp3_3, y0, t_tuple, stepsize, eps=0)
@@ -333,7 +333,7 @@ def case5():
 
 def case6():
     y0 = [[0,1],[0,2],[0,3],[0,4],[0,5]]
-    t_tuple = [(0,20),(0,20),(0,20),(0,20),(0,20)]
+    t_tuple = 20
     stepsize = 0.01
     maxorder = 3
     # start = time.time()

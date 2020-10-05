@@ -133,14 +133,14 @@ def run_test(id, eid, case_id, methods, verbose=False):
 
         # print('Method: %s, d_avg: %.6f, infer_time: %.3f' % (method, d_avg[method], infer_time[method]))
 
-    best_method, best_avg = None, 1.0
-    for method, avg in d_avg.items():
-        total_d_avg[method] += avg
-        if avg < best_avg:
-            best_method, best_avg = method, avg
-    for method, t in infer_time.items():
-        total_time[method] += t
-    total_win[best_method] += 1
+    # best_method, best_avg = None, 1.0
+    # for method, avg in d_avg.items():
+    #     total_d_avg[method] += avg
+    #     if avg < best_avg:
+    #         best_method, best_avg = method, avg
+    # for method, t in infer_time.items():
+    #     total_time[method] += t
+    # total_win[best_method] += 1
 
     print('%d & $%s$ & %d & %.3f & %d & %.3f & %.5f & %.5f & %.5f& & %.1f & %.1f & %.1f& & \\\\' % (
         id, eid, len(y0), stepsize, T, mergeep, d_avg['dbscan'], d_avg['tolmerge'], d_avg['piecelinear'],
@@ -244,27 +244,27 @@ def compare(id, eid, case_id, verbose=False):
         raise NotImplementedError
     end = time.time()
     A, b, Y = diff_method_new(t_list, y_list, maxorder, stepsize)
-    np.savetxt("CA"+str(id)+".txt",A,fmt='%8f')
-    np.savetxt("Cb"+str(id)+".txt",b,fmt='%8f')
+    np.savetxt("data/CA"+str(id)+".txt",A,fmt='%8f')
+    np.savetxt("data/Cb"+str(id)+".txt",b,fmt='%8f')
     YT, FT = diff(t_list+test_t_list, y_list+test_y_list, dy)
-    np.savetxt("CYT"+str(id)+".txt",YT,fmt='%8f')
-    np.savetxt("CFT"+str(id)+".txt",FT,fmt='%8f')
+    np.savetxt("data/CYT"+str(id)+".txt",YT,fmt='%8f')
+    np.savetxt("data/CFT"+str(id)+".txt",FT,fmt='%8f')
 
 
 for i in range(4):
-#     run_test(i+1, 'A', i, methods=['dbscan','tolmerge', 'piecelinear'])
+    run_test(i+1, 'A', i, methods=['dbscan','tolmerge', 'piecelinear'])
     compare(i+1, 'A', i)
 for i in range(4):
-#     run_test(i+5, 'B', i, methods=['dbscan', 'tolmerge', 'piecelinear'])
+    run_test(i+5, 'B', i, methods=['dbscan', 'tolmerge', 'piecelinear'])
     compare(i+5, 'B', i)
 for i in range(4):
-#     run_test(i+9, 'C', i, methods=['dbscan', 'tolmerge', 'piecelinear'])
+    run_test(i+9, 'C', i, methods=['dbscan', 'tolmerge', 'piecelinear'])
     compare(i+9, 'C', i)
 for i in range(4):
-    # run_test(i+13, 'D', i, methods=['dbscan', 'tolmerge', 'piecelinear'])
+    run_test(i+13, 'D', i, methods=['dbscan', 'tolmerge', 'piecelinear'])
     compare(i+13, 'D', i)
 for i in range(4):
-#     run_test(i+17, 'E', i, methods=['dbscan', 'tolmerge', 'piecelinear'])
+    run_test(i+17, 'E', i, methods=['dbscan', 'tolmerge', 'piecelinear'])
     compare(i+17, 'E', i)
 # print('total win:', total_win)
 # print('total d_avg:', total_d_avg)

@@ -231,11 +231,11 @@ def case1():
     t_list, y_list = simulation_ode_2(mmode, event1, y0, T, stepsize)
     t_test_list, y_test_list = simulation_ode_2(mmode, event1, y0_test, T, stepsize)
     A, b, Y = diff_method_new(t_list, y_list, maxorder, stepsize)
-    np.savetxt("A4.txt",A,fmt='%8f')
-    np.savetxt("b4.txt",b,fmt='%8f')
+    np.savetxt("data/A4.txt",A,fmt='%8f')
+    np.savetxt("data/b4.txt",b,fmt='%8f')
     YT, FT = diff(t_list+t_test_list, y_list+y_test_list, dynamics.modeex4)
-    np.savetxt("YT4.txt",YT,fmt='%8f')
-    np.savetxt("FT4.txt",FT,fmt='%8f')
+    np.savetxt("data/YT4.txt",YT,fmt='%8f')
+    np.savetxt("data/FT4.txt",FT,fmt='%8f')
     # P, G, boundary = infer_model(
     #             t_list, y_list, stepsize=stepsize, maxorder=maxorder, boundary_order=boundary_order,
     #             num_mode=num_mode, modelist=mmode, event=event1, ep=ep, method=method, verbose=False)

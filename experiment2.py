@@ -126,8 +126,8 @@ cases = {
         'params': 0,
         'y0': [[5,5,5], [2,2,2], [3,3,3], [2,2,-2], [1,0,1]],
         'y0_test': [[4,4,4], [3,-2,2]],
-        't_tuple': 3,
-        'stepsize': 0.01,
+        't_tuple': 5,
+        'stepsize': 0.004,
         'ep': 0.01,
         'mergeep':0.4
     }
@@ -253,8 +253,8 @@ def case2():
 
     t_list, y_list = simulation_ode_2(get_fvdp3(0), get_event1(0), y0, T, stepsize)
     A, b, Y = diff_method_new(t_list, y_list, maxorder, stepsize)
-    np.savetxt("A2.txt",A,fmt='%8f')
-    np.savetxt("b2.txt",b,fmt='%8f')
+    np.savetxt("data/A2.txt",A,fmt='%8f')
+    np.savetxt("data/b2.txt",b,fmt='%8f')
     # print(y_list)
 
     # P,G,C = infer_model(
@@ -264,10 +264,10 @@ def case2():
     y1 = [[3,3,3], [4,4,4]]
     t_test_list, y_test_list = simulation_ode_2(get_fvdp3(0), get_event1(0), y0, T, stepsize)
     YT, FT = diff(t_list+t_test_list, y_list+y_test_list, dynamics.fvdp3_3)
-    # np.savetxt("YT"+str(n)+".txt",YT,fmt='%8f')
-    # np.savetxt("FT"+str(n)+".txt",FT,fmt='%8f')
-    np.savetxt("YT2.txt",YT,fmt='%8f')
-    np.savetxt("FT2.txt",FT,fmt='%8f')
+    # np.savetxt("data/YT"+str(n)+".txt",YT,fmt='%8f')
+    # np.savetxt("data/FT"+str(n)+".txt",FT,fmt='%8f')
+    np.savetxt("data/YT2.txt",YT,fmt='%8f')
+    np.savetxt("data/FT2.txt",FT,fmt='%8f')
     # d_avg = test_model(
     #             P, G, C, num_mode, y_list + y_test_list, fvdp3, event1, maxorder, boundary_order)
     # print(d_avg)

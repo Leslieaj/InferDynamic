@@ -13,7 +13,7 @@ from mpl_toolkits import mplot3d
 
 def case1():
     y0 = [[5],[1],[2],[3],[0],[-1],[-2]]
-    t_tuple = (0,4)
+    t_tuple = 4
     stepsize = 0.01
     order = 3
     start = time.time()
@@ -32,7 +32,7 @@ def case1():
 
 def case2():
     y0 = [[20]]
-    t_tuple = (0,4)
+    t_tuple = 4
     stepsize = 0.001
     order = 8
     start = time.time()
@@ -55,7 +55,7 @@ def case2():
 
 def case3():
     y0 = [[5,-3],[2,0],[-2,3]]
-    t_tuple = (0,10)
+    t_tuple = 10
     stepsize = 0.01
     order = 3
     start = time.time()

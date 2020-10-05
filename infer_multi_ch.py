@@ -20,7 +20,7 @@ from libsvm.svmutil import *
 
 
 
-def simulation_ode(ode_func, y0, t_tuple, stepsize, noise_type=1, eps=0, solve_method='RK45'):
+def simulation_ode(ode_func, y0, T, stepsize, noise_type=1, eps=0, solve_method='RK45'):
     """ Given a ODE function, some initial state, stepsize, then return the points.
 
         Use RK45 method for solving ODE.
@@ -42,8 +42,8 @@ def simulation_ode(ode_func, y0, t_tuple, stepsize, noise_type=1, eps=0, solve_m
     y_list = []
 
     for k in range(0,len(y0)):
-        t_start = t_tuple[k][0]
-        t_end = t_tuple[k][1]
+        t_start = 0
+        t_end = T
         num = round((t_end - t_start)/stepsize + 1)
         t_points = np.linspace(t_start, t_end, num)
         y_object = solve_ivp(ode_func, (t_start, t_end + 1.1*stepsize), y0[k], t_eval = t_points, method=solve_method, rtol=1e-7, atol=1e-9, max_step = stepsize/100)
@@ -802,6 +802,52 @@ def diff_method_new(t_list, y_list, order, stepsize):
 
     return final_A_mat, final_b_mat, final_y_mat
 
+def diff_method_new_6(t_list, y_list, order, stepsize):
+    """Using multi-step difference method (BDF) to calculate the
+    coefficient matrix.
+
+    """
+    final_A_mat = None
+    final_b_mat = None
+    final_y_mat = None
+    
+    L_y = y_list[0].shape[1]
+    gene = generate_complete_polynomial(L_y,order)
+    L_p = gene.shape[0]
+
+    for k in range(0,len(y_list)):
+        t_points = t_list[k]
+        y_points = y_list[k]
+        L_t = len(y_points)
+        D = L_t - 6    #order6
+        
+        A_matrix = np.zeros((D, L_p), dtype=np.double)
+        b_matrix = np.zeros((D, L_y),  dtype=np.double)
+        y_matrix = np.zeros((D, L_y),  dtype=np.double)
+        coef_matrix = np.ones((L_t, L_p), dtype=np.double)
+        for i in range(0,L_t):
+            for j in range(0,L_p):
+                for l in range(0,L_y):
+                   coef_matrix[i][j] = coef_matrix[i][j] * (y_points[i][l] ** gene[j][l])
+
+        for i in range(0, D):
+                # forward
+            A_matrix[i] = coef_matrix[i+6]
+            b_matrix[i] = (147 * y_points[i+6] - 360 * y_points[i+5] + 450 * y_points[i+4] -
+                           400 * y_points[i+3] + 225 * y_points[i+2] - 72 * y_points[i+1] + 10 * y_points[i]) / (60 * stepsize)
+            y_matrix[i] = y_points[i+6]
+        if k == 0:
+            final_A_mat = A_matrix
+            final_b_mat = b_matrix
+            final_y_mat = y_matrix
+
+        else :
+            final_A_mat = np.r_[final_A_mat,A_matrix]
+            final_b_mat = np.r_[final_b_mat,b_matrix]
+            final_y_mat = np.r_[final_y_mat,y_matrix]
+
+    return final_A_mat, final_b_mat, final_y_mat
+
 
 def diff(t_list, y_list, f):
     final_y_mat = None
@@ -1005,11 +1051,11 @@ def comparecom(A,B):
 def compare1(A,B,ep):
     C = A - B
     r = 1
-    for j in range(0,C.shape[1]):
+    for i in range(0,C.shape[0]):
         c = 0
-        for i in range(0,C.shape[0]):
+        for j in range(0,C.shape[1]):
             c += C[i,j]**2
-        if c/C.shape[0]>ep:
+        if c>ep:
             r = 0
     return r
 
@@ -1297,15 +1343,17 @@ def dropclass1(P,G,D,A,b,Y,ep,stepsize):
                             200 * Y[i+3] - 75 * Y[i+4] + 12 * Y[i+5])/ (60 * stepsize)
             back = np.mat(back)
             # print(back.shape)
+            Ep = []
             for j in range(0,len(G)):
                 g = G[j]
                 der = np.matmul(co,g.T)
                 # print(der.shape)
-                if np.square(der-forw).sum() <ep or np.square(der-back).sum():
-                    P[j].append(i)
-                    D.remove(i)
-                    break
-
+                Ep.append(min(np.square(der-forw).sum(),np.square(der-back).sum()))
+                
+            label = Ep.index(min(Ep)) 
+            if Ep[label]<ep:
+                P[label].append(i)
+                D.remove(i)
     return P,D
 
 def dropclass2(P,G,D,A,b1,b2,stepsize):
@@ -2260,11 +2308,11 @@ def infer_model(t_list, y_list, stepsize, maxorder, boundary_order, num_mode, mo
 
         # Inference
         P, G, D = infer_dynamic_modes_new1(t_list, y_list, stepsize, maxorder, ep)
-        # if len(P)>num_mode:
-        #     P, G = merge_cluster_tol2(P, A, b, num_mode,ep)
-        P, G = reclass(A, b, P, ep)
+        if len(P)>num_mode:
+            P, G = merge_cluster_tol2(P, A, b, num_mode,ep)
+        # P, G = reclass(A, b, P, ep)
         # print(len(P))
-        P, _ = dropclass(P, G, D, A, b, Y, ep, stepsize)
+        P, _ = dropclass1(P, G, D, A, b, Y, ep, stepsize)
 
     elif method == "kmeans":
         # Apply Linear Multistep Method

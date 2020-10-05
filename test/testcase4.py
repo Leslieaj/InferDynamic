@@ -31,7 +31,7 @@ from libsvm.svmutil import *
 
 def case1():
     y0 = [[1,7]]
-    t_tuple = [(0,25)]
+    t_tuple = 25
     stepsize = 0.01
     order = 2
     maxorder = 4
@@ -89,7 +89,7 @@ def case2():
     # y0 = [[1,3],[-1,-2],[-3,-5],[2,4],[-2,3],[-4,5],[4,7],[-2,-10],[5,8]]
     # t_tuple = [(0,2),(0,3),(0,4),(0,5),(0,1),(0,1),(0,5),(0,6),(0,6)]
     y0 = [[1,3]]
-    t_tuple = [(0,2)]
+    t_tuple = 2
     stepsize = 0.01
     order = 2
     maxorder = 4
@@ -109,7 +109,7 @@ def case2():
 
 def case3():
     y0 = [[9]]
-    t_tuple = [(0,3)]
+    t_tuple = 3
     stepsize = 0.01
     order = 2
     t_list, y_list = simulation_ode(dydx3, y0, t_tuple, stepsize, eps=0)
@@ -159,7 +159,7 @@ def case4():
 
 def case5():
     y0 = [[0,0],[1,0]]
-    t_tuple = [(0,2.5),(0,2)]
+    t_tuple = 2
     stepsize = 0.01
     order = 2
     maxorder = 3
@@ -211,7 +211,7 @@ def case5():
 
 def case6():
     y0 = [[1,7]]
-    t_tuple = [(0,30)]
+    t_tuple = 30
     stepsize = 0.001
     order = 2
     maxorder = 4
@@ -262,7 +262,7 @@ def case6():
 
 def case7():
     y0 = [[0,0],[1,0],[0.3,0],[2.7,0]]
-    t_tuple = [(0,2.5),(0,2),(0,2),(0,1)]
+    t_tuple = 2
     stepsize = 0.01
     order = 2
     maxorder = 4
@@ -311,7 +311,7 @@ def case8():
 
 
     y0 = [[0,0],[1,0],[0.3,0]]
-    t_tuple = [(0,2.5),(0,2),(0,2)]
+    t_tuple = 2
     stepsize = 0.01
     order = 2
     maxorder = 4
@@ -337,7 +337,7 @@ def case8():
 
 def case9():
     y0 = [[0,0]]
-    t_tuple = [(0,7)]
+    t_tuple = 7
     stepsize = 0.001
     order = 2
     maxorder = 4
@@ -362,7 +362,7 @@ def case9():
 
 def case10():
     y0 = [[0,0],[1,0],[0.3,0],[2.7,0]]
-    t_tuple = [(0,2.5),(0,2),(0,2),(0,1)]
+    t_tuple = 2
     stepsize = 0.01
     order = 2
     maxorder = 3
@@ -400,7 +400,7 @@ def case10():
 
 def case11():
     y0 = [[1,7],[2,6]]
-    t_tuple = [(0,2),(0,2)]
+    t_tuple = 2
     stepsize = 0.01
     order = 2
     maxorder = 2

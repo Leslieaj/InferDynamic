@@ -27,7 +27,7 @@ from scipy.integrate import odeint, solve_ivp
 from infer_multi_ch import simulation_ode, infer_dynamic, parti, infer_dynamic_modes_ex, norm, reclass, dropclass, \
     infer_dynamic_modes_exx, dist, diff_method, diff_method1, infer_dynamic_modes_ex_dbs, infer_dynamic_modes_pie, \
     infer_dynamic_modes_new, diff_method_new1, diff_method_new, simulation_ode_2, simulation_ode_3, diff_method_backandfor, \
-        diff, infer_model, test_model
+        diff, infer_model, test_model, seg_droprow
 
 import infer_multi_ch
 from generator import generate_complete_polynomial
@@ -41,7 +41,7 @@ from pstats import Stats
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))) # ADD the path of the parent dir
 
 from draw import draw, draw2D, draw2D_dots, draw3D
-from infer_by_optimization import lambda_two_modes, get_coef, infer_optimization2, lambda_two_modes3, infer_optimization3, lambda_three_modes
+from infer_by_optimization import lambda_two_modes, get_coef, infer_optimization2, lambda_two_modes3, infer_optimization3, lambda_three_modes, infer_optimizationm
 # from libsvm.svm import svm_problem, svm_parameter
 # from libsvm.svmutil import svm_train, svm_predict
 from libsvm.svmutil import *

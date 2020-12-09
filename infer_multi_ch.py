@@ -18,6 +18,8 @@ from sklearn import linear_model
 from sklearn.linear_model import Ridge
 from libsvm.svmutil import *
 
+import sys   
+sys.setrecursionlimit(1000000)
 
 
 def simulation_ode(ode_func, y0, T, stepsize, noise_type=1, eps=0, solve_method='RK45'):
@@ -1799,10 +1801,10 @@ def segment(A, b1, b2, ytuple):
 
     return res, drop
 
-def segment_and_fit(A, b1, b2, ytuple):
+def segment_and_fit(A, b1, b2, ytuple,ep = 0.01):
     # Segmentation
     res = []
-    ep = 0.01
+    # ep = 0.01
     for i in range(0,len(ytuple)):
         (l1,l2) = ytuple[i]
         cur_pos = l1

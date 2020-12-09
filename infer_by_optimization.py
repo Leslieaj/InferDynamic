@@ -3,6 +3,7 @@ import numpy as np
 import time
 from scipy.optimize import minimize, dual_annealing
 from generator import generate_complete_polynomial
+from infer_multi_ch import rel_diff
 
 def get_coef(t_points, y_list, order, stepsize):
     final_A_mat = None
@@ -192,16 +193,17 @@ def lambda_m_modes(A, b, m):
         for i in range(0, A_row):
             mode_sum = []
             for k in range(0,m):
-                mode_sum_k = np.sum(np.square(A[i].dot(xmatrix[k]) - b[i]))
+                # mode_sum_k = np.sum(np.square(A[i].dot(xmatrix[k]) - b[i]))
+                mode_sum_k = rel_diff(A[i].dot(xmatrix[k]),b[i])
                 mode_sum.append(mode_sum_k)
             sum = sum + min(mode_sum)
         return sum
     return m_modes
 
 def infer_optimizationm(x0, A, b, m):
-    return minimize(lambda_m_modes(A,b,m), x0, method='nelder-mead', options={'maxiter':100000, 'maxfev':100000, 'xatol': 1e-8, 'disp': True})
-    # return minimize(lambda_m_modes(A,b,m), x0, method='COBYLA', options={'maxiter':100000, 'tol': 1e-8, 'disp': True})
-    # return minimize(lambda_m_modes(A,b,m), x0, method='Powell', options={'maxiter':100000, 'xtol': 1e-8, 'ftol': 1e-5, 'disp': True})
+    return minimize(lambda_m_modes(A,b,m), x0, method='nelder-mead', options={'maxiter':10000, 'maxfev':100000, 'xatol': 1e-5, 'disp': True})
+    # return minimize(lambda_m_modes(A,b,m), x0, method='COBYLA', options={'maxiter':100000, 'tol': 1e-5, 'disp': True})
+    # return minimize(lambda_m_modes(A,b,m), x0, method='Powell', options={'maxiter':100000, 'xtol': 1e-5, 'ftol': 1e-5, 'disp': True})
     # return minimize(lambda_m_modes(A,b,m), x0, method='BFGS', jac=None, options={'maxiter':100000, 'gtol': 1e-05, 'disp': True})
     # return minimize(lambda_m_modes(A,b,m), x0, method='CG',options={'maxiter':100000})
     # return dual_annealing(lambda_m_modes(A,b,m), bounds=[(-5,5)]*(m*A.shape[1]*b.shape[1]), maxfun=10000000, maxiter=1000000)

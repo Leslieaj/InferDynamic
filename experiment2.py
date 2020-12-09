@@ -300,6 +300,7 @@ def case3():
 
     t_list, y_list = simulation_ode_2(get_fvdp3(0), get_event1(0), y0, T, stepsize)
     A, b, Y = diff_method_new(t_list, y_list, maxorder, stepsize)
+    print("start")
     x0 = np.zeros(num_mode*A.shape[1]*b.shape[1])
     re = infer_optimizationm(x0, A, b, num_mode)
     print(re.fun)

@@ -42,7 +42,7 @@ from pstats import Stats
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))) # ADD the path of the parent dir
 
 from draw import draw, draw2D, draw2D_dots, draw3D
-from infer_by_optimization import lambda_two_modes, get_coef, infer_optimization, lambda_two_modes3, infer_optimization3, lambda_three_modes
+from infer_by_optimization import lambda_two_modes, get_coef, infer_optimization2, lambda_two_modes3, infer_optimization3, lambda_three_modes
 # from libsvm.svm import svm_problem, svm_parameter
 # from libsvm.svmutil import svm_train, svm_predict
 from libsvm.svmutil import *

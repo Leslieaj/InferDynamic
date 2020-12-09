@@ -28,7 +28,7 @@ from dynamics import ode_test
 from infer_multi_ch import simulation_ode, infer_dynamic, parti, infer_dynamic_modes_ex, norm, reclass, dropclass, \
     infer_dynamic_modes_exx, dist, diff_method, diff_method1, infer_dynamic_modes_ex_dbs, infer_dynamic_modes_pie, \
     infer_dynamic_modes_new, diff_method_new1, diff_method_new, simulation_ode_2, simulation_ode_3, diff_method_backandfor, \
-        diff, infer_model, test_model, segment_and_fit, merge_cluster_tol2, matrowex
+        diff, infer_model, test_model, segment_and_fit, merge_cluster_tol2, matrowex, seg_droprow
 
 import infer_multi_ch
 from generator import generate_complete_polynomial
@@ -42,7 +42,7 @@ from pstats import Stats
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))) # ADD the path of the parent dir
 
 from draw import draw, draw2D, draw2D_dots, draw3D
-from infer_by_optimization import lambda_two_modes, get_coef, infer_optimization, lambda_two_modes3, infer_optimization3, lambda_three_modes
+from infer_by_optimization import lambda_two_modes, get_coef, infer_optimization2, lambda_two_modes3, infer_optimization3, lambda_three_modes, infer_optimizationm
 # from libsvm.svm import svm_problem, svm_parameter
 # from libsvm.svmutil import svm_train, svm_predict
 from libsvm.svmutil import *
@@ -286,5 +286,40 @@ def case2():
     # print(sq_sum/posum)
 
 
+def case3():
+    y0 = [[5,5,5], [2,2,2]]
+    stepsize = 0.01
+    maxorder = 2
+    boundary_order = 1
+    num_mode = 2
+    T = 5
+    ep = 0.01
+    mergeep = 0.01
+    method='merge'
+    
+
+    t_list, y_list = simulation_ode_2(get_fvdp3(0), get_event1(0), y0, T, stepsize)
+    A, b, Y = diff_method_new(t_list, y_list, maxorder, stepsize)
+    x0 = np.zeros(num_mode*A.shape[1]*b.shape[1])
+    re = infer_optimizationm(x0, A, b, num_mode)
+    print(re.fun)
+    print(re.success)
+    print(re.x)
+    A, b1, b2, Y, ytuple = diff_method_backandfor(t_list, y_list, maxorder, stepsize)
+    A, b1, b2 = seg_droprow(A,b1,b2,ep)
+    x0 = np.zeros(num_mode*A.shape[1]*b1.shape[1])
+    re = infer_optimizationm(x0, A, b1, num_mode)
+    print(re.fun)
+    print(re.success)
+    print(re.x)
+    # P,G,C = infer_model(
+    #             t_list, y_list, stepsize=stepsize, maxorder=maxorder, boundary_order=boundary_order,
+    #             num_mode=num_mode, modelist=fvdp3, event=event1, ep=ep, mergeep= mergeep, method=method, verbose=False)
+    
+    # y1 = [[3,3,3], [4,4,4]]
+    # t_test_list, y_test_list = simulation_ode_2(get_fvdp3(0), get_event1(0), y0, T, stepsize)
+    # YT, FT = diff(t_list+t_test_list, y_list+y_test_list, dynamics.fvdp3_3)
+
 if __name__ == "__main__":
-    case2()
+    # case2()
+    case3()

@@ -1836,6 +1836,14 @@ def segment_and_fit(A, b1, b2, ytuple):
 
     return res, drop, clfs
 
+def seg_droprow(A, b1, b2, ep):
+    rowlist = []
+    for i in range(A.shape[0]):
+        if rel_diff(b1[i],b2[i])<= ep:
+            rowlist.append(i)
+    return matrowex(A,rowlist), matrowex(b1,rowlist), matrowex(b2,rowlist)
+
+
 def kmeans_cluster(clfs, res, A, b1, num_mode):
     # Clustering
     num_coeff = clfs[0].coef_.shape[0] * clfs[0].coef_.shape[1]

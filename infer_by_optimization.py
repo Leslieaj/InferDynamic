@@ -201,7 +201,7 @@ def lambda_m_modes(A, b, m):
     return m_modes
 
 def infer_optimizationm(x0, A, b, m):
-    return minimize(lambda_m_modes(A,b,m), x0, method='nelder-mead', options={'maxiter':100000, 'maxfev':100000, 'xatol': 1e-5, 'disp': True})
+    return minimize(lambda_m_modes(A,b,m), x0, method='nelder-mead', options={'maxiter':100000, 'maxfev':100000, 'xatol': 1e-5, 'disp': False})
     # return minimize(lambda_m_modes(A,b,m), x0, method='COBYLA', options={'maxiter':100000, 'tol': 1e-5, 'disp': True})
     # return minimize(lambda_m_modes(A,b,m), x0, method='Powell', options={'maxiter':100000, 'xtol': 1e-5, 'ftol': 1e-5, 'disp': True})
     # return minimize(lambda_m_modes(A,b,m), x0, method='BFGS', jac=None, options={'maxiter':100000, 'gtol': 1e-05, 'disp': True})

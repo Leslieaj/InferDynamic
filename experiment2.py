@@ -307,7 +307,7 @@ def case3():
     print(re.success)
     print(re.x)
     A, b1, b2, Y, ytuple = diff_method_backandfor(t_list, y_list, maxorder, stepsize)
-    A, b1, b2 = seg_droprow(A,b1,b2,ep)
+    A, b1, b2, _ = seg_droprow(A,b1,b2,ep)
     x0 = np.zeros(num_mode*A.shape[1]*b1.shape[1])
     re = infer_optimizationm(x0, A, b1, num_mode)
     print(re.fun)

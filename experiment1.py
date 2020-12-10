@@ -339,6 +339,7 @@ def case2():
     # P,G,C = infer_model(
     #             t_list, y_list, stepsize=stepsize, maxorder=maxorder, boundary_order=boundary_order,
     #             num_mode=num_mode, modelist=mode2, event=event1, ep=ep, mergeep = mergeep ,method=method, verbose=False)
+    # print(type(G[0]))
     # y1 = [[96, 80], [100.5, 80]]
     # t_test_list, y_test_list = simulation_ode_2(mode2, event1, y1, T, stepsize)
     # Y1, Y2 = disc(t_list+t_test_list,y_list+y_test_list)
@@ -394,7 +395,7 @@ def case3():
     print(re.success)
     print(re.x)
     A, b1, b2, Y, ytuple = diff_method_backandfor(t_list, y_list, maxorder, stepsize)
-    A, b1, b2 = seg_droprow(A,b1,b2,ep)
+    A, b1, b2, _ = seg_droprow(A,b1,b2,ep)
     x0 = np.zeros(num_mode*A.shape[1]*b1.shape[1])
     re = infer_optimizationm(x0, A, b1, 2)
     print(re.fun)
@@ -411,5 +412,5 @@ if __name__ == "__main__":
     # a = case(y0,t_tuple,stepsize,maxorder,mode2,event1,0.01,"new")
     # print(a)
     #case1()
-    # case2()
-    case3()
+    case2()
+    # case3()

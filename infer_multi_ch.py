@@ -1840,10 +1840,13 @@ def segment_and_fit(A, b1, b2, ytuple,ep = 0.01):
 
 def seg_droprow(A, b1, b2, ep):
     rowlist = []
+    drop = []
     for i in range(A.shape[0]):
         if rel_diff(b1[i],b2[i])<= ep:
             rowlist.append(i)
-    return matrowex(A,rowlist), matrowex(b1,rowlist), matrowex(b2,rowlist)
+        else:
+            drop.append(i)
+    return matrowex(A,rowlist), matrowex(b1,rowlist), matrowex(b2,rowlist),drop
 
 
 def kmeans_cluster(clfs, res, A, b1, num_mode):

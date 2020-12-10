@@ -28,7 +28,7 @@ from dynamics import ode_test
 from infer_multi_ch import simulation_ode, infer_dynamic, parti, infer_dynamic_modes_ex, norm, reclass, dropclass, \
     infer_dynamic_modes_exx, dist, diff_method, diff_method1, infer_dynamic_modes_ex_dbs, infer_dynamic_modes_pie, \
     infer_dynamic_modes_new, diff_method_new1, diff_method_new, simulation_ode_2, simulation_ode_3, diff_method_backandfor, infer_model,\
-        diff, test_model, merge_cluster_tol2, diff_method_backandfor, matrowex, segment_and_fit, dropclass0
+    diff, test_model, merge_cluster_tol2, diff_method_backandfor, matrowex, segment_and_fit, dropclass0,svm_classify
 
 import infer_multi_ch
 from generator import generate_complete_polynomial
@@ -50,7 +50,7 @@ from libsvm.svmutil import *
 
 
 modetr_params = [
-    [0.5,0.7,1.0,1.46,1.85,0.1,-0.2,0.3,-0.4,0.5],
+    [1,3,-2,-4,0,0,0.2,0,-0.2,0.0],
 ]
 
 def get_modetr(param_id):
@@ -58,27 +58,27 @@ def get_modetr(param_id):
 
     def modetr_1(t,y):
         y00, y01, y10, y11, y20, y21, y30, y31, y40, y41, z = y
-        dydt = dydt = [a*y01, 0-a*y00, b*y11, 0-b*y10, c*y21, 0-c*y20, d*y31, 0-d*y30, e*y41, 0-e*y40, 1 + m1 * y00**4]
+        dydt = dydt = [a*y01, 0-a*y00, a*y11, 0-a*y10, a*y21, 0-a*y20, a*y31, 0-a*y30, a*y41, 0-a*y40, 1.2 + m1 * y00**2]
         return dydt
 
     def modetr_2(t,y):
         y00, y01, y10, y11, y20, y21, y30, y31, y40, y41, z = y
-        dydt = dydt = [a*y01, 0-a*y00, b*y11, 0-b*y10, c*y21, 0-c*y20, d*y31, 0-d*y30, e*y41, 0-e*y40, 1 + m2 * y10**4]
+        dydt = dydt = [b*y01, 0-b*y00, b*y11, 0-b*y10, b*y21, 0-b*y20, b*y31, 0-b*y30, b*y41, 0-b*y40, 0.5+ m2 * y10**2]
         return dydt
 
     def modetr_3(t,y):
         y00, y01, y10, y11, y20, y21, y30, y31, y40, y41, z = y
-        dydt = dydt = [a*y01, 0-a*y00, b*y11, 0-b*y10, c*y21, 0-c*y20, d*y31, 0-d*y30, e*y41, 0-e*y40, 1 + m3 * y20**4]
+        dydt = dydt = [c*y01, 0-c*y00, c*y11, 0-c*y10, c*y21, 0-c*y20, c*y31, 0-c*y30, c*y41, 0-c*y40, 1+ m3 * y20**2]
         return dydt
 
     def modetr_4(t,y):
         y00, y01, y10, y11, y20, y21, y30, y31, y40, y41, z = y
-        dydt = dydt = [a*y01, 0-a*y00, b*y11, 0-b*y10, c*y21, 0-c*y20, d*y31, 0-d*y30, e*y41, 0-e*y40, 1 + m4 * y30**4]
+        dydt = dydt = [d*y01, 0-d*y00, d*y11, 0-d*y10, d*y21, 0-d*y20, d*y31, 0-d*y30, d*y41, 0-d*y40, 1.2 + m4 * y30**2]
         return dydt
     
     def modetr_5(t,y):
         y00, y01, y10, y11, y20, y21, y30, y31, y40, y41, z = y
-        dydt = dydt = [a*y01, 0-a*y00, b*y11, 0-b*y10, c*y21, 0-c*y20, d*y31, 0-d*y30, e*y41, 0-e*y40, 1 + m5 * y40**4]
+        dydt = dydt = [e*y01, 0-e*y00, e*y11, 0-e*y10, e*y21, 0-e*y20, e*y31, 0-e*y30, e*y41, 0-e*y40, 0.9 + m5 * y40**2]
         return dydt
 
     return [modetr_1,modetr_2,modetr_3,modetr_4,modetr_5]
@@ -144,14 +144,14 @@ def case1():
     modetr = get_modetr(0)
     event = get_event(0)
     labeltest = get_labeltest(0)
-    y0 = [[0,1.2,0,1.2,0,1.2,0,1.2,0,1.2,1.1],[1,0,1,0,1,0,1,0,1,0,0],[-1,0,-1,0,-1,0,-1,0,-1,0,2.1],[0,-1.2,0,-1.2,0,-1.2,0,-1.2,0,-1.2,3.1]]
+    y0 = [[1,0,1,0,1,0,1,0,1,0,0]]
     # y1 = [[3,-1], [-1,3]]
-    T = 2
-    stepsize = 0.002
-    maxorder = 4
+    T = 5
+    stepsize = 0.005
+    maxorder = 2
     boundary_order = 1
     num_mode = 5
-    ep = 0.02
+    ep = 0.005
     mergeep = 0.01
     t_list, y_list = simulation_ode_3(modetr, event, labeltest, y0, T, stepsize)
     # A, b1, b2, Y, ytuple = diff_method_backandfor(t_list, y_list, maxorder, stepsize)
@@ -163,24 +163,29 @@ def case1():
     A, b, Y = diff_method_new(t_list, y_list, maxorder, stepsize)
     np.savetxt("data/YY.txt",Y,fmt='%8f')
     P, G, D = infer_dynamic_modes_new(t_list, y_list, stepsize, maxorder, ep)
-    print(P)
+    # print(P)
     print(len(P))
     if len(P)>num_mode:
-        P, G = merge_cluster_tol2(P, A, b, num_mode,0.01)
+        P, G = merge_cluster_tol2(P, A, b, num_mode,ep)
     P, _ = dropclass0(P, G, D, A, b, Y, ep, stepsize)
     print(P)
     print(len(P))
-
-    sq_sum = 0
-    posum = 0
-    for j in range(0,num_mode):
-        A1 = matrowex(A, P[j])
-        B1 = matrowex(b, P[j])
-        clf = linear_model.LinearRegression(fit_intercept=False)
-        clf.fit(A1, B1)
-        sq_sum += np.square(clf.predict(A1)-B1).sum()
-        posum += len(P[j])
-    print(sq_sum/posum)
+    L_y = len(y_list[0][0])
+    boundary = svm_classify(P, Y, L_y, boundary_order, num_mode)
+    print(boundary)
+    d=test_model(P, G, boundary, num_mode, y_list, modetr, event, maxorder, boundary_order, labeltest=labeltest)
+    print(d)
+    # print(G)
+    # sq_sum = 0
+    # posum = 0
+    # for j in range(0,num_mode):
+    #     A1 = matrowex(A, P[j])
+    #     B1 = matrowex(b, P[j])
+    #     clf = linear_model.LinearRegression(fit_intercept=False)
+    #     clf.fit(A1, B1)
+    #     sq_sum += np.square(clf.predict(A1)-B1).sum()
+    #     posum += len(P[j])
+    # print(sq_sum/posum)
 
 if __name__ == "__main__":
     case1()

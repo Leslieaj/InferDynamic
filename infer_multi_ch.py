@@ -1770,6 +1770,48 @@ def svm_classify(P, Y, L_y, boundary_order, num_mode=2):
         coeff2 = get_coeffs(n, order=boundary_order)
         return coeff1, coeff2, [first,(first+1)%3,(first+2)%3]
 
+    elif num_mode == 5:
+        listres = list(range(5))
+        listord = []
+        coeflist = []
+        while len(listres)>1:
+            acc = []
+            coe = []
+            for idd in listres:
+                y = []
+                x = []
+                listresres = listres[:]
+                for l in listresres:
+                    if l == idd:
+                        for j in range(0,len(P[l])):
+                            y.append(1)
+                            x.append({1:Y[P[l][j],10]})
+                    else:
+                        for j in range(0,len(P[l])):
+                            y.append(-1)
+                            x.append({1:Y[P[l][j],10]})
+
+                prob = svm_problem(y, x)
+                param = svm_parameter('-t 1 -d %d -c 100 -r 1 -b 0 -q' % boundary_order)
+                m = svm_train(prob, param)
+                svm_save_model('model_file1', m)
+                p_coeff = get_coeffs(m, order=boundary_order)
+                p_label, p_acc, p_val = svm_predict(y, x, m,'-q')
+                acc.append(p_acc[0])
+                coe.append(p_coeff)
+            print(acc)
+            nextid = acc.index(max(acc))
+            listord.append(listres[nextid])
+            coeflist.append(coe[nextid])
+            del listres[nextid]
+        
+        listord.append(listres[0])
+
+        return coeflist[0],coeflist[1],coeflist[2],coeflist[3],listord
+
+
+
+
     else:
         raise NotImplementedError
 
@@ -2388,6 +2430,11 @@ def infer_model(t_list, y_list, stepsize, maxorder, boundary_order, num_mode, mo
         coeff1, coeff2, [first,second,third] = svm_classify(P, Y, L_y, boundary_order, num_mode)
         return P, G, (coeff1, coeff2, [first,second,third])
 
+    elif num_mode == 5:
+        coeff1, coeff2, coeff3, coeff4,[first,second,third,fourth,fifth] = svm_classify(P, Y, L_y, boundary_order, num_mode)
+        return P, G, (coeff1, coeff2, coeff3, coeff4,[first,second,third,fourth,fifth])
+
+
     else:
         raise NotImplementedError
 
@@ -2443,7 +2490,33 @@ def test_model(P, G, boundary, num_mode, y_list, modelist, event, maxorder, boun
                 # print(exact,predict,np.square(exact-predict).sum(),file = f)
         # f.close()
         return sum / num
+    elif num_mode == 5:
+        coeff1, coeff2, coeff3, coeff4,[first,second,third,fourth,fifth] = boundary
+        sum = 0
+        num = 0
+        # f = open("diff.txt", "w")
+        for ypoints in y_list:
+            num += ypoints.shape[0]
+            for i in range(ypoints.shape[0]):
+                exact = modelist[labeltest(ypoints[i])](0, ypoints[i])
+                poly_y = np.mat([ypoints[i][10],1])
+                if poly_y.dot(coeff1) > 0:
+                    predict = np.matmul(get_poly_pt(ypoints[i], maxorder), G[first].T)
+                elif poly_y.dot(coeff2) > 0:
+                    predict = np.matmul(get_poly_pt(ypoints[i], maxorder), G[second].T)
+                elif poly_y.dot(coeff3) > 0:
+                    predict = np.matmul(get_poly_pt(ypoints[i], maxorder), G[third].T)
+                elif poly_y.dot(coeff4) > 0:
+                    predict = np.matmul(get_poly_pt(ypoints[i], maxorder), G[fourth].T)
+                else:
+                    predict = np.matmul(get_poly_pt(ypoints[i], maxorder), G[fifth].T)
 
+                exact = np.mat(exact)
+                sum += mat_norm(exact - predict) / (mat_norm(exact) + mat_norm(predict))
+                # sum += np.square(exact-predict).sum()
+                # print(exact,predict,np.square(exact-predict).sum(),file = f)
+        # f.close()
+        return sum / num
     else:
         raise NotImplementedError
 

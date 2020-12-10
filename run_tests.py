@@ -407,28 +407,124 @@ def compare_opt(id, eid, case_id, verbose=False):
     
     print(d_avg,infer_time)
     
+def compare1(id, eid, case_id, verbose=False):
+    np.random.seed(0)
 
+    if eid == 'A':
+        case_info = experiment1.cases[case_id]
+        params = case_info['params']
+        y0 = case_info['y0']
+        y0_test = case_info['y0_test']
+        T = case_info['t_tuple']
+        stepsize = case_info['stepsize']
+        modelist = experiment1.get_mode2(params)
+        event = experiment1.get_event1(params)
+        maxorder = 1
+        boundary_order = 1
+        num_mode = 2
+        ep = 0.01
+        mergeep = 0.01
+        dy = dynamics.mode2t
+    
+    elif eid == 'B':
+        case_info = experiment2.cases[case_id]
+        params = case_info['params']
+        y0 = case_info['y0']
+        y0_test = case_info['y0_test']
+        T = case_info['t_tuple']
+        stepsize = case_info['stepsize']
+        modelist = experiment2.get_fvdp3(params)
+        event = experiment2.get_event1(params)
+        maxorder = 2
+        boundary_order = 1
+        num_mode = 2
+        ep = case_info['ep']
+        mergeep = case_info['mergeep']
+        dy = dynamics.fvdp3_3
+
+    elif eid == 'C':
+        case_info = experiment3.cases[case_id]
+        params = case_info['params']
+        y0 = case_info['y0']
+        y0_test = case_info['y0_test']
+        T = case_info['t_tuple']
+        stepsize = case_info['stepsize']
+        modelist = experiment3.get_mode(params)
+        event = experiment3.get_event(params)
+        maxorder = 3
+        boundary_order = 2
+        num_mode = 2
+        ep = case_info['ep']
+        mergeep = case_info['mergeep']
+        dy = dynamics.modeex3
+
+    elif eid == 'D':
+        case_info = experiment4.cases[case_id]
+        params = case_info['params']
+        y0 = case_info['y0']
+        y0_test = case_info['y0_test']
+        T = case_info['t_tuple']
+        stepsize = case_info['stepsize']
+        modelist = experiment4.get_mmode(params)
+        event = experiment4.get_event(params)
+        maxorder = 2
+        boundary_order = 1
+        num_mode = 2
+        ep = case_info['ep']
+        mergeep = case_info['mergeep']
+        dy = dynamics.modeex4
         
+    elif eid == 'E':
+        case_info = experiment5.cases[case_id]
+        params = case_info['params']
+        y0 = case_info['y0']
+        y0_test = case_info['y0_test']
+        T = case_info['t_tuple']
+        stepsize = case_info['stepsize']
+        modelist = experiment5.get_modetr(params)
+        event = experiment5.get_event(params)
+        labeltest = experiment5.get_labeltest(params)
+        maxorder = 2
+        boundary_order = 1
+        num_mode = 3
+        ep = case_info['ep']
+        mergeep = case_info['mergeep']
+        dy = dynamics.modetrt
 
-
-
-
-
+    # Obtain simulated trajectory
+    start = time.time()
+    if num_mode == 2:
+        t_list, y_list = simulation_ode_2(modelist, event, y0, T, stepsize)
+        test_t_list, test_y_list = simulation_ode_2(modelist, event, y0_test, T, stepsize)
+    elif num_mode == 3:
+        t_list, y_list = simulation_ode_3(modelist, event, labeltest, y0, T, stepsize)
+        test_t_list, test_y_list = simulation_ode_3(modelist, event, labeltest, y0_test, T, stepsize)
+    else:
+        raise NotImplementedError
+    end = time.time()
+    # A, b, Y = diff_method_new(t_list, y_list, maxorder, stepsize)
     # np.savetxt("data/CA"+str(id)+".txt",A,fmt='%8f')
     # np.savetxt("data/Cb"+str(id)+".txt",b,fmt='%8f')
     # YT, FT = diff(t_list+test_t_list, y_list+test_y_list, dy)
     # np.savetxt("data/CYT"+str(id)+".txt",YT,fmt='%8f')
     # np.savetxt("data/CFT"+str(id)+".txt",FT,fmt='%8f')
+    for i in range(0,len(y_list)):
+        np.savetxt("data1/YLIST"+str(id)+"_"+str(i)+".txt",y_list[i],fmt='%8f')
+    for i in range(0,len(test_y_list)):
+        np.savetxt("data1/YTLIST"+str(id)+"_"+str(i)+".txt",test_y_list[i],fmt='%8f')
+    # np.savetxt("data1/step"+str(id)+".txt",stepsize,fmt='%8f')
 
 
 
-for i in range(4):
+# for i in range(1):
     # run_test(i+1, 'A', i, methods=['dbscan','tolmerge', 'piecelinear'])
     # compare(i+1, 'A', i)
-   compare_opt(i+1, 'A', i)
+#    compare_opt(i+1, 'A', i)
+    # compare1(i+1, 'A', i)
 # for i in range(4):
 #     run_test(i+5, 'B', i, methods=['dbscan', 'tolmerge', 'piecelinear'])
 #     compare(i+5, 'B', i)
+    # compare1(i+5, 'B', i)
 # for i in range(4):
     # run_test(i+9, 'C', i, methods=['dbscan', 'tolmerge', 'piecelinear'])
     # compare(i+9, 'C', i)
@@ -436,9 +532,10 @@ for i in range(4):
 # for i in range(4):
 #     run_test(i+13, 'D', i, methods=['dbscan', 'tolmerge', 'piecelinear'])
 #     compare(i+13, 'D', i)
-# for i in range(4):
+for i in range(4):
 #     run_test(i+17, 'E', i, methods=['dbscan', 'tolmerge', 'piecelinear'])
 #     compare(i+17, 'E', i)
+    compare1(i+17, 'E', i)
 # print('total win:', total_win)
 # print('total d_avg:', total_d_avg)
 # print('total time:', total_time)

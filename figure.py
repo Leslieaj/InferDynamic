@@ -60,12 +60,14 @@ def case1():
         else:
             plt.plot(y0_list,y1_list,c='b')
     for i, temp_y in enumerate(ytest_list):
-        y0_list = temp_y.T[0]
-        y1_list = temp_y.T[1]
+        y0_list = temp_y.T[0][::5]
+        y1_list = temp_y.T[1][::5]
         if i == 0:
-            plt.plot(y0_list,y1_list,c='r', label='Inferred',linestyle='--')
+            plt.plot(y0_list,y1_list,mfc='None', mec='r',label='Inferred',marker='.',linestyle='None')
+            
         else:
-            plt.plot(y0_list,y1_list,c='r',linestyle='--')
+            # plt.plot(y0_list,y1_list,c='r',linestyle='--',marker=',')
+            plt.plot(y0_list,y1_list,mfc='None', mec='r',marker='.',linestyle='None')
     plt.xlabel('x1')
     plt.ylabel('x2')
     plt.legend()

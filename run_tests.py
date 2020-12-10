@@ -357,7 +357,7 @@ def compare_opt(id, eid, case_id, verbose=False):
     Fun = []
     Suc = []
     X = []
-    for i in range(5):
+    for i in range(1):
         for ide in range(num_mode*A.shape[1]*b1.shape[1]):
             x0[ide] = random.uniform(-10,10)
         re = infer_optimizationm(x0, optA, optb1, num_mode)
@@ -425,13 +425,14 @@ def compare_opt(id, eid, case_id, verbose=False):
 for i in range(4):
     # run_test(i+1, 'A', i, methods=['dbscan','tolmerge', 'piecelinear'])
     # compare(i+1, 'A', i)
-    compare_opt(i+1, 'A', i)
+   compare_opt(i+1, 'A', i)
 # for i in range(4):
 #     run_test(i+5, 'B', i, methods=['dbscan', 'tolmerge', 'piecelinear'])
 #     compare(i+5, 'B', i)
 # for i in range(4):
-#     run_test(i+9, 'C', i, methods=['dbscan', 'tolmerge', 'piecelinear'])
-#     compare(i+9, 'C', i)
+    # run_test(i+9, 'C', i, methods=['dbscan', 'tolmerge', 'piecelinear'])
+    # compare(i+9, 'C', i)
+    # compare_opt(i+9, 'C', i)
 # for i in range(4):
 #     run_test(i+13, 'D', i, methods=['dbscan', 'tolmerge', 'piecelinear'])
 #     compare(i+13, 'D', i)

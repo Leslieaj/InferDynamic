@@ -182,6 +182,7 @@ def infer_optimization3(x0, A, b):
 
 def lambda_m_modes(A, b, m):
     def m_modes(X):
+        print('call', X.shape)
         A_row = A.shape[0]
         A_col = A.shape[1]
         b_col = b.shape[1]
@@ -197,13 +198,14 @@ def lambda_m_modes(A, b, m):
                 mode_sum_k = rel_diff(A[i].dot(xmatrix[k]),b[i])
                 mode_sum.append(mode_sum_k)
             sum = sum + min(mode_sum)
+        print(sum)
         return sum
     return m_modes
 
 def infer_optimizationm(x0, A, b, m):
-    return minimize(lambda_m_modes(A,b,m), x0, method='nelder-mead', options={'maxiter':100000, 'maxfev':100000, 'xatol': 1e-5, 'disp': False})
+    # return minimize(lambda_m_modes(A,b,m), x0, method='nelder-mead', options={'maxiter':5000, 'maxfev':100000, 'xatol': 1e-5, 'disp': False})
     # return minimize(lambda_m_modes(A,b,m), x0, method='COBYLA', options={'maxiter':100000, 'tol': 1e-5, 'disp': True})
     # return minimize(lambda_m_modes(A,b,m), x0, method='Powell', options={'maxiter':100000, 'xtol': 1e-5, 'ftol': 1e-5, 'disp': True})
-    # return minimize(lambda_m_modes(A,b,m), x0, method='BFGS', jac=None, options={'maxiter':100000, 'gtol': 1e-05, 'disp': True})
+    return minimize(lambda_m_modes(A,b,m), x0, method='Powell', jac=None, options={'maxfev':10, 'maxiter': 10, 'disp': True})
     # return minimize(lambda_m_modes(A,b,m), x0, method='CG',options={'maxiter':100000})
     # return dual_annealing(lambda_m_modes(A,b,m), bounds=[(-5,5)]*(m*A.shape[1]*b.shape[1]), maxfun=10000000, maxiter=1000000)

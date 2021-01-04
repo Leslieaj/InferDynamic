@@ -5,7 +5,7 @@ import experiment1, experiment2, experiment3, experiment4, experiment5
 from infer_multi_ch import infer_model, test_model, simulation_ode_2, simulation_ode_3, diff_method_new, diff, diff_method_backandfor, seg_droprow,rel_diff,svm_classify
 import dynamics
 import random
-from infer_by_optimization import infer_optimizationm
+from infer_by_optimization import infer_optimizationm, infer_optimizationmtest
 
 total_win, total_d_avg, total_time = dict(), dict(), dict()
 methods = ['kmeans', 'dbscan', 'merge', 'piecelinear', 'tolmerge', 'piecelinear1']
@@ -349,63 +349,21 @@ def compare_opt(id, eid, case_id, verbose=False):
     else:
         raise NotImplementedError
     end = time.time()
-    start = time.time()
+    # start = time.time()
     # A, b, Y = diff_method_new(t_list, y_list, maxorder, stepsize)
     A, b1, b2, Y, ytuple = diff_method_backandfor(t_list, y_list, maxorder, stepsize)
     optA, optb1, optb2, drop = seg_droprow(A,b1,b2,ep)
     x0 = np.zeros(num_mode*optA.shape[1]*optb1.shape[1])
-    Fun = []
-    Suc = []
-    X = []
-    for i in range(1):
-        for ide in range(num_mode*A.shape[1]*b1.shape[1]):
-            x0[ide] = random.uniform(-10,10)
-        re = infer_optimizationm(x0, optA, optb1, num_mode)
-        Fun.append(re.fun)
-        Suc.append(re.success)
-        X.append(re.x)
-    print(Fun)
-    print(Suc)
-    label = Fun.index(min(Fun))
-    x = X[label]
-    print(x)
-    G = []
-    P = []
-    xarray = np.array_split(x,num_mode)
-    for m in range(num_mode):
-        G.append(xarray[m].reshape((b1.shape[1],A.shape[1])))
-        P.append([])
-
-    for j in range(A.shape[0]):
-        red1 = []
-        red2 = []
-        for m in range(num_mode):
-            red1.append(rel_diff(A[j].dot(G[m].T),b1[j]))
-            red2.append(rel_diff(A[j].dot(G[m].T),b2[j]))
-        if min(red1) < min(red2):
-            mlabel = red1.index(min(red1))
-        else:
-            mlabel = red2.index(min(red2))
-        P[mlabel].append(j)
-    L_y = len(y_list[0][0])
+    for ini in range(0,5):
+        print('initial',ini)
+        for i in range(len(x0)):
+            x0[i] = np.random.uniform(-5,5)
+        for optmethod in ['nelder-mead','COBYLA','Powell','CG']:
+            try:
+                infer_optimizationmtest(x0, optA, optb1, num_mode)
+            except:
+                print(optmethod,' timeout')
     
-    if num_mode == 2:
-        coeffs = svm_classify(P, Y, L_y, boundary_order, num_mode)
-        boundary = coeffs
-        end = time.time()
-        d_avg = test_model(
-            P, G, boundary, num_mode, y_list + test_y_list, modelist, event, maxorder, boundary_order)
-        infer_time = end - start
-    elif num_mode == 3:
-        coeff1, coeff2, [first,second,third] = svm_classify(P, Y, L_y, boundary_order, num_mode)
-        boundary = (coeff1, coeff2, [first,second,third])
-        end = time.time()
-        d_avg = test_model(
-            P, G, boundary, num_mode, y_list + test_y_list, modelist, event, maxorder, boundary_order,
-            labeltest=labeltest)
-        infer_time = end - start
-    
-    print(d_avg,infer_time)
     
 def compare1(id, eid, case_id, verbose=False):
     np.random.seed(0)
@@ -516,26 +474,27 @@ def compare1(id, eid, case_id, verbose=False):
 
 
 
-# for i in range(1):
+for i in range(4):
     # run_test(i+1, 'A', i, methods=['dbscan','tolmerge', 'piecelinear'])
     # compare(i+1, 'A', i)
-#    compare_opt(i+1, 'A', i)
+    compare_opt(i+1, 'A', i)
     # compare1(i+1, 'A', i)
-# for i in range(4):
+for i in range(4):
 #     run_test(i+5, 'B', i, methods=['dbscan', 'tolmerge', 'piecelinear'])
 #     compare(i+5, 'B', i)
+    compare_opt(i+5, 'B', i)
     # compare1(i+5, 'B', i)
-# for i in range(4):
+for i in range(4):
     # run_test(i+9, 'C', i, methods=['dbscan', 'tolmerge', 'piecelinear'])
     # compare(i+9, 'C', i)
-    # compare_opt(i+9, 'C', i)
+    compare_opt(i+9, 'C', i)
 # for i in range(4):
 #     run_test(i+13, 'D', i, methods=['dbscan', 'tolmerge', 'piecelinear'])
 #     compare(i+13, 'D', i)
-for i in range(4):
+# for i in range(4):
 #     run_test(i+17, 'E', i, methods=['dbscan', 'tolmerge', 'piecelinear'])
 #     compare(i+17, 'E', i)
-    compare1(i+17, 'E', i)
+    # compare1(i+17, 'E', i)
 # print('total win:', total_win)
 # print('total d_avg:', total_d_avg)
 # print('total time:', total_time)

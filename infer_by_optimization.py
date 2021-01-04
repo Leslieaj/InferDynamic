@@ -4,6 +4,8 @@ import time
 from scipy.optimize import minimize, dual_annealing
 from generator import generate_complete_polynomial
 from infer_multi_ch import rel_diff
+import func_timeout
+from func_timeout import func_set_timeout
 
 def get_coef(t_points, y_list, order, stepsize):
     final_A_mat = None
@@ -182,7 +184,7 @@ def infer_optimization3(x0, A, b):
 
 def lambda_m_modes(A, b, m):
     def m_modes(X):
-        print('call', X.shape)
+        # print('call', X.shape)
         A_row = A.shape[0]
         A_col = A.shape[1]
         b_col = b.shape[1]
@@ -198,14 +200,31 @@ def lambda_m_modes(A, b, m):
                 mode_sum_k = rel_diff(A[i].dot(xmatrix[k]),b[i])
                 mode_sum.append(mode_sum_k)
             sum = sum + min(mode_sum)
-        print(sum)
+        # print(sum)
         return sum
     return m_modes
+
+
 
 def infer_optimizationm(x0, A, b, m):
     # return minimize(lambda_m_modes(A,b,m), x0, method='nelder-mead', options={'maxiter':5000, 'maxfev':100000, 'xatol': 1e-5, 'disp': False})
     # return minimize(lambda_m_modes(A,b,m), x0, method='COBYLA', options={'maxiter':100000, 'tol': 1e-5, 'disp': True})
     # return minimize(lambda_m_modes(A,b,m), x0, method='Powell', options={'maxiter':100000, 'xtol': 1e-5, 'ftol': 1e-5, 'disp': True})
-    return minimize(lambda_m_modes(A,b,m), x0, method='Powell', jac=None, options={'maxfev':10, 'maxiter': 10, 'disp': True})
+    return minimize(lambda_m_modes(A,b,m), x0, method='Powell', jac=None, options={'maxfev':10000, 'maxiter': 10000, 'disp': True})
     # return minimize(lambda_m_modes(A,b,m), x0, method='CG',options={'maxiter':100000})
     # return dual_annealing(lambda_m_modes(A,b,m), bounds=[(-5,5)]*(m*A.shape[1]*b.shape[1]), maxfun=10000000, maxiter=1000000)
+
+@func_set_timeout(1200)
+def infer_optimizationmtest(x0, A, b, m, method = 'Powell'):
+    t_start = time.time()
+    if method == 'nelder-mead':
+        re = minimize(lambda_m_modes(A,b,m), x0, method='nelder-mead', options={'maxiter':100000, 'maxfev':100000, 'xatol': 1e-5, 'disp': False})
+    if method == 'COBYLA':
+        re = minimize(lambda_m_modes(A,b,m), x0, method='COBYLA', options={'maxiter':100000, 'tol': 1e-5, 'disp': False})
+    if method == 'Powell':
+        re = minimize(lambda_m_modes(A,b,m), x0, method='Powell', jac=None, options={'maxfev':100000, 'maxiter': 100000, 'disp': False})
+    if method == 'CG':
+        re = minimize(lambda_m_modes(A,b,m), x0, method='CG',options={'maxiter':100000, 'disp': False})
+    # re = dual_annealing(lambda_m_modes(A,b,m), bounds=[(-5,5)]*(m*A.shape[1]*b.shape[1]), maxfun=100000, maxiter=100000)
+    t_end = time.time()
+    print('method',method,'time',t_end-t_start,re.success,re.fun/A.shape[0])
